@@ -232,7 +232,7 @@ const enhance = (wrapper) => {
         const li = document.createElement('li');
         li.className = 'cs-sheet-option';
         li.dataset.value = option.value;
-        li.textContent = option.textContent;
+        li.textContent = option.label;
         li.setAttribute('role', 'option');
         li.setAttribute('aria-selected', 'false');
         li.addEventListener('click', () => {

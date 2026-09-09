@@ -231,7 +231,7 @@
             li.setAttribute('role', 'option');
             li.setAttribute('data-value', option.value);
             li.setAttribute('aria-selected', 'false');
-            li.textContent = option.textContent;
+            li.textContent = option.label;
             li.addEventListener('click', function () { pick(option); closeSheet(); });
             sheetList.appendChild(li);
         });
