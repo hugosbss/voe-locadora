@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1e40af">
+    <title>Protótipos &middot; Cadastro de Clientes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="app-body font-sans text-slate-800 antialiased">
+    <div class="min-h-screen flex flex-col">
+        <header class="app-header">
+            <div class="container">
+                <div class="bar">
+                    <div class="brand">
+                        <span class="brand-icon">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M19 7h-1V6a3 3 0 0 0-6 0v1H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-7-1a1 1 0 0 1 2 0v1h-2V6Zm7 14H5v-9h14v9Zm-9-6a1 1 0 1 0 2 0v-2a1 1 0 1 0-2 0v2Zm5 0a1 1 0 1 0 0-2h-1.5a1 1 0 1 0 0 2H15Z" />
+                            </svg>
+                        </span>
+                        <div class="brand-text">
+                            <p class="brand-title">Locadora</p>
+                            <p class="brand-sub">Protótipos do Cadastro de Clientes</p>
+                        </div>
+                    </div>
+                    <span class="chip">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Dados protegidos
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="card card-pad">
+                <h1 class="page-title">Protótipos de tela</h1>
+                <p class="page-sub">Replicam visualmente as telas do sistema. Nenhum dado real é enviado.</p>
+
+                <div class="prototype-list mt-8">
+                    <a class="prototype-item" href="form.html">
+                        <div>
+                            <h3>Formulário público de cadastro</h3>
+                            <p>6 etapas com stepper, uploads, CEP e conferência</p>
+                        </div>
+                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+
+                    <a class="prototype-item" href="sucesso.html">
+                        <div>
+                            <h3>Cadastro enviado (sucesso)</h3>
+                            <p>Tela de confirmação após o envio</p>
+                        </div>
+                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+
+                    <a class="prototype-item" href="privacidade.html">
+                        <div>
+                            <h3>Política de Privacidade</h3>
+                            <p>Termos exibidos durante o cadastro</p>
+                        </div>
+                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+
+                    <a class="prototype-item" href="admin-login.html">
+                        <div>
+                            <h3>Login admin</h3>
+                            <p>Acesso restrito ao painel da locadora</p>
+                        </div>
+                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+
+                    <a class="prototype-item" href="admin-list.html">
+                        <div>
+                            <h3>Lista de cadastros (admin)</h3>
+                            <p>Cards no mobile e tabela no desktop, com filtro por status</p>
+                        </div>
+                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+
+                    <a class="prototype-item" href="admin-detalhe.html">
+                        <div>
+                            <h3>Detalhe do cadastro (admin)</h3>
+                            <p>Dados do cliente, documentos e mudança de status</p>
+                        </div>
+                        <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                </div>
+
+                <p class="mt-8 text-xs text-slate-400">
+                    Protótipo estático &middot; pensado para visualização em celular (320px+) e desktop.
+                </p>
+            </div>
+        </main>
+
+        <footer class="public-footer">
+            &copy; 2026 Locadora &middot; Dados protegidos e utilizados somente para análise da locação.
+        </footer>
+    </div>
+</body>
+</html>

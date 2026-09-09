@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1e40af">
+    <title>Entrar &middot; Painel da Locadora &middot; Protótipo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="admin-body font-sans antialiased" style="background: var(--header-gradient);">
+    <div class="login-shell flex-col">
+        <div class="login-card">
+            <div class="login-brand">
+                <svg class="h-11 w-11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19 7h-1V6a3 3 0 0 0-6 0v1H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" />
+                </svg>
+                <span class="login-brand-title">Painel da Locadora</span>
+            </div>
+
+            <div class="card card-pad">
+                <h1 class="page-title mb-1">Acesso restrito</h1>
+                <p class="page-sub mb-6" style="font-size: 0.875rem;">Faça login para visualizar os cadastros.</p>
+
+                <form method="GET" action="admin-list.html" class="space-y-4">
+                    <div>
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" name="email" id="email" class="form-input mt-1" placeholder="admin@locadora.com.br" autocomplete="username">
+                    </div>
+
+                    <div>
+                        <label for="password" class="form-label">Senha</label>
+                        <div class="password-wrap mt-1">
+                            <input type="password" name="password" id="password" class="form-input" placeholder="Sua senha" autocomplete="current-password">
+                            <button type="button" id="password-toggle" aria-pressed="false" aria-label="Mostrar senha" class="password-toggle">
+                                <svg data-icon-eye class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <svg data-icon-eye-off class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <label class="checkbox-row">
+                        <input type="checkbox" name="remember" value="1" class="h-4 w-4" style="accent-color: var(--indigo-600);">
+                        Manter conectado
+                    </label>
+
+                    <button type="submit" class="btn btn-primary btn-lg-full">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

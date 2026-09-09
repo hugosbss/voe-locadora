@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1e40af">
+    <title>Cadastro de Cliente &middot; Protótipo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="app-body font-sans text-slate-800 antialiased">
+    <div class="min-h-screen flex flex-col">
+        <header class="app-header">
+            <div class="container">
+                <div class="bar">
+                    <div class="brand">
+                        <span class="brand-icon">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M19 7h-1V6a3 3 0 0 0-6 0v1H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-7-1a1 1 0 0 1 2 0v1h-2V6Zm7 14H5v-9h14v9Zm-9-6a1 1 0 1 0 2 0v-2a1 1 0 1 0-2 0v2Zm5 0a1 1 0 1 0 0-2h-1.5a1 1 0 1 0 0 2H15Z" />
+                            </svg>
+                        </span>
+                        <div class="brand-text">
+                            <p class="brand-title">Locadora</p>
+                            <p class="brand-sub">Cadastro de Clientes</p>
+                        </div>
+                    </div>
+                    <span class="chip">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Dados protegidos
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="card card-pad">
+                <header class="mb-6">
+                    <h1 class="page-title">Cadastro de Cliente</h1>
+                    <p class="page-sub">Preencha os dados abaixo. Leva poucos minutos.</p>
+                </header>
+
+                <div class="stepper-mobile">
+                    <p id="step-count" class="step-count" aria-live="polite">Etapa 1 de 6</p>
+                    <div class="stepbar" role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="1" aria-label="Progresso do cadastro">
+                        <div id="stepbar-fill" class="stepbar-fill" style="width: 16.666%"></div>
+                    </div>
+                    <h1 id="step-title" class="step-title">Dados pessoais</h1>
+                </div>
+
+                <ol id="step-indicator" class="steps" aria-label="Progresso do cadastro">
+                    <li><div class="step-col"><span class="step-dot" data-active="true">1</span><span class="step-label" data-active="true">Dados pessoais</span></div></li>
+                    <li><div class="step-col"><span class="step-dot" data-active="false">2</span><span class="step-label" data-active="false">Endereço</span></div></li>
+                    <li><div class="step-col"><span class="step-dot" data-active="false">3</span><span class="step-label" data-active="false">CNH</span></div></li>
+                    <li><div class="step-col"><span class="step-dot" data-active="false">4</span><span class="step-label" data-active="false">Documentos</span></div></li>
+                    <li><div class="step-col"><span class="step-dot" data-active="false">5</span><span class="step-label" data-active="false">Selfie</span></div></li>
+                    <li><div class="step-col"><span class="step-dot" data-active="false">6</span><span class="step-label" data-active="false">Enviar</span></div></li>
+                </ol>
+
+                <form id="registration-form" data-total="6" novalidate>
+                    <section class="step-panel" data-panel="1" data-title="Dados pessoais">
+                        <h2 class="section-title section-title-desktop">1. Dados pessoais</h2>
+
+                        <div class="field-wrap space-y-5">
+                            <div data-field="full_name">
+                                <label for="full_name" class="form-label">Nome completo <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="text" id="full_name" name="full_name" class="form-input" placeholder="Digite seu nome completo" autocomplete="name">
+                            </div>
+
+                            <div data-field="cpf">
+                                <label for="cpf" class="form-label">CPF <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="text" id="cpf" name="cpf" class="form-input" placeholder="000.000.000-00" inputmode="numeric" data-mask="cpf" autocomplete="off">
+                            </div>
+
+                            <div data-field="birth_date">
+                                <label for="birth_date" class="form-label">Data de nascimento <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="date" id="birth_date" name="birth_date" class="form-input" max="2008-09-09">
+                            </div>
+
+                            <div class="grid-2">
+                                <div data-field="phone">
+                                    <label for="phone" class="form-label">Telefone <span class="asterisk" aria-hidden="true">*</span></label>
+                                    <input type="tel" id="phone" name="phone" class="form-input" placeholder="(00) 0000-0000" inputmode="tel" data-mask="phone" autocomplete="tel">
+                                </div>
+                                <div data-field="whatsapp">
+                                    <label for="whatsapp" class="form-label">WhatsApp <span class="asterisk" aria-hidden="true">*</span></label>
+                                    <input type="tel" id="whatsapp" name="whatsapp" class="form-input" placeholder="(00) 00000-0000" inputmode="tel" data-mask="phone" autocomplete="tel">
+                                </div>
+                            </div>
+
+                            <div data-field="email">
+                                <label for="email" class="form-label">E-mail <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="email" id="email" name="email" class="form-input" placeholder="voce@email.com" inputmode="email" autocomplete="email">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-panel hidden" data-panel="2" data-title="Endereço">
+                        <h2 class="section-title section-title-desktop">2. Endereço</h2>
+
+                        <div class="field-wrap space-y-5">
+                            <div data-field="cep">
+                                <label for="cep" class="form-label">CEP <span class="asterisk" aria-hidden="true">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="cep" name="cep" class="form-input flex-1" placeholder="00000-000" inputmode="numeric" data-mask="cep" aria-describedby="cep-feedback">
+                                    <button type="button" id="cep-search" class="btn btn-secondary" style="white-space: nowrap;">
+                                        <svg data-cep-spinner class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
+                                        <span data-cep-label>Buscar</span>
+                                    </button>
+                                </div>
+                                <p id="cep-feedback" class="field-hint" style="margin-top: 0.375rem;">Preencha e clique em "Buscar" para preencher o endereço automaticamente.</p>
+                            </div>
+
+                            <div data-field="address">
+                                <label for="address" class="form-label">Rua <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="text" id="address" name="address" class="form-input" placeholder="Nome da rua / avenida" autocomplete="address-line1">
+                            </div>
+
+                            <div data-field="address_number">
+                                <label for="address_number" class="form-label">Número <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="text" id="address_number" name="address_number" class="form-input" placeholder="123" inputmode="numeric" autocomplete="address-line2">
+                            </div>
+
+                            <div data-field="neighborhood">
+                                <label for="neighborhood" class="form-label">Bairro <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="text" id="neighborhood" name="neighborhood" class="form-input" placeholder="Nome do bairro" autocomplete="address-level2">
+                            </div>
+
+                            <div class="grid-2">
+                                <div data-field="city">
+                                    <label for="city" class="form-label">Cidade <span class="asterisk" aria-hidden="true">*</span></label>
+                                    <input type="text" id="city" name="city" class="form-input" placeholder="Cidade" autocomplete="address-level2">
+                                </div>
+                                <div data-field="state">
+                                    <label for="state" class="form-label">Estado <span class="asterisk" aria-hidden="true">*</span></label>
+                                    <div data-custom-select data-cs-label="Estado" data-cs-placeholder="Selecione o estado...">
+                                        <select id="state" name="state" class="form-input">
+                                            <option value="">Selecione o estado...</option>
+                                            <option value="AC">AC - Acre</option>
+                                            <option value="AL">AL - Alagoas</option>
+                                            <option value="AP">AP - Amapá</option>
+                                            <option value="AM">AM - Amazonas</option>
+                                            <option value="BA">BA - Bahia</option>
+                                            <option value="CE">CE - Ceará</option>
+                                            <option value="DF">DF - Distrito Federal</option>
+                                            <option value="ES">ES - Espírito Santo</option>
+                                            <option value="GO">GO - Goiás</option>
+                                            <option value="MA">MA - Maranhão</option>
+                                            <option value="MT">MT - Mato Grosso</option>
+                                            <option value="MS">MS - Mato Grosso do Sul</option>
+                                            <option value="MG">MG - Minas Gerais</option>
+                                            <option value="PA">PA - Pará</option>
+                                            <option value="PB">PB - Paraíba</option>
+                                            <option value="PR">PR - Paraná</option>
+                                            <option value="PE">PE - Pernambuco</option>
+                                            <option value="PI">PI - Piauí</option>
+                                            <option value="RJ">RJ - Rio de Janeiro</option>
+                                            <option value="RN">RN - Rio Grande do Norte</option>
+                                            <option value="RS">RS - Rio Grande do Sul</option>
+                                            <option value="RO">RO - Rondônia</option>
+                                            <option value="RR">RR - Roraima</option>
+                                            <option value="SC">SC - Santa Catarina</option>
+                                            <option value="SP">SP - São Paulo</option>
+                                            <option value="SE">SE - Sergipe</option>
+                                            <option value="TO">TO - Tocantins</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-panel hidden" data-panel="3" data-title="Dados da CNH">
+                        <h2 class="section-title section-title-desktop">3. Dados da CNH</h2>
+
+                        <div class="field-wrap space-y-5">
+                            <div data-field="cnh_number">
+                                <label for="cnh_number" class="form-label">Número da CNH <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="text" id="cnh_number" name="cnh_number" class="form-input" placeholder="Número impresso na CNH" inputmode="numeric">
+                            </div>
+
+                            <div data-field="cnh_category">
+                                <label for="cnh_category" class="form-label">Categoria <span class="asterisk" aria-hidden="true">*</span></label>
+                                <div data-custom-select data-cs-label="Categoria" data-cs-placeholder="Selecione a categoria...">
+                                    <select id="cnh_category" name="cnh_category" class="form-input">
+                                        <option value="">Selecione a categoria...</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                        <option value="E">E</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div data-field="cnh_expiry_date">
+                                <label for="cnh_expiry_date" class="form-label">Data de validade <span class="asterisk" aria-hidden="true">*</span></label>
+                                <input type="date" id="cnh_expiry_date" name="cnh_expiry_date" class="form-input" min="2026-09-10">
+                                <p id="cnh_expiry_date-hint" class="field-hint">A CNH deve estar dentro da validade.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-panel hidden" data-panel="4" data-title="Fotos dos documentos">
+                        <h2 class="section-title section-title-desktop">4. Fotos dos documentos</h2>
+                        <p class="field-hint" style="margin-bottom: 1.25rem;">Tire uma foto pela câmera ou escolha da galeria. As imagens ficam protegidas.</p>
+
+                        <div class="upload-card" style="margin-bottom: 1rem;">
+                            <div class="upload-head">
+                                <div style="min-width: 0; padding-top: 0.5rem;">
+                                    <p class="upload-name">CNH (frente)</p>
+                                    <p class="upload-desc">Obrigatório</p>
+                                    <p class="file-name hidden"></p>
+                                </div>
+                                <div class="preview-wrap" data-preview="cnh_front">
+                                    <div class="preview-empty-icon">
+                                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z"/></svg>
+                                    </div>
+                                    <img src="" alt="Pré-visualização" class="preview-image hidden" loading="lazy">
+                                    <button type="button" class="remove-preview" data-doc="cnh_front" aria-label="Remover imagem">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="upload-grid">
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" name="cnh_front_file" accept="image/*" capture="environment" class="document-input sr-only" data-doc="cnh_front">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6h4l1.5-2H15l1.5 2H20v12H4V6Zm8 10a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 16Z"/></svg>
+                                    Tirar foto
+                                </label>
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" accept="image/*" class="gallery-input sr-only" data-doc="cnh_front">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm8 11v-2H8v2h8Zm2-1H22a10 10 0 0 1-20 0h6v-3h4.5a3.5 3.5 0 0 1 6.3-2L22 8v2Z"/></svg>
+                                    Galeria
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="upload-card" style="margin-bottom: 1rem;">
+                            <div class="upload-head">
+                                <div style="min-width: 0; padding-top: 0.5rem;">
+                                    <p class="upload-name">CNH (verso)</p>
+                                    <p class="upload-desc">Obrigatório</p>
+                                    <p class="file-name hidden"></p>
+                                </div>
+                                <div class="preview-wrap" data-preview="cnh_back">
+                                    <div class="preview-empty-icon">
+                                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z"/></svg>
+                                    </div>
+                                    <img src="" alt="Pré-visualização" class="preview-image hidden" loading="lazy">
+                                    <button type="button" class="remove-preview" data-doc="cnh_back" aria-label="Remover imagem">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="upload-grid">
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" name="cnh_back_file" accept="image/*" capture="environment" class="document-input sr-only" data-doc="cnh_back">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6h4l1.5-2H15l1.5 2H20v12H4V6Zm8 10a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 16Z"/></svg>
+                                    Tirar foto
+                                </label>
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" accept="image/*" class="gallery-input sr-only" data-doc="cnh_back">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm8 11v-2H8v2h8Zm2-1H22a10 10 0 0 1-20 0h6v-3h4.5a3.5 3.5 0 0 1 6.3-2L22 8v2Z"/></svg>
+                                    Galeria
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="upload-card">
+                            <div class="upload-head">
+                                <div style="min-width: 0; padding-top: 0.5rem;">
+                                    <p class="upload-name">Comprovante de residência</p>
+                                    <p class="upload-desc">Obrigatório</p>
+                                    <p class="file-name hidden"></p>
+                                </div>
+                                <div class="preview-wrap" data-preview="proof_of_residence">
+                                    <div class="preview-empty-icon">
+                                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z"/></svg>
+                                    </div>
+                                    <img src="" alt="Pré-visualização" class="preview-image hidden" loading="lazy">
+                                    <button type="button" class="remove-preview" data-doc="proof_of_residence" aria-label="Remover imagem">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="upload-grid">
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" name="proof_of_residence_file" accept="image/*" capture="environment" class="document-input sr-only" data-doc="proof_of_residence">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6h4l1.5-2H15l1.5 2H20v12H4V6Zm8 10a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 16Z"/></svg>
+                                    Tirar foto
+                                </label>
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" accept="image/*" class="gallery-input sr-only" data-doc="proof_of_residence">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm8 11v-2H8v2h8Zm2-1H22a10 10 0 0 1-20 0h6v-3h4.5a3.5 3.5 0 0 1 6.3-2L22 8v2Z"/></svg>
+                                    Galeria
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-panel hidden" data-panel="5" data-title="Validação facial">
+                        <h2 class="section-title section-title-desktop">5. Validação facial</h2>
+                        <div style="margin-bottom: 1.25rem;">
+                            <p style="margin: 0; font-size: 0.875rem; color: var(--slate-600);">Tire uma selfie para confirmar sua identidade.</p>
+                            <p class="field-hint">Fique em ambiente bem iluminado, sem óculos e de frente para a câmera.</p>
+                        </div>
+
+                        <div class="upload-card">
+                            <div class="upload-head">
+                                <div style="min-width: 0; padding-top: 0.5rem;">
+                                    <p class="upload-name">Sua selfie</p>
+                                    <p class="upload-desc">Obrigatória para a análise</p>
+                                    <p class="file-name hidden"></p>
+                                </div>
+                                <div class="preview-wrap" data-preview="selfie">
+                                    <div class="preview-empty-icon">
+                                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z"/></svg>
+                                    </div>
+                                    <img src="" alt="Pré-visualização" class="preview-image hidden" loading="lazy">
+                                    <button type="button" class="remove-preview" data-doc="selfie" aria-label="Remover imagem">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="upload-grid">
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" name="selfie_file" accept="image/*" capture="user" class="document-input sr-only" data-doc="selfie">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6h4l1.5-2H15l1.5 2H20v12H4V6Zm8 10a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 16Z"/></svg>
+                                    Tirar selfie
+                                </label>
+                                <label class="upload-btn" style="cursor: pointer;">
+                                    <input type="file" accept="image/*" class="gallery-input sr-only" data-doc="selfie">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm8 11v-2H8v2h8Zm2-1H22a10 10 0 0 1-20 0h6v-3h4.5a3.5 3.5 0 0 1 6.3-2L22 8v2Z"/></svg>
+                                    Escolher da galeria
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step-panel hidden" data-panel="6" data-title="Conferência e envio">
+                        <h2 class="section-title section-title-desktop">6. Conferência e envio</h2>
+
+                        <div class="field-wrap space-y-5">
+                            <div class="summary-box">
+                                <p>Confira seus dados antes de enviar.</p>
+                                <p id="summary-name" style="font-weight: 600; color: var(--slate-900);"></p>
+                                <p id="summary-cpf" style="color: var(--slate-700);"></p>
+                                <p id="summary-phone" style="color: var(--slate-700);"></p>
+                                <p id="summary-email" style="color: var(--slate-700); overflow-wrap: anywhere;"></p>
+                                <p id="summary-city" style="color: var(--slate-700);"></p>
+                            </div>
+
+                            <div class="consent-box">
+                                <p>Declaração de veracidade</p>
+                                <label class="check-label">
+                                    <input type="checkbox" name="veracity_declaration_accepted" value="1" class="checkbox">
+                                    <span>Li e confirmo que as informações fornecidas são verdadeiras.</span>
+                                </label>
+                            </div>
+
+                            <div class="consent-box">
+                                <p>Política de privacidade</p>
+                                <label class="check-label">
+                                    <input type="checkbox" name="privacy_policy_accepted" value="1" class="checkbox">
+                                    <span>Autorizo o uso dos meus dados e documentos para análise da minha locação. Conheça nossa <a href="privacidade.html" target="_blank" rel="noopener" class="link-inline">Política de Privacidade</a>.</span>
+                                </label>
+                            </div>
+
+                            <a class="btn btn-primary btn-lg btn-lg-full" href="sucesso.html" id="submit-btn" style="text-decoration: none;">
+                                <svg class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
+                                <span>Enviar cadastro</span>
+                            </a>
+                        </div>
+                    </section>
+
+                    <div class="nav-steps">
+                        <button type="button" id="prev-btn" class="btn btn-ghost invisible" style="flex-shrink: 0;">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Voltar
+                        </button>
+                        <span id="step-counter" class="step-counter">1 / 6</span>
+                        <button type="button" id="next-btn" class="btn btn-primary" style="flex: 1 1 0; max-width: none;">
+                            Continuar
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer class="public-footer">
+            &copy; 2026 Locadora &middot; Dados protegidos e utilizados somente para análise da locação.
+        </footer>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
