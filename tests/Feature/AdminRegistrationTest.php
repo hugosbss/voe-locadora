@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
 use App\Models\User;
+use App\Services\DocumentStorageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -68,9 +69,10 @@ class AdminRegistrationTest extends TestCase
         Storage::fake('local');
 
         $registration = ClientRegistration::factory()->create();
-        $path = Storage::disk('local')->putFile(
-            'cadastros/teste/cnh_front',
-            UploadedFile::fake()->image('frente.jpg', 600, 400)
+        $path = app(DocumentStorageService::class)->store(
+            UploadedFile::fake()->image('frente.jpg', 600, 400),
+            $registration->uuid,
+            'cnh_front'
         );
         $registration->update(['cnh_front_path' => $path]);
 
@@ -83,11 +85,13 @@ class AdminRegistrationTest extends TestCase
         Storage::fake('local');
 
         $registration = ClientRegistration::factory()->create();
-        $path = Storage::disk('local')->putFile(
-            'cadastros/teste/cnh_front',
-            UploadedFile::fake()->image('frente.jpg', 600, 400)
+        $path = app(DocumentStorageService::class)->store(
+            UploadedFile::fake()->image('frente.jpg', 600, 400),
+            $registration->uuid,
+            'cnh_front'
         );
-        $registration->update(['cnh_front_path' => $path]);
+        $registration['cnh_front_path'] = $path;
+        $registration->save();
 
         $this->actingAs(User::factory()->create())
             ->get(route('admin.registrations.photo', [$registration, 'cnh_front']))

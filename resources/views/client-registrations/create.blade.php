@@ -6,7 +6,6 @@
     <div class="card p-5 sm:p-8">
         <header class="mb-6">
             <h1 class="text-xl font-semibold tracking-tight text-slate-900">Cadastro de Cliente</h1>
-            <p class="mt-1 text-sm text-slate-500">Preencha os dados abaixo. Leva poucos minutos.</p>
         </header>
 
         {{-- Barra de progresso (mobile) --}}
@@ -97,7 +96,7 @@
                             <span data-cep-label>Buscar</span>
                         </x-button>
                     </div>
-                    <p id="cep-feedback" class="mt-1.5 text-xs text-slate-500">Preencha e clique em "Buscar" para preencher o endereço automaticamente.</p>
+                    <p id="cep-feedback" class="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500" hidden></p>
                     <p id="cep-error" class="field-error" role="alert" hidden></p>
                 </div>
 
@@ -123,8 +122,8 @@
             </section>
 
             {{-- Etapa 3: CNH --}}
-            <section class="step-panel space-y-5 hidden" data-panel="3" data-title="Dados da CNH">
-                <h2 class="section-title mb-4 hidden sm:block">3. Dados da CNH</h2>
+            <section class="step-panel space-y-5 hidden" data-panel="3" data-title="CNH">
+                <h2 class="section-title mb-4 hidden sm:block">3. CNH</h2>
 
                 <x-form-field label="Número da CNH" name="cnh_number" value="{{ old('cnh_number') }}"
                     placeholder="Número impresso na CNH" inputmode="numeric" required />
@@ -141,9 +140,9 @@
             </section>
 
             {{-- Etapa 4: Fotos dos documentos --}}
-            <section class="step-panel space-y-5 hidden" data-panel="4" data-title="Fotos dos documentos">
-                <h2 class="section-title mb-4 hidden sm:block">4. Fotos dos documentos</h2>
-                <p class="text-sm text-slate-500">Tire uma foto pela câmera ou escolha da galeria. As imagens ficam protegidas.</p>
+            <section class="step-panel space-y-5 hidden" data-panel="4" data-title="Documentos">
+                <h2 class="section-title mb-4 hidden sm:block">4. Documentos</h2>
+                <p class="text-sm text-slate-500">JPG, PNG ou WebP &middot; até 5 MB por arquivo.</p>
 
                 @foreach (['cnh_front' => 'CNH (frente)', 'cnh_back' => 'CNH (verso)', 'proof_of_residence' => 'Comprovante de residência'] as $doc => $label)
                     <div class="upload-card">
@@ -175,18 +174,17 @@
             </section>
 
             {{-- Etapa 5: Selfie / validação facial --}}
-            <section class="step-panel space-y-5 hidden" data-panel="5" data-title="Validação facial">
-                <h2 class="section-title mb-4 hidden sm:block">5. Validação facial</h2>
+            <section class="step-panel space-y-5 hidden" data-panel="5" data-title="Selfie">
+                <h2 class="section-title mb-4 hidden sm:block">5. Selfie</h2>
                 <div>
-                    <p class="text-sm text-slate-600">Tire uma selfie para confirmar sua identidade.</p>
-                    <p class="mt-1 text-xs text-slate-400">Fique em ambiente bem iluminado, sem óculos e de frente para a câmera.</p>
+                    <p class="text-sm text-slate-600">Tire uma selfie em ambiente claro, sem óculos e de frente para a câmera.</p>
                 </div>
 
                 <div class="upload-card">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 pt-2">
                             <p class="text-sm font-medium text-slate-800">Sua selfie</p>
-                            <p class="text-xs text-slate-500">Obrigatória para a análise</p>
+                            <p class="text-xs text-slate-500">Obrigatório</p>
                             <p class="file-name mt-1 hidden max-w-[12rem] truncate text-xs font-medium text-indigo-600"></p>
                         </div>
                         @include('components.document-preview', ['doc' => 'selfie'])
@@ -210,8 +208,8 @@
             </section>
 
             {{-- Etapa 6: Enviar cadastro --}}
-            <section class="step-panel space-y-5 hidden" data-panel="6" data-title="Conferência e envio">
-                <h2 class="section-title mb-4 hidden sm:block">6. Conferência e envio</h2>
+            <section class="step-panel space-y-5 hidden" data-panel="6" data-title="Revisão">
+                <h2 class="section-title mb-4 hidden sm:block">6. Revisão</h2>
 
                 <div class="rounded-xl bg-slate-50 p-4 text-sm ring-1 ring-inset ring-slate-100">
                     <p class="mb-1 font-medium text-slate-500">Confira seus dados antes de enviar.</p>

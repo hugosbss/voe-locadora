@@ -9,7 +9,9 @@ use App\Services\ClientRegistrationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use RuntimeException;
 
 class ClientRegistrationController extends Controller
 {
@@ -26,9 +28,9 @@ class ClientRegistrationController extends Controller
             'Dados pessoais',
             'Endereço',
             'CNH',
-            'Fotos',
+            'Documentos',
             'Selfie',
-            'Enviar',
+            'Revisão',
         ];
 
         return view('client-registrations.create', [
@@ -40,12 +42,15 @@ class ClientRegistrationController extends Controller
 
     /**
      * Busca o endereço automaticamente a partir do CEP.
+     *
+     * Resposta sempre controlada pela aplicação: nunca repassa erros,
+     * timeout ou malformações da API externa. A rota possui rate limiting.
      */
     public function lookupCep(Request $request, CepService $cepService): JsonResponse
     {
-        $cep = $request->validate(['cep' => ['required', 'string', 'max:9']])['cep'];
+        $validated = $request->validate(['cep' => ['required', 'string', 'regex:/^\d{5}-?\d{3}$/']]);
 
-        $address = $cepService->find($cep);
+        $address = $cepService->find($validated['cep']);
 
         if (! $address) {
             return response()->json(['error' => 'CEP não encontrado.'], 404);
@@ -59,7 +64,17 @@ class ClientRegistrationController extends Controller
      */
     public function store(StoreClientRegistrationRequest $request): RedirectResponse
     {
-        $registration = $this->registrationService->create($request->validated());
+        try {
+            $registration = $this->registrationService->create($request->validated());
+        } catch (RuntimeException $e) {
+            // Arquivo legitimamente inválido que escapou da validação,
+            // ou falha inesperada no reprocessamento: resposta genérica.
+            Log::warning('Registration storage failed', ['kind' => get_class($e)]);
+
+            return back()
+                ->withErrors(['documentos' => 'Não foi possível processar os arquivos enviados. Tente novamente.'])
+                ->withInput($request->except(['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file', 'selfie_file']));
+        }
 
         return redirect()
             ->route('client-registrations.success')

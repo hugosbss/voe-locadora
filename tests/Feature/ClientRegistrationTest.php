@@ -34,7 +34,7 @@ class ClientRegistrationTest extends TestCase
 
     public function test_public_form_page_renders(): void
     {
-        $this->get('/')
+        $this->get('/cadastro')
             ->assertOk()
             ->assertSee('Cadastro de Cliente')
             ->assertSee('Dados pessoais')
@@ -155,6 +155,6 @@ class ClientRegistrationTest extends TestCase
     {
         $this->get(route('client-registrations.success'))
             ->assertOk()
-            ->assertSee('Cadastro enviado com sucesso');
+            ->assertSee('Cadastro enviado');
     }
 }

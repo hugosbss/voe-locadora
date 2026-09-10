@@ -6,6 +6,7 @@ use App\Enums\FacialStatus;
 use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<ClientRegistration>
@@ -20,6 +21,7 @@ class ClientRegistrationFactory extends Factory
     public function definition(): array
     {
         return [
+            'uuid' => (string) Str::uuid(),
             'full_name' => fake()->name(),
             'cpf' => fake()->numerify('###########'),
             'birth_date' => fake()->dateTimeBetween('-60 years', '-18 years')->format('Y-m-d'),

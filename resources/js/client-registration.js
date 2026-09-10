@@ -339,12 +339,12 @@ export const initClientRegistration = () => {
                         : 'text-slate-500';
             feedback.className = `mt-1.5 flex items-center gap-1.5 text-xs ${tone}`;
             feedback.textContent = {
-                idle: 'Preencha e clique em "Buscar" para preencher o endereço automaticamente.',
-                looking: 'Buscando endereço...',
-                success: 'Endereço preenchido automaticamente.',
-                error: 'Não foi possível encontrar o endereço para este CEP.',
-                incomplete: 'Informe um CEP válido para buscar o endereço.',
-            }[state];
+                looking: 'Buscando...',
+                success: 'Endereço preenchido.',
+                error: 'CEP não encontrado. Verifique e tente novamente.',
+                incomplete: 'Informe um CEP válido.',
+            }[state] ?? '';
+            feedback.hidden = feedback.textContent === '';
         };
 
         const setLoading = (loading) => {
@@ -469,7 +469,7 @@ export const initClientRegistration = () => {
         const spinner = submitBtn.querySelector('[data-submit-spinner]');
         const label = submitBtn.querySelector('[data-submit-label]');
         if (spinner) spinner.classList.toggle('hidden', !submitting);
-        if (label) label.textContent = submitting ? 'Enviando cadastro...' : 'Enviar cadastro';
+        if (label) label.textContent = submitting ? 'Enviando...' : 'Enviar cadastro';
     };
 
     form.addEventListener('submit', (event) => {
