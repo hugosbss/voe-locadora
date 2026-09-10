@@ -27,7 +27,7 @@ class AdminAuthTest extends TestCase
         $this->post(route('admin.login.attempt'), [
             'email' => 'admin@locadora.com.br',
             'password' => 'secret-password',
-        ])->assertRedirect(route('admin.registrations.index'));
+        ])->assertRedirect(route('admin.dashboard'));
 
         $this->assertAuthenticated();
     }
