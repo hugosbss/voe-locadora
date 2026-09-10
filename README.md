@@ -36,16 +36,17 @@ Na área administrativa, a equipe:
 
 ## Stack
 
-- Laravel 13 (PHP), SQLite (desenvolvimento), Tailwind CSS 4, Vite, JavaScript vanilla.
+- Laravel 13 (PHP 8.5+), MySQL (produção; SQLite legado importado), Tailwind CSS 4, Vite, JavaScript vanilla.
 
 ## Estrutura
 
 - `app/Http/Controllers/Public` — cadastro público (formulário e sucesso).
-- `app/Http/Controllers/Admin` — autenticação e gestão de cadastros.
-- `app/Services` — CEP, armazenamento de documentos, validação facial e regras de negócio.
-- `app/Http/Requests` e `app/Rules` — validações e regra de CPF.
-- `config/admin.php` e `config/locations.php` — configurações administrativas e estados/CEP.
-- `docs/` — protótipos estáticos das telas, publicados no GitHub Pages.
+- `app/Http/Controllers/Admin` — autenticação (com 2FA/TOTP) e gestão de cadastros.
+- `app/Services` — CEP, armazenamento de documentos, auditoria, retenção e regras de negócio.
+- `app/Http/Requests` e `app/Rules` — validações, regra de CPF e limite agregado de upload.
+- `config/admin.php`, `config/locations.php`, `config/rate.php`, `config/retention.php`,
+  `config/privacy.php` e `config/backup.php` — configurações administrativas e de segurança.
+- `docs/` — protótipos estáticos das telas e o manual de operação/segurança.
 
 ## Configuração local
 
@@ -59,15 +60,57 @@ npm run build
 php artisan serve
 ```
 
-Criar o usuário administrador (`AdminUserSeeder`) a partir das variáveis
-`ADMIN_NAME`, `ADMIN_EMAIL` e `ADMIN_PASSWORD` definidas no seu `.env`
-(não versionado no repositório).
+Criar o usuário administrador a partir das variáveis `ADMIN_NAME`, `ADMIN_EMAIL` e
+`ADMIN_PASSWORD` definidas no seu `.env` (não versionado no repositório):
+
+```bash
+php artisan admin:provision
+```
+
+A `ADMIN_PASSWORD` (mínimo 12 caracteres) só é usada no seeder/`admin:provision`;
+nenhuma senha padrão existe na aplicação.
+
+## Segurança
+
+- **Rate limiting** por IP em cadastro, consulta de CEP e login administrativo, com
+  bloqueio progressivo após falhas repetidas.
+- **2FA via TOTP (RFC 6238)** com códigos de recuperação (armazenados apenas como hash),
+  exigido no login administrativo.
+- **Uploads endurecidos**: validação do conteúdo real (finfo + getimagesize + GD), re-encode
+  para JPEG neutro (sem EXIF/ICC), limites de dimensão e memória, nomes/caminhos gerados pelo
+  servidor e armazenamento fora da raiz web.
+- **Autorização granular** (Policies) + **auditoria** de visualizações, documentos, mudanças de
+  status e eventos de autenticação (metadados sensíveis redigidos).
+- **Retenção e LGPD**: consentimento registrado com versão da Política de Privacidade e
+  timestamps definidos pelo servidor; expurgo automático dos cadastros após o prazo por status.
+- **Headers de segurança** (CSP, X-Frame-Options, HSTS opcional, etc.), cookies HttpOnly/Secure,
+  sessão regenerada no login/logout e respostas de documentos com `Cache-Control: private, no-store`.
+
+## Operação
+
+```bash
+# Backups criptografados (AES-256-CBC) com rotatória
+php artisan backup:cadastros
+
+# Expurgo de cadastros com retenção expirada (preview seguro)
+php artisan cadastros:expurgo --dry-run
+php artisan cadastros:expurgo
+
+# Migração de dados do SQLite legado para o MySQL
+php artisan cadastros:import-legado
+```
+
+Agende `cadastros:expurgo` e `backup:cadastros` em cron. Detalhes completos (variáveis,
+prazos, exemplos) no manual: [docs/seguranca-e-operacao.md](docs/seguranca-e-operacao.md).
 
 ## Testes
 
 ```bash
 php artisan test
 ```
+
+A suíte (68 testes) roda contra MySQL de teste e cobre autenticação, autorização, auditoria,
+retenção, throttling, TOTP (vetores RFC 6238), uploads e proteção de CEP.
 
 ## Protótipos
 
