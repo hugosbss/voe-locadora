@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#1e40af">
-    <title>Maria Fernandes Souza &middot; Painel da Locadora &middot; Protótipo</title>
+    <title>Dashboard &middot; Painel da Locadora &middot; Protótipo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,13 +26,13 @@
 
             <nav class="sb-nav" aria-label="Navegação do painel">
                 <p class="sb-group-label">Principal</p>
-                <a class="sb-item" href="admin-dashboard.html">
+                <a class="sb-item is-active" href="admin-dashboard.html" aria-current="page">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span>Dashboard</span>
                 </a>
 
                 <p class="sb-group-label">Cadastros</p>
-                <a class="sb-item is-active" href="admin-list.html" aria-current="page">
+                <a class="sb-item" href="admin-list.html">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span>Cadastros</span>
                 </a>
@@ -68,7 +68,7 @@
             <header class="admin-topbar">
                 <div class="topbar-section">
                     <p class="topbar-kicker">Painel da Locadora</p>
-                    <p class="topbar-title">Detalhes do cadastro</p>
+                    <p class="topbar-title">Dashboard</p>
                 </div>
                 <div class="topbar-user">
                     <span class="sb-avatar">A</span>
@@ -91,105 +91,118 @@
             </header>
 
             <main class="container-wide main-wide" style="padding-top: 1.5rem; padding-bottom: 3rem;">
-                <div class="flex flex-col mb-6" style="gap: 0.75rem; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                    <a href="admin-list.html" class="back-link">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Voltar
-                    </a>
-                    <span class="badge badge-md b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span>
-                </div>
-
-                <div class="grid-main">
-                    <div class="flex flex-col" style="gap: 1.5rem;">
-                        <div class="card card-pad">
-                            <h2 class="section-title">Dados do cliente</h2>
-                            <dl class="dl-grid cols-2">
-                                <div><dt class="dt">Nome completo</dt><dd class="dd">Maria Fernandes Souza</dd></div>
-                                <div><dt class="dt">CPF</dt><dd class="dd">***.456.789-**</dd></div>
-                                <div><dt class="dt">Data de nascimento</dt><dd class="dd">15/03/1990</dd></div>
-                                <div><dt class="dt">Telefone</dt><dd class="dd">(11) 98765-4321</dd></div>
-                                <div><dt class="dt">WhatsApp</dt><dd class="dd">(11) 98765-4321</dd></div>
-                                <div><dt class="dt">E-mail</dt><dd class="dd">maria.fernandes@email.com</dd></div>
-                                <div><dt class="dt">Data do cadastro</dt><dd class="dd">08/09/2026 14:22</dd></div>
-                            </dl>
+                <div class="space-y-6">
+                    <div class="flex" style="align-items: flex-start; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                        <div>
+                            <h1 class="page-title">Visão geral</h1>
+                            <p class="page-sub" style="margin-top: 0.125rem;">7 cadastros.</p>
                         </div>
+                        <a href="admin-list.html" class="back-link">
+                            Ver todos os cadastros
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </a>
+                    </div>
 
-                        <div class="card card-pad">
-                            <h2 class="section-title">Endereço</h2>
-                            <dl class="dl-grid cols-2">
-                                <div><dt class="dt">CEP</dt><dd class="dd">01310-100</dd></div>
-                                <div><dt class="dt">Rua</dt><dd class="dd">Av. Paulista</dd></div>
-                                <div><dt class="dt">Número</dt><dd class="dd">1578</dd></div>
-                                <div><dt class="dt">Bairro</dt><dd class="dd">Bela Vista</dd></div>
-                                <div><dt class="dt">Cidade</dt><dd class="dd">São Paulo</dd></div>
-                                <div><dt class="dt">Estado</dt><dd class="dd">SP</dd></div>
-                            </dl>
+                    <div class="stat-grid">
+                        <div class="card stat-card">
+                            <p class="stat-value stat-total">7</p>
+                            <p class="stat-label">Total</p>
                         </div>
-
-                        <div class="card card-pad">
-                            <h2 class="section-title">Dados da CNH</h2>
-                            <dl class="dl-grid cols-3">
-                                <div><dt class="dt">Número da CNH</dt><dd class="dd">04288213456</dd></div>
-                                <div><dt class="dt">Categoria</dt><dd class="dd">B</dd></div>
-                                <div><dt class="dt">Validade</dt><dd class="dd">12/05/2031</dd></div>
-                            </dl>
+                        <div class="card stat-card">
+                            <p class="stat-value stat-new">2</p>
+                            <p class="stat-label">Novos</p>
                         </div>
-
-                        <div class="card card-pad">
-                            <h2 class="section-title" style="margin-bottom: 0.25rem;">Fotos e documentos</h2>
-                            <p class="mb-4" style="font-size: 0.75rem; color: var(--slate-400);">Acesso restrito. Clique para ampliar.</p>
-                            <div class="doc-grid">
-                                <div>
-                                    <p class="doc-label">Foto da CNH (frente)</p>
-                                    <a class="doc-thumb">
-                                        <svg style="width: 2rem; height: 2rem; color: var(--slate-300);" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z"/></svg>
-                                    </a>
-                                </div>
-                                <div>
-                                    <p class="doc-label">Foto da CNH (verso)</p>
-                                    <a class="doc-thumb">
-                                        <svg style="width: 2rem; height: 2rem; color: var(--slate-300);" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z"/></svg>
-                                    </a>
-                                </div>
-                                <div>
-                                    <p class="doc-label">Comprovante de residência</p>
-                                    <div class="doc-thumb empty"></div>
-                                </div>
-                                <div>
-                                    <p class="doc-label">Selfie do cliente</p>
-                                    <a class="doc-thumb">
-                                        <svg style="width: 2rem; height: 2rem; color: var(--slate-300);" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm4 3.5a3 3 0 0 0 0 6 3 3 0 0 0 0-6ZM6.5 17h8a3.5 3.5 0 0 0-3.5-3.5 3.5 3.5 0 0 0-4.5 3.5Z"/></svg>
-                                    </a>
-                                </div>
-                            </div>
+                        <div class="card stat-card">
+                            <p class="stat-value stat-review">3</p>
+                            <p class="stat-label">Em análise</p>
+                        </div>
+                        <div class="card stat-card">
+                            <p class="stat-value stat-approved">1</p>
+                            <p class="stat-label">Aprovados</p>
+                        </div>
+                        <div class="card stat-card">
+                            <p class="stat-value stat-rejected">1</p>
+                            <p class="stat-label">Reprovados</p>
                         </div>
                     </div>
 
-                    <aside class="flex flex-col" style="gap: 1.5rem;">
-                        <div class="card card-pad">
-                            <h2 class="section-title">Status</h2>
-                            <form method="GET" action="admin-detalhe.html" class="space-y-3">
-                                <div>
-                                    <label for="status" class="form-label">Alterar status</label>
-                                    <div data-custom-select data-cs-label="Alterar status" data-cs-placeholder="Selecione..." class="mt-1">
-                                        <select name="status" id="status" class="form-input">
-                                            <option value="novo">Novo</option>
-                                            <option value="em_analise" selected>Em análise</option>
-                                            <option value="aprovado">Aprovado</option>
-                                            <option value="reprovado">Reprovado</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-primary" style="width: 100%;">Salvar</button>
-                            </form>
+                    <section class="card" style="padding: 1.5rem;" aria-labelledby="link-heading">
+                        <div class="flex" style="align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
+                            <div style="min-width: 0;">
+                                <h2 class="section-title" id="link-heading" style="text-transform: none; letter-spacing: 0;">Link de cadastro</h2>
+                                <p class="page-sub" style="margin-top: 0.25rem;">Copie e envie ao cliente.</p>
+                            </div>
+                            <a href="form.html" class="back-link">
+                                Abrir página
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </a>
                         </div>
 
-                        <div class="card card-pad">
-                            <h2 class="section-title" style="margin-bottom: 0.75rem;">Validação facial</h2>
-                            <span class="badge b-pending"><span class="badge-dot d-blue" aria-hidden="true"></span>Pendente</span>
-                            <p class="mt-3" style="font-size: 0.875rem; color: var(--slate-600);">Pendente.</p>
+                        <div class="copy-row" style="margin-top: 1rem;">
+                            <p class="copy-value">https://locadora.com.br/cadastro/zyx9-abcd</p>
+                            <button type="button" class="btn btn-secondary" data-copy-link>Copiar link</button>
                         </div>
-                    </aside>
+                    </section>
+
+                    <section aria-labelledby="recent-heading">
+                        <div class="section-head">
+                            <h2 class="section-title" id="recent-heading" style="text-transform: none; letter-spacing: 0;">Cadastros recentes</h2>
+                            <a href="admin-list.html" class="see-all">Ver todos</a>
+                        </div>
+
+                        <div class="card recent-card">
+                            <a href="admin-detalhe.html">
+                                <div class="recent-main">
+                                    <p class="recent-name">Maria Fernandes Souza</p>
+                                    <p class="recent-sub">***.456.789-** &middot; 08/09/2026 14:22</p>
+                                </div>
+                                <div class="recent-side">
+                                    <span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span>
+                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </a>
+                            <a href="admin-detalhe.html">
+                                <div class="recent-main">
+                                    <p class="recent-name">João Pereira Lima</p>
+                                    <p class="recent-sub">***.123.456-** &middot; 08/09/2026 11:05</p>
+                                </div>
+                                <div class="recent-side">
+                                    <span class="badge b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span>
+                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </a>
+                            <a href="admin-detalhe.html">
+                                <div class="recent-main">
+                                    <p class="recent-name">Ana Carolina Ribeiro</p>
+                                    <p class="recent-sub">***.789.012-** &middot; 07/09/2026 18:40</p>
+                                </div>
+                                <div class="recent-side">
+                                    <span class="badge b-aprovado"><span class="badge-dot d-emerald" aria-hidden="true"></span>Aprovado</span>
+                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </a>
+                            <a href="admin-detalhe.html">
+                                <div class="recent-main">
+                                    <p class="recent-name">Carlos Eduardo Nunes</p>
+                                    <p class="recent-sub">***.234.567-** &middot; 06/09/2026 09:12</p>
+                                </div>
+                                <div class="recent-side">
+                                    <span class="badge b-reprovado"><span class="badge-dot d-red" aria-hidden="true"></span>Reprovado</span>
+                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </a>
+                            <a href="admin-detalhe.html">
+                                <div class="recent-main">
+                                    <p class="recent-name">Juliana Castro Melo</p>
+                                    <p class="recent-sub">***.345.678-** &middot; 05/09/2026 16:30</p>
+                                </div>
+                                <div class="recent-side">
+                                    <span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span>
+                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </div>
+                            </a>
+                        </div>
+                    </section>
                 </div>
             </main>
         </div>
@@ -208,13 +221,13 @@
 
         <nav class="drawer-nav" aria-label="Navegação do painel">
             <p class="sb-group-label">Principal</p>
-            <a class="sb-item" href="admin-dashboard.html" data-mobile-nav-link>
+            <a class="sb-item is-active" href="admin-dashboard.html" data-mobile-nav-link aria-current="page">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span>Dashboard</span>
             </a>
 
             <p class="sb-group-label">Cadastros</p>
-            <a class="sb-item is-active" href="admin-list.html" data-mobile-nav-link aria-current="page">
+            <a class="sb-item" href="admin-list.html" data-mobile-nav-link>
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span>Cadastros</span>
             </a>

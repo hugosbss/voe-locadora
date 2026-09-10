@@ -505,15 +505,25 @@
         var state = document.getElementById('state');
 
         function setFeedback(mode) {
-            var tone = mode === 'success' ? 'var(--emerald-600)' : mode === 'error' || mode === 'incomplete' ? 'var(--red-600)' : 'var(--slate-500)';
-            feedback.style.color = tone;
-            feedback.textContent = {
-                idle: 'Preencha e clique em "Buscar" para preencher o endereço automaticamente.',
-                looking: 'Buscando endereço...',
-                success: 'Endereço preenchido automaticamente.',
-                error: 'Não foi possível encontrar o endereço para este CEP.',
-                incomplete: 'Informe um CEP válido para buscar o endereço.'
-            }[mode];
+            var messages = {
+                idle: '',
+                looking: 'Buscando...',
+                success: 'Endereço preenchido.',
+                error: 'CEP não encontrado. Verifique e tente novamente.',
+                incomplete: 'Informe um CEP válido.'
+            };
+            if (mode === 'idle' || !messages[mode]) {
+                feedback.hidden = true;
+                feedback.textContent = '';
+                return;
+            }
+            feedback.hidden = false;
+            feedback.style.color = mode === 'success'
+                ? 'var(--emerald-600)'
+                : mode === 'error' || mode === 'incomplete'
+                    ? 'var(--red-600)'
+                    : 'var(--slate-500)';
+            feedback.textContent = messages[mode];
         }
 
         function lookup() {
@@ -550,6 +560,31 @@
         });
     }
 
+    /* ---------- Nav admin (drawer mobile) ---------- */
+    function initAdminNav() {
+        var drawer = document.getElementById('admin-nav-drawer');
+        if (!drawer) return;
+        var backdrop = document.getElementById('admin-nav-backdrop');
+        var openBtn = document.getElementById('admin-nav-open');
+        var closeBtn = document.getElementById('admin-nav-close');
+
+        function setNav(open) {
+            drawer.classList.toggle('is-open', open);
+            drawer.setAttribute('aria-hidden', String(!open));
+            if (backdrop) backdrop.hidden = !open;
+            document.body.style.overflow = open ? 'hidden' : '';
+        }
+
+        openBtn && openBtn.addEventListener('click', function () { setNav(true); });
+        closeBtn && closeBtn.addEventListener('click', function () { setNav(false); });
+        backdrop && backdrop.addEventListener('click', function () { setNav(false); });
+        Array.prototype.forEach.call(drawer.querySelectorAll('[data-mobile-nav-link]'), function (link) {
+            link.addEventListener('click', function () { setNav(false); });
+        });
+
+        setNav(false);
+    }
+
     /* ---------- Login (toggle senha) ---------- */
     function initLogin() {
         var toggle = document.getElementById('password-toggle');
@@ -571,4 +606,5 @@
     initCustomSelects();
     initRegistration();
     initLogin();
+    initAdminNav();
 })();

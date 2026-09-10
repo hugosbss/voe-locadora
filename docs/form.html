@@ -38,7 +38,6 @@
             <div class="card card-pad">
                 <header class="mb-6">
                     <h1 class="page-title">Cadastro de Cliente</h1>
-                    <p class="page-sub">Preencha os dados abaixo. Leva poucos minutos.</p>
                 </header>
 
                 <div class="stepper-mobile">
@@ -55,7 +54,7 @@
                     <li><div class="step-col"><span class="step-dot" data-active="false">3</span><span class="step-label" data-active="false">CNH</span></div></li>
                     <li><div class="step-col"><span class="step-dot" data-active="false">4</span><span class="step-label" data-active="false">Documentos</span></div></li>
                     <li><div class="step-col"><span class="step-dot" data-active="false">5</span><span class="step-label" data-active="false">Selfie</span></div></li>
-                    <li><div class="step-col"><span class="step-dot" data-active="false">6</span><span class="step-label" data-active="false">Enviar</span></div></li>
+                    <li><div class="step-col"><span class="step-dot" data-active="false">6</span><span class="step-label" data-active="false">Revisão</span></div></li>
                 </ol>
 
                 <form id="registration-form" data-total="6" novalidate>
@@ -109,7 +108,7 @@
                                         <span data-cep-label>Buscar</span>
                                     </button>
                                 </div>
-                                <p id="cep-feedback" class="field-hint" style="margin-top: 0.375rem;">Preencha e clique em "Buscar" para preencher o endereço automaticamente.</p>
+                                <p id="cep-feedback" class="field-hint" style="margin-top: 0.375rem;" hidden></p>
                             </div>
 
                             <div data-field="address">
@@ -171,8 +170,8 @@
                         </div>
                     </section>
 
-                    <section class="step-panel hidden" data-panel="3" data-title="Dados da CNH">
-                        <h2 class="section-title section-title-desktop">3. Dados da CNH</h2>
+                    <section class="step-panel hidden" data-panel="3" data-title="CNH">
+                        <h2 class="section-title section-title-desktop">3. CNH</h2>
 
                         <div class="field-wrap space-y-5">
                             <div data-field="cnh_number">
@@ -202,9 +201,9 @@
                         </div>
                     </section>
 
-                    <section class="step-panel hidden" data-panel="4" data-title="Fotos dos documentos">
-                        <h2 class="section-title section-title-desktop">4. Fotos dos documentos</h2>
-                        <p class="field-hint" style="margin-bottom: 1.25rem;">Tire uma foto pela câmera ou escolha da galeria. As imagens ficam protegidas.</p>
+                    <section class="step-panel hidden" data-panel="4" data-title="Documentos">
+                        <h2 class="section-title section-title-desktop">4. Documentos</h2>
+                        <p class="field-hint" style="margin-bottom: 1.25rem;">JPG, PNG ou WebP &middot; até 5 MB por arquivo.</p>
 
                         <div class="upload-card" style="margin-bottom: 1rem;">
                             <div class="upload-head">
@@ -300,18 +299,17 @@
                         </div>
                     </section>
 
-                    <section class="step-panel hidden" data-panel="5" data-title="Validação facial">
-                        <h2 class="section-title section-title-desktop">5. Validação facial</h2>
+                    <section class="step-panel hidden" data-panel="5" data-title="Selfie">
+                        <h2 class="section-title section-title-desktop">5. Selfie</h2>
                         <div style="margin-bottom: 1.25rem;">
-                            <p style="margin: 0; font-size: 0.875rem; color: var(--slate-600);">Tire uma selfie para confirmar sua identidade.</p>
-                            <p class="field-hint">Fique em ambiente bem iluminado, sem óculos e de frente para a câmera.</p>
+                            <p style="margin: 0; font-size: 0.875rem; color: var(--slate-600);">Tire uma selfie em ambiente claro, sem óculos e de frente para a câmera.</p>
                         </div>
 
                         <div class="upload-card">
                             <div class="upload-head">
                                 <div style="min-width: 0; padding-top: 0.5rem;">
                                     <p class="upload-name">Sua selfie</p>
-                                    <p class="upload-desc">Obrigatória para a análise</p>
+                                    <p class="upload-desc">Obrigatório</p>
                                     <p class="file-name hidden"></p>
                                 </div>
                                 <div class="preview-wrap" data-preview="selfie">
@@ -339,8 +337,8 @@
                         </div>
                     </section>
 
-                    <section class="step-panel hidden" data-panel="6" data-title="Conferência e envio">
-                        <h2 class="section-title section-title-desktop">6. Conferência e envio</h2>
+                    <section class="step-panel hidden" data-panel="6" data-title="Revisão">
+                        <h2 class="section-title section-title-desktop">6. Revisão</h2>
 
                         <div class="field-wrap space-y-5">
                             <div class="summary-box">
@@ -389,10 +387,6 @@
                 </form>
             </div>
         </main>
-
-        <footer class="public-footer">
-            &copy; 2026 Locadora &middot; Dados protegidos e utilizados somente para análise da locação.
-        </footer>
     </div>
 
     <script src="assets/js/main.js"></script>
