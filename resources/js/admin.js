@@ -18,18 +18,30 @@ export const initAdmin = (root = document) => {
         });
     }
 
-    // Alteração de status: confirma quando escolher "reprovado"
+    // Alteração de status: confirmação via dialog quando o status é "reprovado"
     root.querySelectorAll('#status-form').forEach((form) => {
-        form.addEventListener('submit', (event) => {
-            const select = form.querySelector('select[name="status"]');
+        const select = form.querySelector('select[name="status"]');
+        const dialog = root.querySelector(`[data-confirm-target="#${form.id}"]`);
 
-            if (select?.value === 'reprovado') {
-                const confirmed = window.confirm(
-                    'Reprovar este cadastro?'
-                );
-                if (!confirmed) {
-                    event.preventDefault();
-                }
+        if (!select || !dialog) {
+            return;
+        }
+
+        const concernValue = dialog.dataset.confirmWhen || 'reprovado';
+
+        form.addEventListener('submit', (event) => {
+            if (select.value !== concernValue) {
+                return;
+            }
+
+            event.preventDefault();
+            dialog.returnValue = '';
+            dialog.showModal();
+        });
+
+        dialog.addEventListener('close', () => {
+            if (dialog.returnValue === 'confirm') {
+                form.submit();
             }
         });
     });

@@ -113,4 +113,14 @@
                 </p>            </div>
         </aside>
     </div>
+
+    <x-confirm-dialog
+        id="status-reject-dialog"
+        variant="danger"
+        title="Reprovar este cadastro?"
+        message="O cadastro deixará de aparecer como novo. Você pode alterar o status novamente depois."
+        confirmLabel="Reprovar cadastro"
+        cancelLabel="Cancelar"
+        confirm-target="#status-form"
+        confirm-when="reprovado" />
 @endsection

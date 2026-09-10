@@ -430,6 +430,68 @@
     }
 
     /* ==========================================================================
+       Modal de confirmação
+       ========================================================================== */
+    .confirm-dialog {
+        @apply m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200;
+    }
+
+    .confirm-dialog[open] {
+        animation: dialog-in 0.18s ease-out both;
+    }
+
+    .confirm-dialog::backdrop {
+        background: rgb(15 23 42 / 0.55);
+        backdrop-filter: blur(2px);
+    }
+
+    .confirm-dialog-body {
+        @apply flex flex-col items-center gap-2.5 text-center;
+    }
+
+    .confirm-dialog-icon {
+        @apply inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset;
+    }
+
+    .confirm-dialog-icon svg {
+        @apply h-6 w-6;
+    }
+
+    .confirm-dialog-title {
+        @apply text-lg font-semibold tracking-tight text-slate-900;
+    }
+
+    .confirm-dialog-message {
+        @apply text-sm leading-relaxed text-slate-500;
+    }
+
+    .confirm-dialog-actions {
+        @apply mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end;
+    }
+
+    .confirm-dialog-actions .btn {
+        @apply w-full sm:w-auto;
+    }
+
+    @keyframes dialog-in {
+        from {
+            opacity: 0;
+            transform: translateY(6px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .confirm-dialog[open] {
+            animation: none;
+        }
+    }
+
+    /* ==========================================================================
        Cartões / listas
        ========================================================================== */
     .card {
