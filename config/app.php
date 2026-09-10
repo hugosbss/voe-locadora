@@ -123,4 +123,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Força HTTPS e proxies confiáveis
+    |--------------------------------------------------------------------------
+    |
+    | `force_https` redireciona para HTTPS fora do ambiente local/teste.
+    | `trusted_proxies` lista CIDRs/IPs de balanceadores/CDNs reais; cabeçalhos
+    | X-Forwarded-* só são confiáveis para esses endereços (nunca para todos).
+    |
+    */
+
+    'force_https' => env('FORCE_HTTPS', true),
+
+    'trusted_proxies' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('TRUSTED_PROXIES', ''))
+    ))),
+
 ];
