@@ -42,7 +42,7 @@
             @if ($errors->any())
                 <div class="mb-4">
                     <x-alert type="error">
-                        <p class="font-semibold">Não foi possível concluir. Verifique o formulário.</p>
+                        <p class="font-semibold">Não foi possível enviar o cadastro. Confira os campos destacados.</p>
                         <ul class="ml-4 mt-1 list-disc space-y-0.5">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
@@ -61,9 +61,25 @@
             @yield('content')
         </main>
 
-        <footer class="pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-6 text-center text-xs text-slate-500">
-            &copy; {{ date('Y') }} Locadora &middot; Dados protegidos e utilizados somente para análise da locação.
-        </footer>
+        </div>
+
+    {{-- Aviso de cookies: somente cookies estritamente necessários. --}}
+    <div data-cookie-banner hidden class="fixed inset-x-0 bottom-0 z-50 p-4">
+        <div class="mx-auto w-full max-w-2xl rounded-2xl bg-slate-900/95 p-4 text-sm text-slate-100 shadow-2xl ring-1 ring-white/10 backdrop-blur">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <p class="flex-1 leading-relaxed">
+                    Este site usa apenas cookies necessários ao funcionamento do cadastro.
+                    Nenhum cookie de rastreamento é usado.
+                    <a href="{{ route('policy.index') }}" class="text-indigo-300 underline underline-offset-2 hover:text-indigo-200">
+                        Saiba mais
+                    </a>.
+                </p>
+                <button type="button" data-cookie-banner-accept
+                    class="inline-flex shrink-0 items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-500">
+                    Entendi
+                </button>
+            </div>
+        </div>
     </div>
 
     @stack('scripts')
