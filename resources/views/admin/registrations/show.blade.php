@@ -78,7 +78,7 @@
         {{-- Status --}}
         <aside class="space-y-6">
             <div class="card p-5">
-                <h2 class="section-title mb-4">Status do cadastro</h2>
+                <h2 class="section-title mb-4">Status</h2>
 
                 <form method="POST" id="status-form" action="{{ route('admin.registrations.status', $registration) }}" class="space-y-3">
                     @csrf
@@ -98,7 +98,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary w-full">
-                        Salvar status
+                        Salvar
                     </button>
                 </form>
             </div>
@@ -110,11 +110,7 @@
                 </div>
                 <p class="mt-3 text-sm text-slate-600">
                     {{ $registration->facial_status->label() }}.
-                </p>
-                <p class="mt-2 text-xs text-slate-400">
-                    A comparação automática entre selfie e CNH estará disponível em integração futura.
-                </p>
-            </div>
+                </p>            </div>
         </aside>
     </div>
 @endsection

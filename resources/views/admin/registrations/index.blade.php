@@ -9,9 +9,9 @@
 
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight text-slate-900">Cadastros de clientes</h1>
+            <h1 class="text-xl font-semibold tracking-tight text-slate-900">Cadastros</h1>
             <p class="mt-0.5 text-sm text-slate-500">
-                {{ $registrations->total() }} cadastro(s) recebido(s)
+                {{ $registrations->total() }} {{ $registrations->total() === 1 ? 'cadastro' : 'cadastros' }}
                 @if ($currentStatus)
                     &middot; filtrando por <span class="font-medium text-slate-700">{{ $currentStatusLabel ?? $currentStatus }}</span>
                 @endif

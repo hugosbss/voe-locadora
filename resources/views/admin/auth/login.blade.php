@@ -14,7 +14,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="admin-body font-sans antialiased">
+<body class="auth-body font-sans antialiased">
     <div class="flex min-h-screen items-center justify-center px-4 py-10">
         <div class="w-full max-w-sm">
             <div class="mb-6 flex flex-col items-center gap-2 text-center">
@@ -26,7 +26,7 @@
 
             <div class="card p-6 sm:p-8">
                 <h1 class="mb-1 text-lg font-semibold tracking-tight text-slate-900">Acesso restrito</h1>
-                <p class="mb-6 text-sm text-slate-500">Faça login para visualizar os cadastros.</p>
+                <p class="mb-6 text-sm text-slate-500">Faça login para acessar o painel.</p>
 
                 @if ($errors->any())
                     <div class="mb-4">
@@ -40,14 +40,14 @@
                     <div class="space-y-1.5">
                         <label for="email" class="form-label">E-mail</label>
                         <input type="email" name="email" id="email" value="{{ old('email') }}"
-                            class="form-input" placeholder="admin@locadora.com.br" autocomplete="username" required autofocus>
+                            class="form-input" autocomplete="username" required autofocus>
                     </div>
 
                     <div class="space-y-1.5">
                         <label for="password" class="form-label">Senha</label>
                         <div class="relative">
                             <input type="password" name="password" id="password"
-                                class="form-input pr-11" placeholder="Sua senha" autocomplete="current-password" required>
+                                class="form-input pr-11" autocomplete="current-password" required>
                             <button
                                 type="button"
                                 id="password-toggle"
