@@ -140,22 +140,21 @@
             </header>
 
             <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-6 lg:px-8 lg:pt-8">
-                @if (session('success'))
-                    <div class="mb-4">
-                        <x-alert type="success">{{ session('success') }}</x-alert>
-                    </div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="mb-4">
-                        <x-alert type="error">{{ $errors->first() }}</x-alert>
-                    </div>
-                @endif
-
                 @yield('content')
             </main>
         </div>
     </div>
+
+    @php
+        $toastQueue = array_values(array_filter([
+            session('success') ? ['type' => 'success', 'message' => (string) session('success')] : null,
+            session('error') ? ['type' => 'error', 'message' => (string) session('error')] : null,
+            session('info') ? ['type' => 'info', 'message' => (string) session('info')] : null,
+            ($errors->any() && ! session('error')) ? ['type' => 'error', 'message' => (string) $errors->first()] : null,
+        ]));
+    @endphp
+
+    <x-toaster :queue="$toastQueue" />
 
     @stack('scripts')
 </body>

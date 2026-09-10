@@ -33,9 +33,7 @@
                 </p>
 
                 @if ($errors->any())
-                    <div class="mb-4">
-                        <x-alert type="error">{{ $errors->first() }}</x-alert>
-                    </div>
+                    <x-toaster :queue="[['type' => 'error', 'message' => (string) $errors->first()]]" />
                 @endif
 
                 <form method="POST" action="{{ route('admin.login.two-factor.verify') }}" class="space-y-4">

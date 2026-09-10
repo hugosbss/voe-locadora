@@ -89,7 +89,7 @@ class RegistrationController extends Controller
             $registration,
         );
 
-        return back()->with('success', 'Status atualizado com sucesso.');
+        return back()->with('success', 'Status atualizado.');
     }
 
     /**

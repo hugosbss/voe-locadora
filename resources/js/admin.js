@@ -1,6 +1,8 @@
 /**
  * Recursos do painel administrativo.
  */
+import { toast } from './toasts';
+
 export const initAdmin = (root = document) => {
     // Filtro por status (envia ao trocar a opção)
     const statusFilter = root.getElementById('status-filter');
@@ -92,17 +94,20 @@ export const initAdmin = (root = document) => {
 
             if (statusEl) {
                 statusEl.textContent = success
-                    ? 'Link copiado!'
+                    ? 'Link copiado.'
                     : 'Não foi possível copiar o link.';
             }
 
             if (success) {
-                button.innerHTML = `${checkIcon()} <span>Link copiado!</span>`;
+                button.innerHTML = `${checkIcon()} <span>Copiado</span>`;
                 button.classList.add('is-copied');
+                toast('success', 'Link copiado');
                 window.setTimeout(() => {
                     button.innerHTML = originalHtml;
                     button.classList.remove('is-copied');
                 }, 2600);
+            } else {
+                toast('error', 'Não foi possível copiar o link');
             }
         });
     });

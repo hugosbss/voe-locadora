@@ -29,9 +29,7 @@
                 <p class="mb-6 text-sm text-slate-500">Faça login para acessar o painel.</p>
 
                 @if ($errors->any())
-                    <div class="mb-4">
-                        <x-alert type="error">{{ $errors->first() }}</x-alert>
-                    </div>
+                    <x-toaster :queue="[['type' => 'error', 'message' => (string) $errors->first()]]" />
                 @endif
 
                 <form method="POST" action="{{ route('admin.login.attempt') }}" class="space-y-4">

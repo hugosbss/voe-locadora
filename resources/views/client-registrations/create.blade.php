@@ -145,7 +145,7 @@
                 <p class="text-sm text-slate-500">JPG, PNG ou WebP &middot; até 5 MB por arquivo.</p>
 
                 @foreach (['cnh_front' => 'CNH (frente)', 'cnh_back' => 'CNH (verso)', 'proof_of_residence' => 'Comprovante de residência'] as $doc => $label)
-                    <div class="upload-card">
+                    <div @class(['upload-card', 'has-error' => $errors->has($doc . '_file')])>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0 pt-2">
                                 <p class="text-sm font-medium text-slate-800">{{ $label }}</p>
@@ -168,7 +168,8 @@
                                 Galeria
                             </label>
                         </div>
-                        <p id="{{ $doc }}_file-error" class="field-error" role="alert" hidden></p>
+                        <p id="{{ $doc }}_file-error" class="field-error" role="alert"
+                            @unless ($errors->has($doc . '_file')) hidden @endunless>{{ $errors->first($doc . '_file') }}</p>
                     </div>
                 @endforeach
             </section>
@@ -180,7 +181,7 @@
                     <p class="text-sm text-slate-600">Tire uma selfie em ambiente claro, sem óculos e de frente para a câmera.</p>
                 </div>
 
-                <div class="upload-card">
+                <div @class(['upload-card', 'has-error' => $errors->has('selfie_file')])>
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 pt-2">
                             <p class="text-sm font-medium text-slate-800">Sua selfie</p>
@@ -203,7 +204,8 @@
                             Escolher da galeria
                         </label>
                     </div>
-                    <p id="selfie_file-error" class="field-error" role="alert" hidden></p>
+                    <p id="selfie_file-error" class="field-error" role="alert"
+                        @unless ($errors->has('selfie_file')) hidden @endunless>{{ $errors->first('selfie_file') }}</p>
                 </div>
             </section>
 
@@ -227,7 +229,8 @@
                             class="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" required>
                         <span class="text-sm text-slate-600">Li e confirmo que as informações fornecidas são verdadeiras.</span>
                     </label>
-                    <p id="veracity_declaration_accepted-error" class="field-error" role="alert" hidden></p>
+                    <p id="veracity_declaration_accepted-error" class="field-error" role="alert"
+                        @unless ($errors->has('veracity_declaration_accepted')) hidden @endunless>{{ $errors->first('veracity_declaration_accepted') }}</p>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 p-4">
@@ -239,7 +242,8 @@
                             <a href="{{ route('policy.index') }}" target="_blank" rel="noopener" class="text-indigo-600 underline">Política de Privacidade</a>.
                         </span>
                     </label>
-                    <p id="privacy_policy_accepted-error" class="field-error" role="alert" hidden></p>
+                    <p id="privacy_policy_accepted-error" class="field-error" role="alert"
+                        @unless ($errors->has('privacy_policy_accepted')) hidden @endunless>{{ $errors->first('privacy_policy_accepted') }}</p>
                 </div>
 
                 <x-button type="submit" id="submit-btn" size="lg" class="w-full">

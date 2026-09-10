@@ -39,29 +39,22 @@
         </header>
 
         <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
-            @if ($errors->any())
-                <div class="mb-4">
-                    <x-alert type="error">
-                        <p class="font-semibold">Não foi possível enviar o cadastro. Confira os campos destacados.</p>
-                        <ul class="ml-4 mt-1 list-disc space-y-0.5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </x-alert>
-                </div>
-            @endif
-
-            @if (session('success'))
-                <div class="mb-4">
-                    <x-alert type="success">{{ session('success') }}</x-alert>
-                </div>
-            @endif
-
             @yield('content')
         </main>
 
         </div>
+
+    @php
+        $toastQueue = array_values(array_filter([
+            session('success') ? ['type' => 'success', 'message' => (string) session('success')] : null,
+            session('error') ? ['type' => 'error', 'message' => (string) session('error')] : null,
+            ($errors->any() && ! session('error'))
+                ? ['type' => 'error', 'message' => 'Não foi possível enviar o cadastro. Confira os campos destacados.']
+                : null,
+        ]));
+    @endphp
+
+    <x-toaster :queue="$toastQueue" />
 
     {{-- Aviso de cookies: somente cookies estritamente necessários. --}}
     <div data-cookie-banner hidden class="fixed inset-x-0 bottom-0 z-50 p-4">
