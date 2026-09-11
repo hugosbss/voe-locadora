@@ -116,6 +116,6 @@ retenção, throttling, TOTP (vetores RFC 6238), uploads e proteção de CEP.
 
 As telas do sistema estão disponíveis como protótipo estático em:
 
-**https://hugosbss.github.io/locadora-veicular/**
+**https://hugosbss.github.io/voe-locadora/**
 
 > Os protótipos são apenas demonstração visual — nenhum dado real é enviado.
