@@ -17,32 +17,47 @@ genéricos, o que gera:
 
 Um formulário público em **6 etapas** coleta os dados do cliente (pessoais, endereço, CNH),
 recebe **fotos dos documentos e selfie**, confere os dados e envia o cadastro para análise.
+Cada cadastro novo notifica os administradores por e-mail.
 
 Na área administrativa, a equipe:
 
-- visualiza a lista de cadastros recebidos, com filtro por status;
-- consulta os dados, endereço, CNH e documentos enviados;
-- altera o status do cadastro (novo, em análise, aprovado, reprovado);
-- acompanha a validação facial (selfie × CNH).
+- consulta o **dashboard** com o resumo dos cadastros por status;
+- **filtra a lista** de cadastros recebidos e navega com paginação;
+- consulta dados, endereço, CNH e documentos enviados;
+- altera o status (novo, em análise, aprovado, reprovado) — com toast de confirmação único;
+- acompanha a validação facial (selfie × CNH) no detalhe do cadastro;
+- gerencia o **link de cadastro** compartilhável e os **usuários** administrativos;
+- configura o **2FA** e acompanha a auditoria das próprias ações.
 
 ## Destaques
 
 - **Busca de endereço por CEP** via ViaCEP, com preenchimento automático.
-- **Validação de CPF** e Form Request com regras de negócio.
-- **Upload com câmera/galeria** nos dispositivos móveis e pré-visualização.
+- **Validação de CPF** (módulo 11) e Form Request com regras de negócio.
+- **Upload com câmera/galeria** nos dispositivos móveis, pré-visualização e re-encode seguro.
 - **Máscaras** de CPF, telefone e CEP, com UX mobile-first.
-- **Documentos armazenados** em área privada, acessíveis somente com login administrativo.
-- **Protótipos estáticos** publicados para demonstração (sem dados reais).
+- **Autenticação em duas etapas** (TOTP RFC 6238) e códigos de recuperação.
+- **Recuperação de senha** por e-mail (token criptografado, validade curta).
+- **Auditoria** de visualizações, documentos, status e autenticação (dados sensíveis redigidos).
+- **Retenção LGPD** com consentimento versionado e expurgo automático por prazo de status.
+- **Backups criptografados** (AES-256-CBC) fora da raiz web, com rotatória.
+- **Protótipos estáticos** espelhando a identidade visual VCA (sem dados reais).
 
 ## Stack
 
-- Laravel 13 (PHP 8.5+), MySQL (produção; SQLite legado importado), Tailwind CSS 4, Vite, JavaScript vanilla.
+- Laravel 13 (`laravel/framework ^13.17`), PHP `^8.3` (desenvolvido em 8.4), MySQL (produção;
+  SQLite legado importado), Tailwind CSS 4, Vite, JavaScript vanilla.
+
+## Identidade Visual (VCA)
+
+Tema escuro próprio (`#050505`–`#161616`, marca `#fed106`, tipografia Inter) aplicado nas
+telas reais e nos protótipos. Detalhes em [docs/seguranca-e-operacao.md](docs/seguranca-e-operacao.md).
 
 ## Estrutura
 
-- `app/Http/Controllers/Public` — cadastro público (formulário e sucesso).
-- `app/Http/Controllers/Admin` — autenticação (com 2FA/TOTP) e gestão de cadastros.
-- `app/Services` — CEP, armazenamento de documentos, auditoria, retenção e regras de negócio.
+- `app/Http/Controllers/Public` — cadastro público (formulário, sucesso, CEP, política de privacidade).
+- `app/Http/Controllers/Admin` — autenticação (login, 2FA/TOTP, recuperação de senha), dashboard,
+  gestão de cadastros, usuários e link de cadastro.
+- `app/Services` — CEP, armazenamento de documentos, auditoria, retenção, notificação e regras de negócio.
 - `app/Http/Requests` e `app/Rules` — validações, regra de CPF e limite agregado de upload.
 - `config/admin.php`, `config/locations.php`, `config/rate.php`, `config/retention.php`,
   `config/privacy.php` e `config/backup.php` — configurações administrativas e de segurança.
@@ -72,8 +87,8 @@ nenhuma senha padrão existe na aplicação.
 
 ## Segurança
 
-- **Rate limiting** por IP em cadastro, consulta de CEP e login administrativo, com
-  bloqueio progressivo após falhas repetidas.
+- **Rate limiting** por IP em cadastro, consulta de CEP, login administrativo e recuperação de
+  senha, com bloqueio progressivo após falhas repetidas.
 - **2FA via TOTP (RFC 6238)** com códigos de recuperação (armazenados apenas como hash),
   exigido no login administrativo.
 - **Uploads endurecidos**: validação do conteúdo real (finfo + getimagesize + GD), re-encode
@@ -89,8 +104,8 @@ nenhuma senha padrão existe na aplicação.
 ## Operação
 
 ```bash
-# Backups criptografados (AES-256-CBC) com rotatória
-php artisan backup:cadastros
+# Backups criptografados (AES-256-CBC a partir de APP_KEY) com rotatória
+php artisan backup:cadastros [--only=tabela] [--keep=14]
 
 # Expurgo de cadastros com retenção expirada (preview seguro)
 php artisan cadastros:expurgo --dry-run
@@ -109,12 +124,14 @@ prazos, exemplos) no manual: [docs/seguranca-e-operacao.md](docs/seguranca-e-ope
 php artisan test
 ```
 
-A suíte (68 testes) roda contra MySQL de teste e cobre autenticação, autorização, auditoria,
-retenção, throttling, TOTP (vetores RFC 6238), uploads e proteção de CEP.
+A suíte (141 testes / 602 asserts) roda contra MySQL de teste e cobre autenticação (incluindo
+2FA e recuperação de senha), autorização, auditoria, retenção, throttling, TOTP (vetores RFC
+6238), uploads, proteção de CEP e gerenciamento de cadastros (filtro, paginação, status e toast).
 
 ## Protótipos
 
-As telas do sistema estão disponíveis como protótipo estático em:
+As telas do sistema estão disponíveis como protótipo estático em `docs/` (11 páginas com a
+identidade VCA). Demonstração publicada:
 
 **https://hugosbss.github.io/voe-locadora/**
 

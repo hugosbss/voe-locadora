@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#050505">
-    <title>Dashboard | VCA</title>
+    <title>Usuários | VCA</title>
     <link rel="icon" type="image/jpeg" href="assets/img/vca-logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
                     <p class="nav-label">Principal</p>
                     <ul class="nav-list">
                         <li>
-                            <a class="nav-item is-active" href="admin-dashboard.html" aria-current="page">
+                            <a class="nav-item" href="admin-dashboard.html">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12 21.75 3l-4.5 18-4.5-6-5.25-2.25L9 10.5 2.25 12Z"/></svg>
                                 <span>Dashboard</span>
                             </a>
@@ -69,7 +69,7 @@
                             </a>
                         </li>
                         <li>
-                            <a class="nav-item" href="admin-users.html">
+                            <a class="nav-item is-active" href="admin-users.html" aria-current="page">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
                                 <span>Usuários</span>
                             </a>
@@ -106,7 +106,7 @@
             <div class="admin-topbar">
                 <div class="admin-topbar-section">
                     <span class="admin-topbar-eyebrow">VCA</span>
-                    <span class="admin-topbar-title">Dashboard</span>
+                    <span class="admin-topbar-title">Usuários</span>
                 </div>
                 <div class="admin-topbar-user">
                     <span class="session-avatar" aria-hidden="true">J</span>
@@ -118,88 +118,67 @@
             </div>
 
             <main class="admin-main">
-                <div class="stack-6">
-                    <div class="page-head">
+                <div class="grid-2-1">
+
+                    <div class="stack-6">
                         <div>
-                            <h1 class="page-title">Visão geral</h1>
-                            <p class="page-sub">18 cadastros.</p>
+                            <h1 class="page-title">Usuários</h1>
+                            <p class="page-sub">2 usuários com acesso ao painel.</p>
                         </div>
-                        <a class="back-link" href="admin-list.html">
-                            Ver todos os cadastros
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </a>
+
+                        <div class="table-card" style="display: block;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>E-mail</th>
+                                        <th>Criado em</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="td-strong">Janete Almeida</td>
+                                        <td class="td-muted">janete@locadora.com.br</td>
+                                        <td class="td-muted nowrap">12/03/2026</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="td-strong">Carlos Pereira</td>
+                                        <td class="td-muted">carlos@locadora.com.br</td>
+                                        <td class="td-muted nowrap">02/06/2026</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <div class="stat-grid cols-5">
-                        <div class="stat"><p class="stat-number">18</p><p class="stat-label">Total</p></div>
-                        <div class="stat"><p class="stat-number is-brand">6</p><p class="stat-label">Novos</p></div>
-                        <div class="stat"><p class="stat-number is-amber">4</p><p class="stat-label">Em análise</p></div>
-                        <div class="stat"><p class="stat-number is-emerald">6</p><p class="stat-label">Aprovados</p></div>
-                        <div class="stat"><p class="stat-number is-rose">2</p><p class="stat-label">Reprovados</p></div>
+                    <div>
+                        <div class="card p-5">
+                            <h2 class="section-title">Novo usuário</h2>
+                            <p class="mt-2 text-xs text-muted">
+                                O acesso é restrito ao painel. Todo usuário recebe o papel de administrador.
+                            </p>
+
+                            <form class="stack-4 mt-5" action="#" method="post">
+                                <div class="form-field">
+                                    <label for="u-nome" class="form-label">Nome</label>
+                                    <input id="u-nome" class="form-input" type="text" autocomplete="off">
+                                </div>
+                                <div class="form-field">
+                                    <label for="u-email" class="form-label">E-mail</label>
+                                    <input id="u-email" class="form-input" type="email" autocomplete="off">
+                                </div>
+                                <div class="form-field">
+                                    <label for="u-senha" class="form-label">Senha</label>
+                                    <input id="u-senha" class="form-input" type="password" autocomplete="new-password">
+                                </div>
+                                <div class="form-field">
+                                    <label for="u-confirmar" class="form-label">Confirmar senha</label>
+                                    <input id="u-confirmar" class="form-input" type="password" autocomplete="new-password">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Criar usuário</button>
+                            </form>
+                        </div>
                     </div>
-
-                    <section class="card p-5" style="padding: 1.25rem;">
-                        <div class="row-between">
-                            <div class="min-w-0">
-                                <h2 class="section-title">Link de cadastro</h2>
-                                <p class="mt-2 text-sm text-dim">Copie e envie ao cliente.</p>
-                            </div>
-                            <a class="back-link" href="admin-link.html">
-                                Abrir página
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            </a>
-                        </div>
-
-                        <p id="copy-status-dashboard" class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);" role="status"></p>
-
-                        <div class="link-box mt-4">
-                            <p class="form-input break-all">https://vca.locadora.com.br/cadastro</p>
-                            <div class="link-actions">
-                                <button type="button" class="btn btn-secondary" data-js-copy data-copy-url="https://vca.locadora.com.br/cadastro" data-copy-status="copy-status-dashboard">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                    Copiar link
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section>
-                        <div class="row-between mb-3">
-                            <h2 class="section-title">Cadastros recentes</h2>
-                            <a href="admin-list.html" class="text-xs font-medium text-brand" style="text-decoration: none;">Ver todos</a>
-                        </div>
-
-                        <div class="row-list">
-                            <a class="row-item" href="admin-detalhe.html">
-                                <span class="row-main">
-                                    <span class="row-name">João Pedro Almeida</span>
-                                    <span class="row-meta">123.456.789-00 &middot; 13/09/2026 14:02</span>
-                                </span>
-                                <span class="row-side"><span class="badge badge-novo"><span class="badge-dot" aria-hidden="true"></span>Novo</span></span>
-                            </a>
-                            <a class="row-item" href="admin-detalhe.html">
-                                <span class="row-main">
-                                    <span class="row-name">Maria Fernanda Costa</span>
-                                    <span class="row-meta">987.654.321-00 &middot; 12/09/2026 18:47</span>
-                                </span>
-                                <span class="row-side"><span class="badge badge-analise"><span class="badge-dot" aria-hidden="true"></span>Em análise</span></span>
-                            </a>
-                            <a class="row-item" href="admin-detalhe.html">
-                                <span class="row-main">
-                                    <span class="row-name">Carlos Eduardo Martins</span>
-                                    <span class="row-meta">456.123.789-01 &middot; 12/09/2026 09:15</span>
-                                </span>
-                                <span class="row-side"><span class="badge badge-aprovado"><span class="badge-dot" aria-hidden="true"></span>Aprovado</span></span>
-                            </a>
-                            <a class="row-item" href="admin-detalhe.html">
-                                <span class="row-main">
-                                    <span class="row-name">Ana Beatriz Souza</span>
-                                    <span class="row-meta">321.654.987-22 &middot; 11/09/2026 21:30</span>
-                                </span>
-                                <span class="row-side"><span class="badge badge-reprovado"><span class="badge-dot" aria-hidden="true"></span>Reprovado</span></span>
-                            </a>
-                        </div>
-                    </section>
                 </div>
             </main>
         </div>

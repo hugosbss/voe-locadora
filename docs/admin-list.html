@@ -3,313 +3,246 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#1e40af">
-    <title>Cadastros &middot; Painel da Locadora &middot; Protótipo</title>
+    <meta name="theme-color" content="#050505">
+    <title>Cadastros | VCA</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/vca-logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="admin-body font-sans antialiased">
-    <div class="admin-layout">
+<body class="admin-body">
+    <div class="admin-shell">
 
         <aside class="admin-sidebar">
-            <div class="sb-brand">
-                <span class="sb-brand-icon">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+            <div class="admin-brand">
+                <span class="admin-brand-logo">
+                    <img src="assets/img/vca-logo.jpeg" alt="VCA Locadora">
                 </span>
-                <span>
-                    <p class="sb-brand-title">Locadora</p>
-                    <p class="sb-brand-sub">Painel administrativo</p>
+                <span class="min-w-0">
+                    <span class="admin-brand-title">VCA</span>
+                    <span class="admin-brand-sub">Painel administrativo</span>
                 </span>
             </div>
 
-            <nav class="sb-nav" aria-label="Navegação do painel">
-                <p class="sb-group-label">Principal</p>
-                <a class="sb-item" href="admin-dashboard.html">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Dashboard</span>
-                </a>
-
-                <p class="sb-group-label">Cadastros</p>
-                <a class="sb-item is-active" href="admin-list.html" aria-current="page">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Cadastros</span>
-                </a>
-
-                <p class="sb-group-label">Ferramentas</p>
-                <a class="sb-item" href="admin-link.html">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Link de cadastro</span>
-                </a>
-
-                <p class="sb-group-label">Sistema</p>
-                <a class="sb-item" href="admin-seguranca.html">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Segurança</span>
-                </a>
-
-                <button type="button" class="sb-logout">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <nav class="admin-nav" aria-label="Navegação principal">
+                <div class="nav-group">
+                    <p class="nav-label">Principal</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item" href="admin-dashboard.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12 21.75 3l-4.5 18-4.5-6-5.25-2.25L9 10.5 2.25 12Z"/></svg>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <p class="nav-label">Cadastros</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item is-active" href="admin-list.html" aria-current="page">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H3m15 0h-3.75M12 15.75v1.5m-3.75-1.5v1.5m6-1.5v1.5M7.5 18h9m-10.5-6H21M3 18V6.75a2.25 2.25 0 0 1 2.25-2.25h9"/></svg>
+                                <span>Cadastros</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <p class="nav-label">Ferramentas</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item" href="admin-link.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
+                                <span>Link de cadastro</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <p class="nav-label">Sistema</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item" href="admin-seguranca.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
+                                <span>Segurança</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-item" href="admin-users.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+                                <span>Usuários</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="nav-logout" onclick="location.href='admin-login.html'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span>Sair</span>
                 </button>
             </nav>
 
-            <div class="sb-user">
-                <span class="sb-avatar">A</span>
-                <span style="min-width: 0;">
-                    <p class="sb-user-name">Admin</p>
-                    <p class="sb-user-email">admin@locadora.com.br</p>
+            <div class="admin-session">
+                <span class="session-avatar" aria-hidden="true">J</span>
+                <span class="min-w-0">
+                    <span class="session-name">Janete Almeida</span>
+                    <span class="session-email">janete@locadora.com.br</span>
                 </span>
             </div>
         </aside>
 
-        <div class="admin-content">
-            <header class="admin-topbar">
-                <div class="topbar-section">
-                    <p class="topbar-kicker">Painel da Locadora</p>
-                    <p class="topbar-title">Cadastros</p>
+        <header class="admin-mobile-header">
+            <button type="button" class="admin-mobile-menu" data-mobile-nav-open aria-expanded="false" aria-controls="mobile-nav" aria-label="Abrir menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/></svg>
+            </button>
+            <span class="admin-mobile-title min-w-0">
+                <span class="t">VCA</span>
+                <span class="s">Painel administrativo</span>
+            </span>
+            <span class="session-avatar" aria-hidden="true">J</span>
+        </header>
+
+        <div>
+            <div class="admin-topbar">
+                <div class="admin-topbar-section">
+                    <span class="admin-topbar-eyebrow">VCA</span>
+                    <span class="admin-topbar-title">Cadastros</span>
                 </div>
-                <div class="topbar-user">
-                    <span class="sb-avatar">A</span>
-                    <span style="min-width: 0;">
-                        <p class="topbar-user-name">Admin</p>
-                        <p class="topbar-user-email">admin@locadora.com.br</p>
+                <div class="admin-topbar-user">
+                    <span class="session-avatar" aria-hidden="true">J</span>
+                    <span class="min-w-0">
+                        <span class="session-name">Janete Almeida</span>
+                        <span class="session-email">janete@locadora.com.br</span>
                     </span>
                 </div>
-            </header>
+            </div>
 
-            <header class="admin-mobile-header">
-                <button type="button" class="icon-btn" id="admin-nav-open" aria-label="Abrir navegação" aria-controls="admin-nav-drawer">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <div class="mobile-brand">
-                    <p class="mobile-brand-title">Locadora</p>
-                    <p class="mobile-brand-sub">Painel administrativo</p>
-                </div>
-                <span class="mobile-avatar">A</span>
-            </header>
-
-            <main class="container-wide main-wide" style="padding-top: 1.5rem; padding-bottom: 3rem;">
-                <div class="flex flex-col mb-6" style="gap: 0.75rem;">
-                    <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-                        <div>
-                            <h1 class="page-title">Cadastros</h1>
-                            <p class="page-sub mt-1">
-                                6 cadastros
-                                &middot; filtrando por <span class="text-slate-700" style="font-weight: 500;">Novo</span>
-                            </p>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <a href="admin-list.html" class="text-indigo-600" style="font-size: 0.75rem; font-weight: 500; text-decoration: none;">Limpar</a>
-                            <div data-custom-select data-cs-label="Filtrar por status" data-cs-placeholder="Todos os status" class="w-48">
-                                <select name="status" id="status-filter" class="form-input">
-                                    <option value="">Todos os status</option>
-                                    <option value="novo" selected>Novo</option>
-                                    <option value="em_analise">Em análise</option>
-                                    <option value="aprovado">Aprovado</option>
-                                    <option value="reprovado">Reprovado</option>
-                                </select>
-                            </div>
-                        </div>
+            <main class="admin-main">
+                <div class="page-head">
+                    <div>
+                        <h1 class="page-title">Cadastros</h1>
+                        <p class="page-sub">18 cadastros</p>
                     </div>
+
+                    <form class="row" method="get" action="#">
+                        <a href="admin-list.html" class="text-xs font-medium text-brand" style="text-decoration: none;">Limpar</a>
+                        <div class="cs" style="width: 12rem;">
+                            <button type="button" class="cs-trigger" tabindex="0">
+                                <span class="cs-value">Todos os status</span>
+                                <svg class="cs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <div class="list-mobile">
-                    <a href="admin-detalhe.html" class="row-card">
-                        <div class="row-card-main">
-                            <p class="row-card-name">Maria Fernandes Souza</p>
-                            <p class="row-card-sub">***.456.789-** &middot; (11) 98765-4321</p>
-                            <p class="row-card-sub text-slate-400">Cadastrado em 08/09/2026 14:22</p>
-                        </div>
-                        <div class="row-card-side">
-                            <span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span>
-                            <span class="row-card-more">Ver detalhes</span>
-                        </div>
+                <div class="mobile-list">
+                    <a class="admin-row-card" href="admin-detalhe.html">
+                        <span class="row-main">
+                            <span class="row-name">João Pedro Almeida</span>
+                            <span class="row-meta">123.456.789-00 &middot; (11) 99999-1000</span>
+                            <span class="row-meta">Cadastrado em 13/09/2026 14:02</span>
+                        </span>
+                        <span class="row-side"><span class="badge badge-novo"><span class="badge-dot" aria-hidden="true"></span>Novo</span><span class="row-action">Ver detalhes</span></span>
                     </a>
-
-                    <a href="admin-detalhe.html" class="row-card">
-                        <div class="row-card-main">
-                            <p class="row-card-name">João Pereira Lima</p>
-                            <p class="row-card-sub">***.123.456-** &middot; (21) 99876-5432</p>
-                            <p class="row-card-sub text-slate-400">Cadastrado em 08/09/2026 11:05</p>
-                        </div>
-                        <div class="row-card-side">
-                            <span class="badge b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span>
-                            <span class="row-card-more">Ver detalhes</span>
-                        </div>
+                    <a class="admin-row-card" href="admin-detalhe.html">
+                        <span class="row-main">
+                            <span class="row-name">Maria Fernanda Costa</span>
+                            <span class="row-meta">987.654.321-00 &middot; (21) 98888-2000</span>
+                            <span class="row-meta">Cadastrado em 12/09/2026 18:47</span>
+                        </span>
+                        <span class="row-side"><span class="badge badge-analise"><span class="badge-dot" aria-hidden="true"></span>Em análise</span><span class="row-action">Ver detalhes</span></span>
                     </a>
-
-                    <a href="admin-detalhe.html" class="row-card">
-                        <div class="row-card-main">
-                            <p class="row-card-name">Ana Carolina Ribeiro</p>
-                            <p class="row-card-sub">***.789.012-** &middot; (31) 91234-5678</p>
-                            <p class="row-card-sub text-slate-400">Cadastrado em 07/09/2026 18:40</p>
-                        </div>
-                        <div class="row-card-side">
-                            <span class="badge b-aprovado"><span class="badge-dot d-emerald" aria-hidden="true"></span>Aprovado</span>
-                            <span class="row-card-more">Ver detalhes</span>
-                        </div>
+                    <a class="admin-row-card" href="admin-detalhe.html">
+                        <span class="row-main">
+                            <span class="row-name">Carlos Eduardo Martins</span>
+                            <span class="row-meta">456.123.789-01 &middot; (31) 97777-3000</span>
+                            <span class="row-meta">Cadastrado em 12/09/2026 09:15</span>
+                        </span>
+                        <span class="row-side"><span class="badge badge-aprovado"><span class="badge-dot" aria-hidden="true"></span>Aprovado</span><span class="row-action">Ver detalhes</span></span>
                     </a>
-
-                    <a href="admin-detalhe.html" class="row-card">
-                        <div class="row-card-main">
-                            <p class="row-card-name">Carlos Eduardo Nunes</p>
-                            <p class="row-card-sub">***.234.567-** &middot; (41) 97654-3210</p>
-                            <p class="row-card-sub text-slate-400">Cadastrado em 06/09/2026 09:12</p>
-                        </div>
-                        <div class="row-card-side">
-                            <span class="badge b-reprovado"><span class="badge-dot d-red" aria-hidden="true"></span>Reprovado</span>
-                            <span class="row-card-more">Ver detalhes</span>
-                        </div>
-                    </a>
-
-                    <a href="admin-detalhe.html" class="row-card">
-                        <div class="row-card-main">
-                            <p class="row-card-name">Juliana Castro Melo</p>
-                            <p class="row-card-sub">***.345.678-** &middot; (85) 98888-7777</p>
-                            <p class="row-card-sub text-slate-400">Cadastrado em 05/09/2026 16:30</p>
-                        </div>
-                        <div class="row-card-side">
-                            <span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span>
-                            <span class="row-card-more">Ver detalhes</span>
-                        </div>
-                    </a>
-
-                    <a href="admin-detalhe.html" class="row-card">
-                        <div class="row-card-main">
-                            <p class="row-card-name">Ricardo Alves Pinto</p>
-                            <p class="row-card-sub">***.456.123-** &middot; (51) 91212-3434</p>
-                            <p class="row-card-sub text-slate-400">Cadastrado em 04/09/2026 10:02</p>
-                        </div>
-                        <div class="row-card-side">
-                            <span class="badge b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span>
-                            <span class="row-card-more">Ver detalhes</span>
-                        </div>
+                    <a class="admin-row-card" href="admin-detalhe.html">
+                        <span class="row-main">
+                            <span class="row-name">Ana Beatriz Souza</span>
+                            <span class="row-meta">321.654.987-22 &middot; (41) 96666-4000</span>
+                            <span class="row-meta">Cadastrado em 11/09/2026 21:30</span>
+                        </span>
+                        <span class="row-side"><span class="badge badge-reprovado"><span class="badge-dot" aria-hidden="true"></span>Reprovado</span><span class="row-action">Ver detalhes</span></span>
                     </a>
                 </div>
 
-                <div class="list-desktop">
-                    <div class="card" style="overflow: hidden;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Cliente</th>
-                                    <th>CPF</th>
-                                    <th class="hide-md">Telefone</th>
-                                    <th class="hide-lg">Data do cadastro</th>
-                                    <th>Status</th>
-                                    <th style="text-align: right;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-slate-900" style="font-weight: 500;">Maria Fernandes Souza</td>
-                                    <td class="text-slate-600">***.456.789-**</td>
-                                    <td class="text-slate-600 hide-md">(11) 98765-4321</td>
-                                    <td class="text-slate-600 hide-lg">08/09/2026 14:22</td>
-                                    <td><span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span></td>
-                                    <td style="text-align: right;"><a href="admin-detalhe.html" class="link-det">Ver detalhes</a></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-slate-900" style="font-weight: 500;">João Pereira Lima</td>
-                                    <td class="text-slate-600">***.123.456-**</td>
-                                    <td class="text-slate-600 hide-md">(21) 99876-5432</td>
-                                    <td class="text-slate-600 hide-lg">08/09/2026 11:05</td>
-                                    <td><span class="badge b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span></td>
-                                    <td style="text-align: right;"><a href="admin-detalhe.html" class="link-det">Ver detalhes</a></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-slate-900" style="font-weight: 500;">Ana Carolina Ribeiro</td>
-                                    <td class="text-slate-600">***.789.012-**</td>
-                                    <td class="text-slate-600 hide-md">(31) 91234-5678</td>
-                                    <td class="text-slate-600 hide-lg">07/09/2026 18:40</td>
-                                    <td><span class="badge b-aprovado"><span class="badge-dot d-emerald" aria-hidden="true"></span>Aprovado</span></td>
-                                    <td style="text-align: right;"><a href="admin-detalhe.html" class="link-det">Ver detalhes</a></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-slate-900" style="font-weight: 500;">Carlos Eduardo Nunes</td>
-                                    <td class="text-slate-600">***.234.567-**</td>
-                                    <td class="text-slate-600 hide-md">(41) 97654-3210</td>
-                                    <td class="text-slate-600 hide-lg">06/09/2026 09:12</td>
-                                    <td><span class="badge b-reprovado"><span class="badge-dot d-red" aria-hidden="true"></span>Reprovado</span></td>
-                                    <td style="text-align: right;"><a href="admin-detalhe.html" class="link-det">Ver detalhes</a></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-slate-900" style="font-weight: 500;">Juliana Castro Melo</td>
-                                    <td class="text-slate-600">***.345.678-**</td>
-                                    <td class="text-slate-600 hide-md">(85) 98888-7777</td>
-                                    <td class="text-slate-600 hide-lg">05/09/2026 16:30</td>
-                                    <td><span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span></td>
-                                    <td style="text-align: right;"><a href="admin-detalhe.html" class="link-det">Ver detalhes</a></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-slate-900" style="font-weight: 500;">Ricardo Alves Pinto</td>
-                                    <td class="text-slate-600">***.456.123-**</td>
-                                    <td class="text-slate-600 hide-md">(51) 91212-3434</td>
-                                    <td class="text-slate-600 hide-lg">04/09/2026 10:02</td>
-                                    <td><span class="badge b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span></td>
-                                    <td style="text-align: right;"><a href="admin-detalhe.html" class="link-det">Ver detalhes</a></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>CPF</th>
+                                <th>Telefone</th>
+                                <th>Data do cadastro</th>
+                                <th>Status</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="td-strong">João Pedro Almeida</td>
+                                <td class="td-muted">123.456.789-00</td>
+                                <td class="td-muted">(11) 99999-1000</td>
+                                <td class="td-muted">13/09/2026 14:02</td>
+                                <td><span class="badge badge-novo"><span class="badge-dot" aria-hidden="true"></span>Novo</span></td>
+                                <td class="text-right"><a class="td-link" href="admin-detalhe.html">Ver detalhes</a></td>
+                            </tr>
+                            <tr>
+                                <td class="td-strong">Maria Fernanda Costa</td>
+                                <td class="td-muted">987.654.321-00</td>
+                                <td class="td-muted">(21) 98888-2000</td>
+                                <td class="td-muted">12/09/2026 18:47</td>
+                                <td><span class="badge badge-analise"><span class="badge-dot" aria-hidden="true"></span>Em análise</span></td>
+                                <td class="text-right"><a class="td-link" href="admin-detalhe.html">Ver detalhes</a></td>
+                            </tr>
+                            <tr>
+                                <td class="td-strong">Carlos Eduardo Martins</td>
+                                <td class="td-muted">456.123.789-01</td>
+                                <td class="td-muted">(31) 97777-3000</td>
+                                <td class="td-muted">12/09/2026 09:15</td>
+                                <td><span class="badge badge-aprovado"><span class="badge-dot" aria-hidden="true"></span>Aprovado</span></td>
+                                <td class="text-right"><a class="td-link" href="admin-detalhe.html">Ver detalhes</a></td>
+                            </tr>
+                            <tr>
+                                <td class="td-strong">Ana Beatriz Souza</td>
+                                <td class="td-muted">321.654.987-22</td>
+                                <td class="td-muted">(41) 96666-4000</td>
+                                <td class="td-muted">11/09/2026 21:30</td>
+                                <td><span class="badge badge-reprovado"><span class="badge-dot" aria-hidden="true"></span>Reprovado</span></td>
+                                <td class="text-right"><a class="td-link" href="admin-detalhe.html">Ver detalhes</a></td>
+                            </tr>
+                            <tr>
+                                <td class="td-strong">Rafael Nogueira Lima</td>
+                                <td class="td-muted">654.321.987-01</td>
+                                <td class="td-muted">(51) 95555-5000</td>
+                                <td class="td-muted">11/09/2026 10:10</td>
+                                <td><span class="badge badge-novo"><span class="badge-dot" aria-hidden="true"></span>Novo</span></td>
+                                <td class="text-right"><a class="td-link" href="admin-detalhe.html">Ver detalhes</a></td>
+                            </tr>
+                            <tr>
+                                <td class="td-strong">Juliana Ribeiro Prado</td>
+                                <td class="td-muted">789.123.456-02</td>
+                                <td class="td-muted">(61) 94444-6000</td>
+                                <td class="td-muted">10/09/2026 16:44</td>
+                                <td><span class="badge badge-analise"><span class="badge-dot" aria-hidden="true"></span>Em análise</span></td>
+                                <td class="text-right"><a class="td-link" href="admin-detalhe.html">Ver detalhes</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <p class="mt-4 text-slate-500" style="font-size: 0.875rem;">Página 1 de 1</p>
+                <div class="row-between mt-4" style="justify-content: flex-start; gap: 0.375rem;">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled>Anterior</button>
+                    <button type="button" class="btn btn-primary btn-sm">1</button>
+                    <button type="button" class="btn btn-secondary btn-sm">2</button>
+                    <button type="button" class="btn btn-secondary btn-sm">3</button>
+                    <button type="button" class="btn btn-secondary btn-sm">Próxima</button>
+                </div>
             </main>
-        </div>
-    </div>
-
-    <div class="drawer-backdrop hidden" id="admin-nav-backdrop" aria-hidden="true"></div>
-    <div class="drawer" id="admin-nav-drawer" aria-hidden="true">
-        <div class="drawer-head">
-            <span class="sb-brand-icon">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
-            </span>
-            <button type="button" class="icon-btn" id="admin-nav-close" aria-label="Fechar navegação" style="color: var(--slate-200);">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 18 18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-        </div>
-
-        <nav class="drawer-nav" aria-label="Navegação do painel">
-            <p class="sb-group-label">Principal</p>
-            <a class="sb-item" href="admin-dashboard.html" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Dashboard</span>
-            </a>
-
-            <p class="sb-group-label">Cadastros</p>
-            <a class="sb-item is-active" href="admin-list.html" data-mobile-nav-link aria-current="page">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Cadastros</span>
-            </a>
-
-            <p class="sb-group-label">Ferramentas</p>
-            <a class="sb-item" href="admin-link.html" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Link de cadastro</span>
-            </a>
-
-            <p class="sb-group-label">Sistema</p>
-            <a class="sb-item" href="admin-seguranca.html" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Segurança</span>
-            </a>
-
-            <button type="button" class="sb-logout" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Sair</span>
-            </button>
-        </nav>
-
-        <div class="drawer-user">
-            <span class="sb-avatar">A</span>
-            <span style="min-width: 0;">
-                <p class="sb-user-name">Admin</p>
-                <p class="sb-user-email">admin@locadora.com.br</p>
-            </span>
         </div>
     </div>
 

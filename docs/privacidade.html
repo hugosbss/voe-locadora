@@ -3,48 +3,44 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#1e40af">
-    <title>Política de Privacidade &middot; Protótipo</title>
+    <meta name="theme-color" content="#050505">
+    <title>Política de Privacidade | VCA</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/vca-logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="app-body font-sans text-slate-800 antialiased">
+<body class="app-body">
     <div class="min-h-screen flex flex-col">
         <header class="app-header">
-            <div class="container">
-                <div class="bar">
-                    <div class="brand">
-                        <span class="brand-icon">
-                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M19 7h-1V6a3 3 0 0 0-6 0v1H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-7-1a1 1 0 0 1 2 0v1h-2V6Zm7 14H5v-9h14v9Zm-9-6a1 1 0 1 0 2 0v-2a1 1 0 1 0-2 0v2Zm5 0a1 1 0 1 0 0-2h-1.5a1 1 0 1 0 0 2H15Z" />
-                            </svg>
-                        </span>
-                        <div class="brand-text">
-                            <p class="brand-title">Locadora</p>
-                            <p class="brand-sub">Cadastro de Clientes</p>
-                        </div>
+            <div class="app-header-inner">
+                <div class="brand-row">
+                    <span class="brand-logo">
+                        <img src="assets/img/vca-logo.jpeg" alt="VCA Locadora">
+                    </span>
+                    <div class="min-w-0">
+                        <p class="brand-title">VCA</p>
+                        <p class="brand-sub">Formulário de cadastro</p>
                     </div>
+                    <span class="prototype-chip ml-auto">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Protótipo
+                    </span>
                 </div>
             </div>
         </header>
 
-        <main class="container">
-            <div class="card card-pad">
-                <a href="form.html" class="back-link mb-4">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Voltar ao cadastro
-                </a>
+        <main class="public-main">
+            <div class="card panel-card p-5" style="padding: 1.5rem;">
+                <h1 class="mb-4 text-xl font-semibold tracking-tight text-white">Política de Privacidade</h1>
 
-                <h1 class="page-title mb-4">Política de Privacidade</h1>
-
-                <div class="mb-5" style="padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); font-size: 0.75rem; color: var(--slate-400);">
-                    <p style="margin: 0;">Versão 1.1 &middot; Publicada em 09/09/2026</p>
-                    <p style="margin: 0; margin-top: 0.5rem;">Este documento descreve como seus dados são tratados em conformidade com a LGPD (Lei nº 13.709/2018).</p>
+                <div class="mb-5 divide pb-5 text-xs text-muted">
+                    <p>Versão 1.0 &middot; Publicada em 13/09/2026</p>
+                    <p class="mt-2">Este documento descreve como seus dados são tratados em conformidade com a LGPD (Lei nº 13.709/2018).</p>
                 </div>
 
-                <div class="prose">
+                <div class="doc-body">
                     <div>
                         <h2>1. Quais dados coletamos</h2>
                         <p>
@@ -53,7 +49,6 @@
                             e documentos como foto da CNH, comprovante de residência e selfie para conferência de identidade.
                         </p>
                     </div>
-
                     <div>
                         <h2>2. Uso dos dados</h2>
                         <p>
@@ -62,7 +57,6 @@
                             conferência de identidade, habilitação para dirigir e residência.
                         </p>
                     </div>
-
                     <div>
                         <h2>3. Consentimento</h2>
                         <p>
@@ -71,16 +65,15 @@
                             locação. A data e a versão da política aceitas são registradas de forma segura e conferíveis.
                         </p>
                     </div>
-
                     <div>
                         <h2>4. Armazenamento e segurança</h2>
                         <p>
-                            As imagens e documentos são armazenados em área privada e criptografada de acesso restrito,
+                            As imagens e documentos são armazenados em área privada e de acesso restrito,
                             com verificação em duas etapas nos acessos administrativos e registro de auditoria de cada
-                            visualização. Conexões são protegidas por HTTPS e os dados em repouso são criptografados.
+                            visualização. A entrega dos documentos ao painel exige login e é controlada por
+                            <strong>Cache-Control: private, no-store</strong>.
                         </p>
                     </div>
-
                     <div>
                         <h2>5. Cookies e sessão</h2>
                         <p>
@@ -89,14 +82,12 @@
                             de proteção do formulário. <strong>Não utilizamos cookies de publicidade ou rastreamento.</strong>
                         </p>
                     </div>
-
                     <div>
                         <h2>6. Compartilhamento</h2>
                         <p>
                             Os dados não são vendidos nem compartilhados com terceiros para fins comerciais.
                         </p>
                     </div>
-
                     <div>
                         <h2>7. Retenção e exclusão</h2>
                         <p>
@@ -105,7 +96,6 @@
                             eliminados automaticamente.
                         </p>
                     </div>
-
                     <div>
                         <h2>8. Seus direitos</h2>
                         <p>
@@ -114,6 +104,11 @@
                         </p>
                     </div>
                 </div>
+
+                <a href="form.html" class="btn btn-ghost mt-6">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Voltar
+                </a>
             </div>
         </main>
     </div>
