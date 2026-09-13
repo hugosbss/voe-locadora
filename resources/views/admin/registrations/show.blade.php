@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', $registration->full_name . ' · Painel da Locadora')
+@section('title', 'Cadastro')
 
 @section('content')
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -52,20 +52,36 @@
 
             {{-- Documentos --}}
             <div class="card p-5 sm:p-6">
-                <h2 class="section-title mb-1">Fotos e documentos</h2>
-                <p class="mb-4 text-xs text-slate-400">Acesso restrito. Clique para ampliar.</p>
-                <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <h2 class="section-title mb-4">Fotos e documentos</h2>
+                <div class="mx-auto grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
                     @foreach (App\Models\ClientRegistration::DOCUMENTS as $doc => $label)
-                        <div>
-                            <p class="mb-2 text-xs font-medium text-slate-600">{{ $label }}</p>
+                        <div class="min-w-0">
+                            <div class="mb-2 flex min-h-[2.5rem] items-start">
+                                <p class="text-xs font-medium leading-snug text-zinc-500">{{ $label }}</p>
+                            </div>
+
                             @if ($registration->{$doc . '_path'})
-                                <a href="{{ route('admin.registrations.photo', [$registration, $doc]) }}" target="_blank" rel="noopener">
-                                    <img src="{{ route('admin.registrations.photo', [$registration, $doc]) }}"
-                                        alt="{{ $label }}" loading="lazy"
-                                        class="aspect-[3/4] w-full rounded-lg object-cover ring-1 ring-slate-200 transition-colors duration-150 hover:ring-2 hover:ring-indigo-400">
+                                <a
+                                    href="{{ route('admin.registrations.photo', [$registration, $doc]) }}"
+                                    data-fancybox="cadastro-docs"
+                                    data-type="image"
+                                    data-caption="{{ $label }}"
+                                    aria-label="Ampliar {{ $label }}"
+                                    class="group relative block cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
+                                    <img
+                                        src="{{ route('admin.registrations.photo', [$registration, $doc]) }}"
+                                        alt="{{ $label }}"
+                                        loading="lazy"
+                                        class="aspect-[3/4] w-full rounded-lg object-cover ring-1 ring-line-dark transition-[box-shadow,ring] duration-150 group-hover:ring-2 group-hover:ring-brand group-focus-visible:ring-2 group-focus-visible:ring-brand">
+                                    <span class="pointer-events-none absolute inset-0 flex items-end justify-center rounded-lg pb-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                                            Ampliar
+                                        </span>
+                                    </span>
                                 </a>
                             @else
-                                <div class="flex aspect-[3/4] w-full items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                                <div class="flex aspect-[3/4] w-full items-center justify-center rounded-lg bg-surface-800 text-xs text-zinc-600">
                                     Não enviado
                                 </div>
                             @endif
@@ -108,7 +124,7 @@
                 <div class="flex items-center gap-2">
                     @include('components.status-badge', ['status' => $registration->facial_status])
                 </div>
-                <p class="mt-3 text-sm text-slate-600">
+                <p class="mt-3 text-sm text-zinc-400">
                     {{ $registration->facial_status->label() }}.
                 </p>            </div>
         </aside>
