@@ -2,10 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Mail\NewRegistrationMail;
 use App\Models\ClientRegistration;
+use App\Models\User;
+use App\Services\NewRegistrationNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Mockery\MockInterface;
+use RuntimeException;
 use Tests\TestCase;
 
 class ClientRegistrationTest extends TestCase
@@ -39,6 +45,32 @@ class ClientRegistrationTest extends TestCase
             ->assertSee('Cadastro de Cliente')
             ->assertSee('Dados pessoais')
             ->assertSee('Enviar cadastro');
+    }
+
+    public function test_public_pages_use_vca_brand_and_have_no_protected_badge(): void
+    {
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+
+        $this->assertStringContainsString('>VCA</', $html);
+        $this->assertStringContainsString('Formulário de cadastro', $html);
+        $this->assertStringNotContainsString('Dados protegidos', $html);
+        $this->assertStringNotContainsString('Painel da Locadora', $html);
+        $this->assertStringNotContainsString('Locadora</span>', $html);
+    }
+
+    public function test_selfie_step_only_offers_camera_capture_without_gallery_option(): void
+    {
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="selfie_file"', $html);
+        $this->assertStringContainsString('capture="user"', $html);
+        $this->assertStringContainsString('Tirar selfie', $html);
+        $this->assertStringNotContainsString('Escolher da galeria', $html);
+        $this->assertStringNotContainsString('gallery-input sr-only" data-doc="selfie"', $html);
+
+        foreach (['cnh_front', 'cnh_back', 'proof_of_residence'] as $doc) {
+            $this->assertStringContainsString('gallery-input sr-only" data-doc="'.$doc.'"', $html);
+        }
     }
 
     public function test_client_can_submit_registration_with_documents(): void
@@ -156,5 +188,73 @@ class ClientRegistrationTest extends TestCase
         $this->get(route('client-registrations.success'))
             ->assertOk()
             ->assertSee('Cadastro enviado');
+    }
+
+    public function test_admins_are_notified_by_email_when_registration_is_created(): void
+    {
+        Mail::fake();
+        Storage::fake('local');
+
+        User::factory()->count(2)->create();
+
+        $this->post('/cadastro', [
+            ...$this->baseData,
+            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
+            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
+            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
+            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
+        ])->assertRedirect(route('client-registrations.success'));
+
+        Mail::assertSent(NewRegistrationMail::class, 2);
+
+        $this->assertDatabaseCount('client_registrations', 1);
+    }
+
+    public function test_mail_failure_does_not_lose_the_registration(): void
+    {
+        Storage::fake('local');
+
+        $this->mock(NewRegistrationNotifier::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('notifyAdmins')
+                ->once()
+                ->andThrow(new RuntimeException('SMTP indisponível'));
+        });
+
+        $response = $this->post('/cadastro', [
+            ...$this->baseData,
+            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
+            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
+            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
+            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
+        ]);
+
+        $response->assertRedirect(route('client-registrations.success'));
+        $this->assertDatabaseCount('client_registrations', 1);
+    }
+
+    public function test_registration_notification_email_omits_sensitive_data(): void
+    {
+        $registration = ClientRegistration::factory()->create([
+            'full_name' => 'Maria da Silva Souza',
+        ]);
+
+        $html = (new NewRegistrationMail($registration))->render();
+
+        $this->assertStringContainsString('Novo cadastro recebido', $html);
+        $this->assertStringContainsString('Maria da Silva Souza', $html);
+        $this->assertStringContainsString('Ver cadastro', $html);
+        $this->assertStringContainsString($registration->uuid, $html);
+        $this->assertStringNotContainsString($registration->cpf, $html);
+        $this->assertStringNotContainsString($registration->cnh_number, $html);
+    }
+
+    public function test_registration_notification_email_logo_is_embedded_instead_of_absolute_url(): void
+    {
+        $registration = ClientRegistration::factory()->create();
+
+        $html = (new NewRegistrationMail($registration))->render();
+
+        $this->assertMatchesRegularExpression('/<img[^>]*src="(cid:|data:)/', $html);
+        $this->assertStringNotContainsString('/images/brand/vca-logo.jpeg', $html);
     }
 }

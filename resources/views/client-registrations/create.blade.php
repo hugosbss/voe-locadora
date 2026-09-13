@@ -1,21 +1,21 @@
 @extends('layouts.public')
 
-@section('title', 'Cadastro de Cliente')
+@section('title', 'Cadastro')
 
 @section('content')
-    <div class="card p-5 sm:p-8">
+    <div class="card panel-card p-5 sm:p-8">
         <header class="mb-6">
-            <h1 class="text-xl font-semibold tracking-tight text-slate-900">Cadastro de Cliente</h1>
+            <h1 class="text-xl font-semibold tracking-tight text-white">Cadastro de Cliente</h1>
         </header>
 
         {{-- Barra de progresso (mobile) --}}
         <div class="mb-6 sm:hidden">
             <div class="flex items-center justify-between">
-                <p id="step-count" class="text-xs font-semibold text-indigo-600" aria-live="polite">Etapa 1 de 6</p>
+                <p id="step-count" class="text-xs font-semibold text-brand" aria-live="polite">Etapa 1 de 6</p>
             </div>
             <div
                 id="step-progress"
-                class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200"
+                class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-line-dark"
                 role="progressbar"
                 aria-valuemin="1"
                 aria-valuemax="6"
@@ -23,10 +23,10 @@
                 aria-label="Progresso do cadastro">
                 <div
                     id="stepbar-fill"
-                    class="absolute inset-y-0 left-0 rounded-full bg-indigo-600 transition-[width] duration-300 ease-out"
+                    class="stepbar-fill"
                     style="width: 16.666%"></div>
             </div>
-            <h1 id="step-title" class="mt-3 text-lg font-semibold tracking-tight text-slate-900">Dados pessoais</h1>
+            <h1 id="step-title" class="mt-3 text-lg font-semibold tracking-tight text-white">Dados pessoais</h1>
         </div>
 
         {{-- Indicador de etapas (desktop) --}}
@@ -57,7 +57,7 @@
 
             {{-- Etapa 1: Dados pessoais --}}
             <section class="step-panel space-y-5" data-panel="1" data-title="Dados pessoais">
-                <h2 class="section-title mb-4 hidden sm:block">1. Dados pessoais</h2>
+                <h2 class="step-heading mb-4 hidden sm:flex">1. Dados pessoais</h2>
 
                 <x-form-field label="Nome completo" name="full_name" value="{{ old('full_name') }}"
                     placeholder="Digite seu nome completo" autocomplete="name" required />
@@ -82,7 +82,7 @@
 
             {{-- Etapa 2: Endereço --}}
             <section class="step-panel space-y-5 hidden" data-panel="2" data-title="Endereço">
-                <h2 class="section-title mb-4 hidden sm:block">2. Endereço</h2>
+                <h2 class="step-heading mb-4 hidden sm:flex">2. Endereço</h2>
 
                 <div data-field="cep">
                     <label for="cep" class="form-label">CEP <span class="text-red-500" aria-hidden="true">*</span></label>
@@ -96,7 +96,7 @@
                             <span data-cep-label>Buscar</span>
                         </x-button>
                     </div>
-                    <p id="cep-feedback" class="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500" hidden></p>
+                    <p id="cep-feedback" class="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-500" hidden></p>
                     <p id="cep-error" class="field-error" role="alert" hidden></p>
                 </div>
 
@@ -123,7 +123,7 @@
 
             {{-- Etapa 3: CNH --}}
             <section class="step-panel space-y-5 hidden" data-panel="3" data-title="CNH">
-                <h2 class="section-title mb-4 hidden sm:block">3. CNH</h2>
+                <h2 class="step-heading mb-4 hidden sm:flex">3. CNH</h2>
 
                 <x-form-field label="Número da CNH" name="cnh_number" value="{{ old('cnh_number') }}"
                     placeholder="Número impresso na CNH" inputmode="numeric" required />
@@ -141,16 +141,16 @@
 
             {{-- Etapa 4: Fotos dos documentos --}}
             <section class="step-panel space-y-5 hidden" data-panel="4" data-title="Documentos">
-                <h2 class="section-title mb-4 hidden sm:block">4. Documentos</h2>
-                <p class="text-sm text-slate-500">JPG, PNG ou WebP &middot; até 5 MB por arquivo.</p>
+                <h2 class="step-heading mb-4 hidden sm:flex">4. Documentos</h2>
+                <p class="text-sm text-zinc-500">JPG, PNG ou WebP &middot; até 5 MB por arquivo.</p>
 
                 @foreach (['cnh_front' => 'CNH (frente)', 'cnh_back' => 'CNH (verso)', 'proof_of_residence' => 'Comprovante de residência'] as $doc => $label)
                     <div @class(['upload-card', 'has-error' => $errors->has($doc . '_file')])>
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0 pt-2">
-                                <p class="text-sm font-medium text-slate-800">{{ $label }}</p>
-                                <p class="text-xs text-slate-500">Obrigatório</p>
-                                <p class="file-name mt-1 hidden max-w-[12rem] truncate text-xs font-medium text-indigo-600"></p>
+                                <p class="text-sm font-medium text-gray-100">{{ $label }}</p>
+                                <p class="text-xs text-zinc-500">Obrigatório</p>
+                                <p class="file-name mt-1 hidden max-w-[12rem] truncate text-xs font-medium text-brand"></p>
                             </div>
                             @include('components.document-preview', ['doc' => $doc])
                         </div>
@@ -176,32 +176,26 @@
 
             {{-- Etapa 5: Selfie / validação facial --}}
             <section class="step-panel space-y-5 hidden" data-panel="5" data-title="Selfie">
-                <h2 class="section-title mb-4 hidden sm:block">5. Selfie</h2>
+                <h2 class="step-heading mb-4 hidden sm:flex">5. Selfie</h2>
                 <div>
-                    <p class="text-sm text-slate-600">Tire uma selfie em ambiente claro, sem óculos e de frente para a câmera.</p>
+                    <p class="text-sm text-zinc-400">Tire uma selfie agora, em ambiente claro e de frente para a câmera, sem óculos.</p>
                 </div>
 
                 <div @class(['upload-card', 'has-error' => $errors->has('selfie_file')])>
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 pt-2">
-                            <p class="text-sm font-medium text-slate-800">Sua selfie</p>
-                            <p class="text-xs text-slate-500">Obrigatório</p>
-                            <p class="file-name mt-1 hidden max-w-[12rem] truncate text-xs font-medium text-indigo-600"></p>
+                            <p class="text-sm font-medium text-gray-100">Sua selfie</p>
+                            <p class="text-xs text-zinc-500">Obrigatório</p>
+                            <p class="file-name mt-1 hidden max-w-[12rem] truncate text-xs font-medium text-brand"></p>
                         </div>
                         @include('components.document-preview', ['doc' => 'selfie'])
                     </div>
-                    <div class="mt-3 grid grid-cols-2 gap-2">
-                        <label class="upload-btn cursor-pointer">
+                    <div class="mt-3">
+                        <label class="upload-btn w-full cursor-pointer justify-center">
                             <input type="file" name="selfie_file" accept="image/*" capture="user"
                                 class="document-input sr-only" data-doc="selfie">
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6h4l1.5-2H15l1.5 2H20v12H4V6Zm8 10a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 12 16Z"/></svg>
                             Tirar selfie
-                        </label>
-                        <label class="upload-btn cursor-pointer">
-                            <input type="file" accept="image/*"
-                                class="gallery-input sr-only" data-doc="selfie">
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm8 11v-2H8v2h8Zm2-1H22a10 10 0 0 1-20 0h6v-3h4.5a3.5 3.5 0 0 1 6.3-2L22 8v2Z"/></svg>
-                            Escolher da galeria
                         </label>
                     </div>
                     <p id="selfie_file-error" class="field-error" role="alert"
@@ -211,35 +205,46 @@
 
             {{-- Etapa 6: Enviar cadastro --}}
             <section class="step-panel space-y-5 hidden" data-panel="6" data-title="Revisão">
-                <h2 class="section-title mb-4 hidden sm:block">6. Revisão</h2>
+                <h2 class="step-heading mb-4 hidden sm:flex">6. Revisão</h2>
 
-                <div class="rounded-xl bg-slate-50 p-4 text-sm ring-1 ring-inset ring-slate-100">
-                    <p class="mb-1 font-medium text-slate-500">Confira seus dados antes de enviar.</p>
-                    <p id="summary-name" class="font-semibold text-slate-900"></p>
-                    <p id="summary-cpf" class="text-slate-700"></p>
-                    <p id="summary-phone" class="text-slate-700"></p>
-                    <p id="summary-email" class="break-words text-slate-700"></p>
-                    <p id="summary-city" class="text-slate-700"></p>
+                {{-- Problemas agrupados por etapa (modo correção) --}}
+                <div id="review-problems" hidden>
+                    <p id="review-problems-intro" class="mb-3 flex items-center gap-2 text-sm font-medium text-amber-300">
+                        <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                        <span data-review-problems-intro-text></span>
+                    </p>
+                    <div class="space-y-2" data-review-problems-list></div>
                 </div>
 
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <p class="mb-3 text-sm font-medium text-slate-800">Declaração de veracidade</p>
+                <div class="rounded-xl bg-surface-850 p-4 text-sm ring-1 ring-inset ring-line-dark">
+                    <p class="mb-1 font-medium text-zinc-400">Confira seus dados antes de enviar.</p>
+                    <p id="summary-name" class="font-semibold text-white"></p>
+                    <p id="summary-cpf" class="text-gray-300"></p>
+                    <p id="summary-phone" class="text-gray-300"></p>
+                    <p id="summary-email" class="break-words text-gray-300"></p>
+                    <p id="summary-city" class="text-gray-300"></p>
+                </div>
+
+                <div class="rounded-xl border border-line-dark p-4">
+                    <p class="mb-3 text-sm font-medium text-gray-100">Declaração de veracidade</p>
                     <label class="flex cursor-pointer items-start gap-3">
                         <input type="checkbox" name="veracity_declaration_accepted" value="1"
-                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" required>
-                        <span class="text-sm text-slate-600">Li e confirmo que as informações fornecidas são verdadeiras.</span>
+                            @checked(old('veracity_declaration_accepted'))
+                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
+                        <span class="text-sm text-zinc-300">Li e confirmo que as informações fornecidas são verdadeiras.</span>
                     </label>
                     <p id="veracity_declaration_accepted-error" class="field-error" role="alert"
                         @unless ($errors->has('veracity_declaration_accepted')) hidden @endunless>{{ $errors->first('veracity_declaration_accepted') }}</p>
                 </div>
 
-                <div class="rounded-xl border border-slate-200 p-4">
-                    <p class="mb-3 text-sm font-medium text-slate-800">Política de privacidade</p>
+                <div class="rounded-xl border border-line-dark p-4">
+                    <p class="mb-3 text-sm font-medium text-gray-100">Política de privacidade</p>
                     <label class="flex cursor-pointer items-start gap-3">
                         <input type="checkbox" name="privacy_policy_accepted" value="1"
-                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 accent-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" required>
-                        <span class="text-sm text-slate-600">Autorizo o uso dos meus dados e documentos para análise da minha locação. Conheça nossa
-                            <a href="{{ route('policy.index') }}" target="_blank" rel="noopener" class="text-indigo-600 underline">Política de Privacidade</a>.
+                            @checked(old('privacy_policy_accepted'))
+                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
+                        <span class="text-sm text-zinc-300">Autorizo o uso dos meus dados e documentos para análise da minha locação. Conheça nossa
+                            <a href="{{ route('policy.index') }}" target="_blank" rel="noopener" class="text-brand underline hover:text-brand-soft">Política de Privacidade</a>.
                         </span>
                     </label>
                     <p id="privacy_policy_accepted-error" class="field-error" role="alert"
@@ -251,6 +256,10 @@
                         aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
                     <span data-submit-label>Enviar cadastro</span>
                 </x-button>
+                <p
+                    data-submit-warning
+                    class="mt-3 hidden rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200"
+                    role="alert"></p>
             </section>
 
             {{-- Navegação entre etapas --}}
@@ -259,9 +268,9 @@
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Voltar
                 </x-button>
-                <span id="step-counter" class="text-sm font-medium text-slate-400">1 / 6</span>
+                <span id="step-counter" class="text-sm font-medium text-zinc-500">1 / 6</span>
                 <x-button type="button" id="next-btn" class="flex-1 sm:flex-none sm:px-8">
-                    Continuar
+                    <span data-next-label>Continuar</span>
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </x-button>
             </div>
@@ -270,10 +279,41 @@
 @endsection
 
 @push('scripts')
-    <script>
-        window.registrationForm = {
-            totalSteps: {{ count($steps) }},
-            cepLookupUrl: @json(route('cep.lookup')),
-        };
+    @php
+        $serverFieldToStep = [
+            'full_name' => 1, 'cpf' => 1, 'birth_date' => 1, 'phone' => 1, 'whatsapp' => 1, 'email' => 1,
+            'cep' => 2, 'address' => 2, 'address_number' => 2, 'neighborhood' => 2, 'city' => 2, 'state' => 2,
+            'cnh_number' => 3, 'cnh_category' => 3, 'cnh_expiry_date' => 3,
+            'cnh_front_file' => 4, 'cnh_back_file' => 4, 'proof_of_residence_file' => 4,
+            'documentos' => 4,
+            'selfie_file' => 5,
+            'veracity_declaration_accepted' => 6, 'privacy_policy_accepted' => 6,
+        ];
+
+        $serverErrorSteps = [];
+
+        foreach ($errors->keys() as $errorKey) {
+            $step = $serverFieldToStep[$errorKey] ?? 4;
+            $serverErrorSteps[$step] = ($serverErrorSteps[$step] ?? 0) + 1;
+        }
+
+        $serverFieldErrors = collect($errors->messages())
+            ->map(fn (array $messages) => (string) $messages[0])
+            ->all();
+
+        $registrationFormConfig = [
+            'totalSteps' => count($steps),
+            'cepLookupUrl' => route('cep.lookup'),
+            'successUrl' => route('client-registrations.success'),
+            'fieldToStep' => $serverFieldToStep,
+            'serverErrorSteps' => empty($serverErrorSteps) ? new stdClass : $serverErrorSteps,
+            'serverFieldErrors' => empty($serverFieldErrors) ? new stdClass : $serverFieldErrors,
+        ];
+    @endphp
+
+    {{-- Configuração em bloco de dados (não executável): segura sob a CSP atual,
+         que bloqueia scripts inline mas permite type="application/json". --}}
+    <script type="application/json" id="registration-form-config">
+        @json($registrationFormConfig)
     </script>
 @endpush
