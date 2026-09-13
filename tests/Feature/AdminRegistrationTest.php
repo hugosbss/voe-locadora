@@ -104,12 +104,25 @@ class AdminRegistrationTest extends TestCase
             ->assertSee('data-status-redirect-url="', false);
     }
 
-    public function test_registrations_list_shows_confirmation_after_auto_redirect(): void
+    public function test_registrations_list_consumes_status_updated_trigger(): void
     {
         $this->actingAs(User::factory()->create())
             ->get(route('admin.registrations.index', ['status_updated' => 1]))
+            ->assertRedirect(route('admin.registrations.index'))
+            ->assertSessionHas('success', 'Status atualizado com sucesso.');
+
+        $this->get(route('admin.registrations.index'))
             ->assertOk()
-            ->assertSee('Status atualizado com sucesso.', false);
+            ->assertSee('Status atualizado com sucesso.', false)
+            ->assertDontSee('status_updated', false);
+    }
+
+    public function test_status_updated_trigger_is_not_propagated_to_filters(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.index', ['status_updated' => 1, 'status' => 'novo']))
+            ->assertRedirect(route('admin.registrations.index', ['status' => 'novo']))
+            ->assertSessionMissing('status_updated_redirect');
     }
 
     public function test_show_page_renders_documents_as_fancybox_without_new_tab(): void

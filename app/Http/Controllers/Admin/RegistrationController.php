@@ -24,9 +24,19 @@ class RegistrationController extends Controller
     /**
      * Lista os cadastros recebidos pela locadora.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $this->authorize('viewAny', ClientRegistration::class);
+
+        // Consome o gatilho do toast de status: "status_updated" funciona como
+        // entrada única após alterar o status. Ao chegar aqui, remove-se o
+        // parâmetro da URL (e, por consequência, da paginação e dos filtros);
+        // a mensagem é exibida uma única vez através do flash de sessão.
+        if ($request->has('status_updated')) {
+            return redirect()
+                ->route('admin.registrations.index', $request->except('status_updated'))
+                ->with('success', 'Status atualizado com sucesso.');
+        }
 
         $statusFilter = $request->query('status');
 
@@ -69,9 +79,15 @@ class RegistrationController extends Controller
     {
         $this->authorize('updateStatus', $registration);
 
-        $validated = $request->validate([
-            'status' => ['required', Rule::enum(RegistrationStatus::class)],
-        ]);
+        $validated = $request->validate(
+            [
+                'status' => ['required', Rule::enum(RegistrationStatus::class)],
+            ],
+            [
+                'status.required' => 'Selecione um status válido.',
+                'status.enum' => 'O status selecionado é inválido.',
+            ],
+        );
 
         $previous = $registration->status;
         $next = RegistrationStatus::from($validated['status']);
@@ -89,7 +105,11 @@ class RegistrationController extends Controller
             $registration,
         );
 
-        return back()->with('success', 'Status atualizado.');
+        // Sucesso: a página de detalhes mantém o toast e, após ~2s, é
+        // levada de volta à listagem (flags consumidas pelo próprio layout).
+        return back()
+            ->with('success', 'Status atualizado com sucesso.')
+            ->with('status_updated_redirect', true);
     }
 
     /**
