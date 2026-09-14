@@ -17,7 +17,7 @@
 <body class="app-body font-sans text-slate-800 antialiased">
     <div class="min-h-screen flex flex-col">
         <header class="app-header">
-            <div class="mx-auto w-full max-w-2xl px-4 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-5">
+            <div class="mx-auto w-full max-w-2xl px-4 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-5 md:max-w-4xl">
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
                         <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
@@ -38,7 +38,7 @@
             </div>
         </header>
 
-        <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+        <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-6 md:max-w-4xl">
             @yield('content')
         </main>
 

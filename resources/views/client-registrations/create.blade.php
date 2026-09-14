@@ -59,65 +59,91 @@
             <section class="step-panel space-y-5" data-panel="1" data-title="Dados pessoais">
                 <h2 class="step-heading mb-4 hidden sm:flex">1. Dados pessoais</h2>
 
-                <x-form-field label="Nome completo" name="full_name" value="{{ old('full_name') }}"
-                    placeholder="Digite seu nome completo" autocomplete="name" required />
+                <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-3">
+                    <div class="md:col-span-1">
+                        <x-form-field label="Nome completo" name="full_name" value="{{ old('full_name') }}"
+                            placeholder="Digite seu nome completo" autocomplete="name" required />
+                    </div>
 
-                <x-form-field label="CPF" name="cpf" value="{{ old('cpf') }}"
-                    placeholder="000.000.000-00" inputmode="numeric" data-mask="cpf" autocomplete="off" required />
+                    <div class="md:col-span-1">
+                        <x-form-field label="CPF" name="cpf" value="{{ old('cpf') }}"
+                            placeholder="000.000.000-00" inputmode="numeric" data-mask="cpf" autocomplete="off" required />
+                    </div>
 
-                <x-form-field label="Data de nascimento" name="birth_date" value="{{ old('birth_date') }}"
-                    type="date" max="{{ \Carbon\Carbon::now()->subYears(18)->format('Y-m-d') }}" required />
+                    <div class="md:col-span-1">
+                        <x-form-field label="Data de nascimento" name="birth_date" value="{{ old('birth_date') }}"
+                            type="date" max="{{ \Carbon\Carbon::now()->subYears(18)->format('Y-m-d') }}" required />
+                    </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <x-form-field label="Telefone" name="phone" value="{{ old('phone') }}"
-                        placeholder="(00) 0000-0000" inputmode="tel" data-mask="phone" autocomplete="tel" required />
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:contents">
+                        <div class="md:col-span-1">
+                            <x-form-field label="Telefone" name="phone" value="{{ old('phone') }}"
+                                placeholder="(00) 0000-0000" inputmode="tel" data-mask="phone" autocomplete="tel" required />
+                        </div>
 
-                    <x-form-field label="WhatsApp" name="whatsapp" value="{{ old('whatsapp') }}"
-                        placeholder="(00) 00000-0000" inputmode="tel" data-mask="phone" autocomplete="tel" required />
+                        <div class="md:col-span-1">
+                            <x-form-field label="WhatsApp" name="whatsapp" value="{{ old('whatsapp') }}"
+                                placeholder="(00) 00000-0000" inputmode="tel" data-mask="phone" autocomplete="tel" required />
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <x-form-field label="E-mail" name="email" value="{{ old('email') }}"
+                            type="email" placeholder="voce@email.com" inputmode="email" autocomplete="email" required />
+                    </div>
                 </div>
-
-                <x-form-field label="E-mail" name="email" value="{{ old('email') }}"
-                    type="email" placeholder="voce@email.com" inputmode="email" autocomplete="email" required />
             </section>
 
             {{-- Etapa 2: Endereço --}}
             <section class="step-panel space-y-5 hidden" data-panel="2" data-title="Endereço">
                 <h2 class="step-heading mb-4 hidden sm:flex">2. Endereço</h2>
 
-                <div data-field="cep">
-                    <label for="cep" class="form-label">CEP <span class="text-red-500" aria-hidden="true">*</span></label>
-                    <div class="flex gap-2">
-                        <input type="text" id="cep" name="cep" value="{{ old('cep') }}"
-                            class="form-input flex-1" placeholder="00000-000" inputmode="numeric" data-mask="cep"
-                            aria-describedby="cep-feedback cep-error" required>
-                        <x-button type="button" id="cep-search" variant="secondary" class="whitespace-nowrap">
-                            <svg data-cep-spinner class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
-                                aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
-                            <span data-cep-label>Buscar</span>
-                        </x-button>
+                <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-12">
+                    <div data-field="cep" class="md:col-span-4">
+                        <label for="cep" class="form-label">CEP <span class="text-red-500" aria-hidden="true">*</span></label>
+                        <div class="flex gap-2">
+                            <input type="text" id="cep" name="cep" value="{{ old('cep') }}"
+                                class="form-input flex-1" placeholder="00000-000" inputmode="numeric" data-mask="cep"
+                                aria-describedby="cep-feedback cep-error" required>
+                            <x-button type="button" id="cep-search" variant="secondary" class="whitespace-nowrap">
+                                <svg data-cep-spinner class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                                    aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
+                                <span data-cep-label>Buscar</span>
+                            </x-button>
+                        </div>
+                        <p id="cep-feedback" class="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-500" hidden></p>
+                        <p id="cep-error" class="field-error" role="alert" hidden></p>
                     </div>
-                    <p id="cep-feedback" class="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-500" hidden></p>
-                    <p id="cep-error" class="field-error" role="alert" hidden></p>
-                </div>
 
-                <x-form-field label="Rua" name="address" value="{{ old('address') }}"
-                    placeholder="Nome da rua / avenida" autocomplete="address-line1" required />
+                    <div class="md:col-span-6">
+                        <x-form-field label="Rua" name="address" value="{{ old('address') }}"
+                            placeholder="Nome da rua / avenida" autocomplete="address-line1" required />
+                    </div>
 
-                <x-form-field label="Número" name="address_number" value="{{ old('address_number') }}"
-                    placeholder="123" inputmode="numeric" autocomplete="address-line2" required />
+                    <div class="md:col-span-2">
+                        <x-form-field label="Número" name="address_number" value="{{ old('address_number') }}"
+                            placeholder="123" inputmode="numeric" autocomplete="address-line2" required />
+                    </div>
 
-                <x-form-field label="Bairro" name="neighborhood" value="{{ old('neighborhood') }}"
-                    placeholder="Nome do bairro" autocomplete="address-level2" required />
+                    <div class="md:col-span-5">
+                        <x-form-field label="Bairro" name="neighborhood" value="{{ old('neighborhood') }}"
+                            placeholder="Nome do bairro" autocomplete="address-level2" required />
+                    </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <x-form-field label="Cidade" name="city" value="{{ old('city') }}"
-                        placeholder="Cidade" autocomplete="address-level2" required />
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:contents">
+                        <div class="md:col-span-4">
+                            <x-form-field label="Cidade" name="city" value="{{ old('city') }}"
+                                placeholder="Cidade" autocomplete="address-level2" required />
+                        </div>
 
-                    <x-select-field label="Estado" name="state" placeholder="Selecione o estado..." required>
-                        @foreach ($states as $uf => $name)
-                            <option value="{{ $uf }}" @selected(old('state') === $uf)>{{ $uf }} - {{ $name }}</option>
-                        @endforeach
-                    </x-select-field>
+                        <div class="md:col-span-3">
+                            <x-select-field label="Estado" name="state" placeholder="Selecione o estado..." required>
+                                @foreach ($states as $uf => $name)
+                                    <option value="{{ $uf }}" @selected(old('state') === $uf)>{{ $uf }} - {{ $name }}</option>
+                                @endforeach
+                            </x-select-field>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -125,18 +151,26 @@
             <section class="step-panel space-y-5 hidden" data-panel="3" data-title="CNH">
                 <h2 class="step-heading mb-4 hidden sm:flex">3. CNH</h2>
 
-                <x-form-field label="Número da CNH" name="cnh_number" value="{{ old('cnh_number') }}"
-                    placeholder="Número impresso na CNH" inputmode="numeric" required />
+                <div class="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-12">
+                    <div class="md:col-span-5">
+                        <x-form-field label="Número da CNH" name="cnh_number" value="{{ old('cnh_number') }}"
+                            placeholder="Número impresso na CNH" inputmode="numeric" required />
+                    </div>
 
-                <x-select-field label="Categoria" name="cnh_category" placeholder="Selecione a categoria..." required>
-                    @foreach ($cnhCategories as $category)
-                        <option value="{{ $category }}" @selected(old('cnh_category') === $category)>{{ $category }}</option>
-                    @endforeach
-                </x-select-field>
+                    <div class="md:col-span-3">
+                        <x-select-field label="Categoria" name="cnh_category" placeholder="Selecione a categoria..." required>
+                            @foreach ($cnhCategories as $category)
+                                <option value="{{ $category }}" @selected(old('cnh_category') === $category)>{{ $category }}</option>
+                            @endforeach
+                        </x-select-field>
+                    </div>
 
-                <x-form-field label="Data de validade" name="cnh_expiry_date" value="{{ old('cnh_expiry_date') }}"
-                    type="date" min="{{ now()->addDay()->format('Y-m-d') }}" required
-                    hint="A CNH deve estar dentro da validade." />
+                    <div class="md:col-span-4">
+                        <x-form-field label="Data de validade" name="cnh_expiry_date" value="{{ old('cnh_expiry_date') }}"
+                            type="date" min="{{ now()->addDay()->format('Y-m-d') }}" required
+                            hint="A CNH deve estar dentro da validade." />
+                    </div>
+                </div>
             </section>
 
             {{-- Etapa 4: Fotos dos documentos --}}
@@ -144,6 +178,7 @@
                 <h2 class="step-heading mb-4 hidden sm:flex">4. Documentos</h2>
                 <p class="text-sm text-zinc-500">JPG, PNG ou WebP &middot; até 5 MB por arquivo.</p>
 
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
                 @foreach (['cnh_front' => 'CNH (frente)', 'cnh_back' => 'CNH (verso)', 'proof_of_residence' => 'Comprovante de residência'] as $doc => $label)
                     <div @class(['upload-card', 'has-error' => $errors->has($doc . '_file')])>
                         <div class="flex items-start justify-between gap-3">
@@ -172,6 +207,7 @@
                             @unless ($errors->has($doc . '_file')) hidden @endunless>{{ $errors->first($doc . '_file') }}</p>
                     </div>
                 @endforeach
+                </div>
             </section>
 
             {{-- Etapa 5: Selfie / validação facial --}}
@@ -225,30 +261,32 @@
                     <p id="summary-city" class="text-gray-300"></p>
                 </div>
 
-                <div class="rounded-xl border border-line-dark p-4">
-                    <p class="mb-3 text-sm font-medium text-gray-100">Declaração de veracidade</p>
-                    <label class="flex cursor-pointer items-start gap-3">
-                        <input type="checkbox" name="veracity_declaration_accepted" value="1"
-                            @checked(old('veracity_declaration_accepted'))
-                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
-                        <span class="text-sm text-zinc-300">Li e confirmo que as informações fornecidas são verdadeiras.</span>
-                    </label>
-                    <p id="veracity_declaration_accepted-error" class="field-error" role="alert"
-                        @unless ($errors->has('veracity_declaration_accepted')) hidden @endunless>{{ $errors->first('veracity_declaration_accepted') }}</p>
-                </div>
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div class="rounded-xl border border-line-dark p-4">
+                        <p class="mb-3 text-sm font-medium text-gray-100">Declaração de veracidade</p>
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" name="veracity_declaration_accepted" value="1"
+                                @checked(old('veracity_declaration_accepted'))
+                                class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
+                            <span class="text-sm text-zinc-300">Declaro que os dados e documentos enviados são verdadeiros.</span>
+                        </label>
+                        <p id="veracity_declaration_accepted-error" class="field-error" role="alert"
+                            @unless ($errors->has('veracity_declaration_accepted')) hidden @endunless>{{ $errors->first('veracity_declaration_accepted') }}</p>
+                    </div>
 
-                <div class="rounded-xl border border-line-dark p-4">
-                    <p class="mb-3 text-sm font-medium text-gray-100">Política de privacidade</p>
-                    <label class="flex cursor-pointer items-start gap-3">
-                        <input type="checkbox" name="privacy_policy_accepted" value="1"
-                            @checked(old('privacy_policy_accepted'))
-                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
-                        <span class="text-sm text-zinc-300">Autorizo o uso dos meus dados e documentos para análise da minha locação. Conheça nossa
-                            <a href="{{ route('policy.index') }}" target="_blank" rel="noopener" class="text-brand underline hover:text-brand-soft">Política de Privacidade</a>.
-                        </span>
-                    </label>
-                    <p id="privacy_policy_accepted-error" class="field-error" role="alert"
-                        @unless ($errors->has('privacy_policy_accepted')) hidden @endunless>{{ $errors->first('privacy_policy_accepted') }}</p>
+                    <div class="rounded-xl border border-line-dark p-4">
+                        <p class="mb-3 text-sm font-medium text-gray-100">Política de privacidade</p>
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" name="privacy_policy_accepted" value="1"
+                                @checked(old('privacy_policy_accepted'))
+                                class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
+                            <span class="text-sm text-zinc-300">Autorizo o uso dos meus dados e documentos para análise da minha locação. Conheça nossa
+                                <a href="{{ route('policy.index') }}" target="_blank" rel="noopener" class="text-brand underline hover:text-brand-soft">Política de Privacidade</a>.
+                            </span>
+                        </label>
+                        <p id="privacy_policy_accepted-error" class="field-error" role="alert"
+                            @unless ($errors->has('privacy_policy_accepted')) hidden @endunless>{{ $errors->first('privacy_policy_accepted') }}</p>
+                    </div>
                 </div>
 
                 <x-button type="submit" id="submit-btn" size="lg" class="w-full">
