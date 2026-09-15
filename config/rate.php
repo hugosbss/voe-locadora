@@ -14,15 +14,37 @@ return [
     */
 
     'limits' => [
-        // Envio do cadastro (ação que persiste dados e arquivos).
-        'cadastro_max_attempts' => (int) env('RATE_LIMIT_CADASTRO_PER_MINUTE', 8),
-        'cadastro_decay_minutes' => (int) env('RATE_LIMIT_CADASTRO_DECAY_MINUTES', 15),
+        /*
+         * Envio do cadastro (ação que persiste dados e arquivos).
+         *
+         * A política usa dois contadores independentes por IP:
+         * - max_attempts: conta TODAS as submissões (inclusive 422 de validação),
+         *   protegendo contra flood automatizado de requisições (CPU/upload/banco);
+         * - success_max_attempts: conta apenas cadastros efetivamente criados
+         *   (POST aceito), permitindo que o usuário corrija e reenvie livremente
+         *   sem esgotar o limite e, ao mesmo tempo, impede spam de cadastros reais.
+         *
+         * O GET /cadastro não é limitado: apenas renderiza o formulário e não é
+         * contabilizado como tentativa de envio.
+         */
+        'cadastro' => [
+            'max_attempts' => (int) env('RATE_LIMIT_CADASTRO_MAX_ATTEMPTS', 60),
+            'decay_minutes' => (int) env('RATE_LIMIT_CADASTRO_DECAY_MINUTES', 15),
+            'success_max_attempts' => (int) env('RATE_LIMIT_CADASTRO_SUCCESS_MAX_ATTEMPTS', 10),
+            'success_decay_minutes' => (int) env('RATE_LIMIT_CADASTRO_SUCCESS_DECAY_MINUTES', 15),
+        ],
 
         // Consulta de CEP (proxy para API externa).
         'cep_per_minute' => (int) env('RATE_LIMIT_CEP_PER_MINUTE', 30),
 
         // Autenticação administrativa (janela curta).
         'login_per_minute' => (int) env('RATE_LIMIT_LOGIN_PER_MINUTE', 5),
+
+        // Solicitação de link de recuperação de senha (por IP).
+        'password_reset' => [
+            'max_attempts' => (int) env('RATE_LIMIT_PASSWORD_RESET', 6),
+            'decay_minutes' => (int) env('RATE_LIMIT_PASSWORD_RESET_DECAY_MINUTES', 10),
+        ],
 
         // Bloqueio progressivo após falhas repetidas.
         'login_lock_threshold' => (int) env('LOGIN_LOCK_THRESHOLD', 10),

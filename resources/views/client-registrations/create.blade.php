@@ -11,20 +11,20 @@
         {{-- Barra de progresso (mobile) --}}
         <div class="mb-6 sm:hidden">
             <div class="flex items-center justify-between">
-                <p id="step-count" class="text-xs font-semibold text-brand" aria-live="polite">Etapa 1 de 6</p>
+                <p id="step-count" class="text-xs font-semibold text-brand" aria-live="polite">Etapa 1 de {{ count($steps) }}</p>
             </div>
             <div
                 id="step-progress"
                 class="relative mt-2 h-1.5 overflow-hidden rounded-full bg-line-dark"
                 role="progressbar"
                 aria-valuemin="1"
-                aria-valuemax="6"
+                aria-valuemax="{{ count($steps) }}"
                 aria-valuenow="1"
                 aria-label="Progresso do cadastro">
                 <div
                     id="stepbar-fill"
                     class="stepbar-fill"
-                    style="width: 16.666%"></div>
+                    style="width: {{ 100 / count($steps) }}%"></div>
             </div>
             <h1 id="step-title" class="mt-3 text-lg font-semibold tracking-tight text-white">Dados pessoais</h1>
         </div>
@@ -76,18 +76,18 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:contents">
-                        <div class="md:col-span-1">
+                        <div class="md:col-span-1 md:order-2">
                             <x-form-field label="Telefone" name="phone" value="{{ old('phone') }}"
                                 placeholder="(00) 0000-0000" inputmode="tel" data-mask="phone" autocomplete="tel" required />
                         </div>
 
-                        <div class="md:col-span-1">
+                        <div class="md:col-span-1 md:order-3">
                             <x-form-field label="WhatsApp" name="whatsapp" value="{{ old('whatsapp') }}"
                                 placeholder="(00) 00000-0000" inputmode="tel" data-mask="phone" autocomplete="tel" required />
                         </div>
                     </div>
 
-                    <div class="md:col-span-1">
+                    <div class="md:col-span-1 md:order-1">
                         <x-form-field label="E-mail" name="email" value="{{ old('email') }}"
                             type="email" placeholder="voce@email.com" inputmode="email" autocomplete="email" required />
                     </div>
@@ -165,7 +165,7 @@
                         </x-select-field>
                     </div>
 
-                    <div class="md:col-span-4">
+                    <div class="md:col-span-4 min-w-0">
                         <x-form-field label="Data de validade" name="cnh_expiry_date" value="{{ old('cnh_expiry_date') }}"
                             type="date" min="{{ now()->addDay()->format('Y-m-d') }}" required
                             hint="A CNH deve estar dentro da validade." />
@@ -289,24 +289,110 @@
                     </div>
                 </div>
 
-                <x-button type="submit" id="submit-btn" size="lg" class="w-full">
-                    <svg data-submit-spinner class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
-                        aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
-                    <span data-submit-label>Enviar cadastro</span>
-                </x-button>
+                <div class="md:flex md:justify-center">
+                    <p
+                        data-submit-warning
+                        class="mt-3 hidden rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200 md:mx-auto md:max-w-md"
+                        role="alert"></p>
+                </div>
+            </section>
+
+            {{-- Etapa 7: Contrato e assinatura --}}
+            <section class="step-panel space-y-5 hidden" data-panel="7" data-title="Contrato e assinatura">
+                <h2 class="step-heading mb-4 hidden sm:flex">7. Contrato e assinatura</h2>
+
+                <div class="rounded-xl bg-surface-850 p-4 text-sm ring-1 ring-inset ring-line-dark">
+                    <p class="mb-1 font-medium text-zinc-400">Contrato do Clube de Mobilidade</p>
+                    <p class="text-gray-300">
+                        Leia o contrato abaixo. Depois, assine para concluir seu cadastro.
+                    </p>
+                    <a
+                        href="{{ route('client-registrations.contract') }}"
+                        target="_blank"
+                        rel="noopener"
+                        class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-line-dark bg-surface-800 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand hover:text-brand sm:w-auto">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                        Visualizar o contrato completo
+                    </a>
+                </div>
+
+                <div>
+                    <label for="contract_signer_name" class="form-label">Nome do signatário</label>
+                    <input
+                        type="text"
+                        id="contract_signer_name"
+                        name="contract_signer_name"
+                        value="{{ old('contract_signer_name', '') }}"
+                        maxlength="255"
+                        readonly
+                        class="form-input cursor-not-allowed opacity-70">
+                    <p class="field-hint">O nome é preenchido automaticamente com os dados do cadastro.</p>
+                    <p id="contract_signer_name-error" class="field-error" role="alert"
+                        @unless ($errors->has('contract_signer_name')) hidden @endunless>{{ $errors->first('contract_signer_name') }}</p>
+                </div>
+
+                <div>
+                    <p class="form-label">Sua assinatura</p>
+                    <div
+                        id="signature-canvas-wrap"
+                        class="relative overflow-hidden rounded-xl bg-white ring-1 ring-inset ring-line-dark"
+                        style="touch-action: none;">
+                        <canvas
+                            id="signature-canvas"
+                            class="block w-full"
+                            height="200"
+                            aria-label="Área para desenhar sua assinatura"
+                            role="img"></canvas>
+                        <p id="signature-hint"
+                            class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-medium text-zinc-400">
+                            Desenhe sua assinatura aqui
+                        </p>
+                        <button
+                            type="button"
+                            id="signature-clear"
+                            class="absolute end-2 top-2 rounded-md border border-line-dark bg-white px-2 py-1 text-xs font-semibold text-zinc-600 transition hover:border-red-300 hover:text-red-500">
+                            Limpar
+                        </button>
+                    </div>
+                    <input type="hidden" id="contract_signature" name="contract_signature"
+                        value="{{ old('contract_signature', '') }}">
+                    <p class="field-hint">Use o dedo ou o mouse para desenhar sua assinatura. Ela será aplicada ao contrato.</p>
+                    <p id="contract_signature-error" class="field-error" role="alert"
+                        @unless ($errors->has('contract_signature')) hidden @endunless>{{ $errors->first('contract_signature') }}</p>
+                </div>
+
+                <div class="rounded-xl border border-line-dark p-4">
+                    <label class="flex cursor-pointer items-start gap-3">
+                        <input type="checkbox" id="contract_accepted" name="contract_accepted" value="1"
+                            @checked(old('contract_accepted'))
+                            class="mt-0.5 h-5 w-5 shrink-0 rounded border-line-muted accent-brand focus:ring-2 focus:ring-brand focus:ring-offset-0" required>
+                        <span class="text-sm text-zinc-300">Declaro que li e aceito os termos do Contrato do Clube de Mobilidade da VCA.</span>
+                    </label>
+                    <p id="contract_accepted-error" class="field-error" role="alert"
+                        @unless ($errors->has('contract_accepted')) hidden @endunless>{{ $errors->first('contract_accepted') }}</p>
+                </div>
+
+                <div class="md:flex md:justify-center">
+                    <x-button type="submit" id="submit-btn" size="lg" class="w-full md:min-w-64 md:w-auto"
+                        disabled title="Assine o contrato e marque a aceitação para enviar">
+                        <svg data-submit-spinner class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                            aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
+                        <span data-submit-label>Enviar cadastro</span>
+                    </x-button>
+                </div>
                 <p
                     data-submit-warning
-                    class="mt-3 hidden rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200"
+                    class="mt-3 hidden rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200 md:mx-auto md:max-w-md"
                     role="alert"></p>
             </section>
 
-            {{-- Navegação entre etapas --}}
-            <div class="mt-8 flex items-center justify-between gap-3">
+            {{-- Navegação entre etapas (somente mobile/tablet < 768px) --}}
+            <div class="registration-nav mt-8 flex items-center justify-between gap-3">
                 <x-button type="button" id="prev-btn" variant="ghost" class="invisible shrink-0">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Voltar
                 </x-button>
-                <span id="step-counter" class="text-sm font-medium text-zinc-500">1 / 6</span>
+                <span id="step-counter" class="text-sm font-medium text-zinc-500">1 / {{ count($steps) }}</span>
                 <x-button type="button" id="next-btn" class="flex-1 sm:flex-none sm:px-8">
                     <span data-next-label>Continuar</span>
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -326,6 +412,7 @@
             'documentos' => 4,
             'selfie_file' => 5,
             'veracity_declaration_accepted' => 6, 'privacy_policy_accepted' => 6,
+            'contract_signature' => 7, 'contract_signer_name' => 7, 'contract_accepted' => 7,
         ];
 
         $serverErrorSteps = [];

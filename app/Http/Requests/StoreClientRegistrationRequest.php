@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\UploadBatchMax;
 use App\Rules\ValidCpf;
+use App\Rules\ValidSignatureData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,7 @@ class StoreClientRegistrationRequest extends FormRequest
 
     /**
      * Normaliza o CPF (apenas dígitos) antes de validar para que a regra de
-     * unicidade compare o mesmo formato armazenado no banco.
+     * formato compare sempre o mesmo padrão (11122233344).
      */
     protected function prepareForValidation(): void
     {
@@ -57,7 +58,7 @@ class StoreClientRegistrationRequest extends FormRequest
 
         return [
             'full_name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\.\'\-]+$/u'],
-            'cpf' => ['required', new ValidCpf, Rule::unique('client_registrations', 'cpf')],
+            'cpf' => ['required', new ValidCpf],
             'birth_date' => ['required', 'date', 'before_or_equal:'.now()->subYears(18)->startOfDay()->format('Y-m-d')],
             'phone' => ['required', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
             'whatsapp' => ['required', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
@@ -78,6 +79,10 @@ class StoreClientRegistrationRequest extends FormRequest
 
             'veracity_declaration_accepted' => ['required', 'accepted'],
             'privacy_policy_accepted' => ['required', 'accepted'],
+
+            'contract_signature' => ['required', new ValidSignatureData],
+            'contract_signer_name' => ['required', 'string', 'max:255', 'same:full_name'],
+            'contract_accepted' => ['required', 'accepted'],
         ];
     }
 
@@ -93,7 +98,6 @@ class StoreClientRegistrationRequest extends FormRequest
             'full_name.regex' => 'O nome completo contém caracteres inválidos.',
             'cpf.required' => 'Informe o CPF.',
             'cpf.cpf' => 'Informe um CPF válido.',
-            'cpf.unique' => 'Já existe um cadastro para este CPF.',
             'birth_date.required' => 'Informe a data de nascimento.',
             'birth_date.date' => 'Informe uma data de nascimento válida.',
             'birth_date.before_or_equal' => 'É necessário ter pelo menos 18 anos para se cadastrar.',
@@ -152,6 +156,12 @@ class StoreClientRegistrationRequest extends FormRequest
             'veracity_declaration_accepted.accepted' => 'Você deve aceitar a declaração de veracidade.',
             'privacy_policy_accepted.required' => 'Você deve aceitar a Política de Privacidade.',
             'privacy_policy_accepted.accepted' => 'Você deve aceitar a Política de Privacidade.',
+
+            'contract_signature.required' => 'Desenhe sua assinatura antes de concluir o cadastro.',
+            'contract_signer_name.required' => 'Informe o nome do signatário.',
+            'contract_signer_name.same' => 'O nome do signatário deve ser igual ao informado no cadastro.',
+            'contract_accepted.required' => 'Você deve aceitar os termos do contrato.',
+            'contract_accepted.accepted' => 'Você deve aceitar os termos do contrato.',
         ];
     }
 }

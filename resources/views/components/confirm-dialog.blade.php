@@ -13,11 +13,11 @@
 @php
     $tones = [
         'danger' => [
-            'chip' => 'bg-red-50 text-red-600 ring-red-100',
+            'chip' => 'bg-red-500/15 text-red-400 ring-red-500/30',
             'button' => 'btn-danger',
         ],
         'primary' => [
-            'chip' => 'bg-indigo-50 text-indigo-600 ring-indigo-100',
+            'chip' => 'bg-brand/15 text-brand ring-brand/30',
             'button' => 'btn-primary',
         ],
     ];

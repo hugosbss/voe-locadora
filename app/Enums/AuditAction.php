@@ -21,6 +21,9 @@ enum AuditAction: string
     case TwoFactorDisabled = 'two_factor_disabled';
     case TwoFactorRecoveryUsed = 'two_factor_recovery_used';
     case ConsentRecorded = 'consent_recorded';
+    case ViewContract = 'view_contract';
+    case UserCreated = 'user_created';
+    case PasswordReset = 'password_reset';
 
     public function label(): string
     {
@@ -36,6 +39,9 @@ enum AuditAction: string
             self::TwoFactorDisabled => 'Desativação da verificação em duas etapas',
             self::TwoFactorRecoveryUsed => 'Uso de código de recuperação',
             self::ConsentRecorded => 'Consentimento registrado',
+            self::ViewContract => 'Visualização de contrato assinado',
+            self::UserCreated => 'Criação de usuário administrativo',
+            self::PasswordReset => 'Redefinição de senha',
         };
     }
 }

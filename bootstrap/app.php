@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\ThrottleCadastroSubmissions;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Segurança cabeçalhos primeiro: assim também cobrem respostas
         // geradas por middlewares posteriores (ex.: 429 do throttle).
         $middleware->prependToGroup('web', SecurityHeaders::class);
+
+        $middleware->alias([
+            'cadastro-throttle' => ThrottleCadastroSubmissions::class,
+        ]);
 
         $middleware->web(append: [ForceHttps::class]);
 

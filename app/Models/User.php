@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AdminRole;
+use App\Mail\AdminResetPasswordMail;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Mail;
 
 #[Fillable(['name', 'email', 'password', 'role', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_enabled_at'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
@@ -42,5 +44,13 @@ class User extends Authenticatable
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_enabled_at !== null && $this->two_factor_secret !== null;
+    }
+
+    /**
+     * Envio do link de recuperação de senha com a identidade visual do VCA.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        Mail::to($this)->send(new AdminResetPasswordMail($this, $token));
     }
 }

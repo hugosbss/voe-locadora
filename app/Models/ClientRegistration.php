@@ -60,7 +60,18 @@ class ClientRegistration extends Model
             'veracity_declaration_accepted_at' => 'datetime',
             'privacy_policy_accepted' => 'boolean',
             'privacy_policy_accepted_at' => 'datetime',
+            'contract_signed' => 'boolean',
+            'contract_signed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * As URLs administrativas usam o UUID (público e imprevisível) em vez do
+     * id numérico interno. O id sequencial permanece apenas no banco.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 
     public function maskedCpf(): string
@@ -118,5 +129,39 @@ class ClientRegistration extends Model
     public function storageDirectory(): string
     {
         return 'cadastros/'.$this->uuid;
+    }
+
+    /**
+     * Diretório privado do contrato assinado deste cadastro.
+     */
+    public function contractStorageDirectory(): string
+    {
+        return 'contracts/signed/'.$this->uuid;
+    }
+
+    /**
+     * Confirma que um arquivo de contrato (PDF assinado ou assinatura em
+     * PNG) pertence a ESTE cadastro. Caminhos nunca são aceitos do cliente:
+     * o diretório esperado é sempre `contracts/signed/{uuid deste registro}/`.
+     */
+    public function ownsStoredContractFile(string $path): bool
+    {
+        if (! $this->uuid || ! is_string($path) || $path === '') {
+            return false;
+        }
+
+        $expected = $this->contractStorageDirectory().'/';
+
+        return Str::startsWith($path, $expected);
+    }
+
+    /**
+     * Indica se este cadastro possui contrato assinado registrado.
+     */
+    public function hasSignedContract(): bool
+    {
+        return $this->contract_signed === true
+            && $this->contract_signed_pdf_path !== null
+            && $this->contract_signature_path !== null;
     }
 }

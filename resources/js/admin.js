@@ -18,20 +18,6 @@ export const initAdmin = (root = document) => {
         }, redirectAfter);
     }
 
-    // Filtro por status (envia ao trocar a opção)
-    const statusFilter = root.getElementById('status-filter');
-    if (statusFilter) {
-        statusFilter.addEventListener('change', () => {
-            const url = new URL(window.location.href);
-            if (statusFilter.value) {
-                url.searchParams.set('status', statusFilter.value);
-            } else {
-                url.searchParams.delete('status');
-            }
-            window.location.href = url.toString();
-        });
-    }
-
     // Alteração de status: confirmação via dialog quando o status é "reprovado"
     root.querySelectorAll('#status-form').forEach((form) => {
         const select = form.querySelector('select[name="status"]');

@@ -12,25 +12,31 @@ class UploadSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
-    private array $base = [
-        'full_name' => 'João Testador',
-        'cpf' => '529.982.247-25',
-        'birth_date' => '1985-04-02',
-        'phone' => '(11) 91234-5678',
-        'whatsapp' => '(11) 91234-5678',
-        'email' => 'joao@example.com',
-        'cep' => '01310-100',
-        'address' => 'Avenida Paulista',
-        'address_number' => '100',
-        'neighborhood' => 'Bela Vista',
-        'city' => 'São Paulo',
-        'state' => 'SP',
-        'cnh_number' => '12345678901',
-        'cnh_category' => 'B',
-        'cnh_expiry_date' => '2030-01-01',
-        'veracity_declaration_accepted' => '1',
-        'privacy_policy_accepted' => '1',
-    ];
+    private function baseData(): array
+    {
+        return [
+            'full_name' => 'João Testador',
+            'cpf' => '529.982.247-25',
+            'birth_date' => '1985-04-02',
+            'phone' => '(11) 91234-5678',
+            'whatsapp' => '(11) 91234-5678',
+            'email' => 'joao@example.com',
+            'cep' => '01310-100',
+            'address' => 'Avenida Paulista',
+            'address_number' => '100',
+            'neighborhood' => 'Bela Vista',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'cnh_number' => '12345678901',
+            'cnh_category' => 'B',
+            'cnh_expiry_date' => '2030-01-01',
+            'veracity_declaration_accepted' => '1',
+            'privacy_policy_accepted' => '1',
+            'contract_signature' => $this->signatureDataUrl(),
+            'contract_signer_name' => 'João Testador',
+            'contract_accepted' => '1',
+        ];
+    }
 
     private function files(): array
     {
@@ -50,7 +56,7 @@ class UploadSecurityTest extends TestCase
         file_put_contents($textFile, 'Não sou uma imagem.');
 
         $payload = [
-            ...$this->base,
+            ...$this->baseData(),
             ...$this->files(),
             'cnh_front_file' => new UploadedFile($textFile, 'cnh-front.jpg', 'text/plain', null, true),
         ];
@@ -64,7 +70,7 @@ class UploadSecurityTest extends TestCase
     public function test_rejects_oversized_dimensions(): void
     {
         $this->post('/cadastro', [
-            ...$this->base,
+            ...$this->baseData(),
             ...$this->files(),
             'cnh_front_file' => UploadedFile::fake()->image('big.jpg', 9000, 100),
         ])->assertSessionHasErrors('cnh_front_file');
@@ -73,7 +79,7 @@ class UploadSecurityTest extends TestCase
     public function test_rejects_tiny_dimensions(): void
     {
         $this->post('/cadastro', [
-            ...$this->base,
+            ...$this->baseData(),
             ...$this->files(),
             'cnh_front_file' => UploadedFile::fake()->image('small.jpg', 100, 100),
         ])->assertSessionHasErrors('cnh_front_file');
@@ -82,9 +88,10 @@ class UploadSecurityTest extends TestCase
     public function test_stored_document_is_normalized_to_jpeg_with_server_generated_path(): void
     {
         Storage::fake('local');
+        $this->seedContractTemplate();
 
         $this->post('/cadastro', [
-            ...$this->base,
+            ...$this->baseData(),
             ...$this->files(),
         ])->assertRedirect();
 
@@ -100,15 +107,67 @@ class UploadSecurityTest extends TestCase
         $this->assertSame('image/jpeg', $finfo->buffer($bytes));
     }
 
-    public function test_duplicate_cpf_is_rejected(): void
+    public function test_duplicate_cpf_is_accepted_and_registrations_are_independent(): void
     {
         Storage::fake('local');
+        $this->seedContractTemplate();
 
         ClientRegistration::factory()->create(['cpf' => '52998224725']);
 
         $this->post('/cadastro', [
-            ...$this->base,
+            ...$this->baseData(),
             ...$this->files(),
-        ])->assertSessionHasErrors('cpf');
+        ])->assertRedirect();
+
+        $this->assertDatabaseCount('client_registrations', 2);
+
+        $first = ClientRegistration::orderBy('id')->first();
+        $second = ClientRegistration::orderByDesc('id')->first();
+
+        $this->assertSame('52998224725', $second->cpf);
+        $this->assertNotSame($first->uuid, $second->uuid);
+        $this->assertMatchesRegularExpression(
+            '#^contracts/signed/[0-9a-f-]{36}/contrato-assinado\.pdf$#',
+            $second->contract_signed_pdf_path
+        );
+    }
+
+    /**
+     * Prepara o disco privado fake com o modelo do contrato (sintético,
+     * 12 páginas A4 — mesmo que o usado nos testes de contrato).
+     */
+    private function seedContractTemplate(): void
+    {
+        $pdf = new \FPDF('P', 'pt', [595.276, 841.89]);
+
+        for ($page = 1; $page <= 12; $page++) {
+            $pdf->AddPage();
+            $pdf->SetFont('Helvetica', '', 12);
+            $pdf->Text(40, 40, 'Contrato sintetico para testes — pagina '.$page);
+        }
+
+        Storage::disk('local')->put(config('contracts.template_path'), $pdf->Output('S'));
+    }
+
+    /**
+     * Gera um payload PNG de assinatura desenhada (traço escuro em fundo
+     * branco), no mesmo formato enviado pelo canvas do navegador.
+     */
+    private function signatureDataUrl(): string
+    {
+        $image = imagecreatetruecolor(520, 140);
+        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
+
+        $ink = imagecolorallocate($image, 15, 15, 15);
+        imageline($image, 40, 110, 480, 70, $ink);
+        imageline($image, 60, 95, 470, 60, $ink);
+        imageline($image, 80, 85, 450, 50, $ink);
+
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+        imagedestroy($image);
+
+        return 'data:image/png;base64,'.base64_encode($png);
     }
 }

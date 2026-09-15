@@ -56,4 +56,22 @@ class AdminAuthTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_admin_login_redirects_to_intended_admin_page(): void
+    {
+        User::factory()->create([
+            'email' => 'admin@locadora.com.br',
+            'password' => Hash::make('secret-password'),
+        ]);
+
+        $this->get(route('admin.registrations.index'))
+            ->assertRedirect(route('admin.login'));
+
+        $this->post(route('admin.login.attempt'), [
+            'email' => 'admin@locadora.com.br',
+            'password' => 'secret-password',
+        ])->assertRedirect(route('admin.registrations.index'));
+
+        $this->assertAuthenticated();
+    }
 }

@@ -127,6 +127,57 @@
                 <p class="mt-3 text-sm text-zinc-400">
                     {{ $registration->facial_status->label() }}.
                 </p>            </div>
+
+            <div class="card p-5">
+                <h2 class="section-title mb-3">Contrato</h2>
+
+                @if ($registration->hasSignedContract())
+                    <p class="mb-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
+                        Contrato assinado
+                    </p>
+
+                    <dl class="mt-4 grid grid-cols-1 gap-3 text-sm">
+                        @include('components.data-row', ['label' => 'Signatário', 'value' => $registration->contract_signer_name])
+                        @include('components.data-row', ['label' => 'Versão', 'value' => $registration->contract_version])
+                        @include('components.data-row', [
+                            'label' => 'Data/hora',
+                            'value' => $registration->contract_signed_at?->timezone('America/Sao_Paulo')->format('d/m/Y H:i:s'),
+                        ])
+                    </dl>
+
+                    @if ($registration->contract_signature_path)
+                        <img
+                            src="{{ route('admin.registrations.contract.signature', $registration) }}"
+                            alt="Assinatura do cliente"
+                            loading="lazy"
+                            class="mt-4 h-24 w-full rounded-lg object-contain ring-1 ring-line-dark">
+                    @endif
+
+                    <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <a
+                            href="{{ route('admin.registrations.contract', $registration) }}"
+                            target="_blank"
+                            rel="noopener"
+                            class="btn btn-secondary w-full">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                            Visualizar contrato assinado
+                        </a>
+                        <a
+                            href="{{ route('admin.registrations.contract.download', $registration) }}"
+                            class="btn btn-primary w-full">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                            Baixar contrato
+                        </a>
+                    </div>
+                @else
+                    <p class="inline-flex items-center gap-1.5 rounded-full bg-surface-800 px-2.5 py-1 text-xs font-semibold text-zinc-400 ring-1 ring-inset ring-line-dark">
+                        Contrato não assinado
+                    </p>
+                    <p class="mt-3 text-sm text-zinc-400">
+                        Este cadastro foi enviado sem contrato digital assinado.
+                    </p>
+                @endif
+            </div>
         </aside>
     </div>
 

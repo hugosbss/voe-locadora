@@ -36,7 +36,67 @@ class ClientRegistrationTest extends TestCase
         'cnh_expiry_date' => '2030-01-01',
         'veracity_declaration_accepted' => '1',
         'privacy_policy_accepted' => '1',
+        'contract_signer_name' => 'Maria da Silva Souza',
+        'contract_accepted' => '1',
     ];
+
+    /**
+     * Prepara o disco privado fake com o modelo do contrato. O template
+     * oficial não está versionado; os testes usam um PDF sintético de
+     * 12 páginas A4 (mesma estrutura) para validar o fluxo.
+     */
+    private function seedContractTemplate(): void
+    {
+        Storage::fake('local');
+
+        $pdf = new \FPDF('P', 'pt', [595.276, 841.89]);
+
+        for ($page = 1; $page <= 12; $page++) {
+            $pdf->AddPage();
+            $pdf->SetFont('Helvetica', '', 12);
+            $pdf->Text(40, 40, 'Contrato sintetico para testes — pagina '.$page);
+        }
+
+        Storage::disk('local')->put(config('contracts.template_path'), $pdf->Output('S'));
+    }
+
+    /**
+     * Gera um payload PNG válido desenhado (traço escuro em fundo branco).
+     */
+    private function signatureDataUrl(): string
+    {
+        $image = imagecreatetruecolor(520, 140);
+        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
+
+        $ink = imagecolorallocate($image, 15, 15, 15);
+        imageline($image, 40, 110, 480, 70, $ink);
+        imageline($image, 60, 95, 470, 60, $ink);
+        imageline($image, 80, 85, 450, 50, $ink);
+
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+        imagedestroy($image);
+
+        return 'data:image/png;base64,'.base64_encode($png);
+    }
+
+    /**
+     * Payload completo de um envio válido (dados + arquivos + assinatura).
+     *
+     * @return array<string, mixed>
+     */
+    private function validPayload(bool $withSignature = true): array
+    {
+        return [
+            ...$this->baseData,
+            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
+            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
+            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
+            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
+            'contract_signature' => $withSignature ? $this->signatureDataUrl() : '',
+        ];
+    }
 
     public function test_public_form_page_renders(): void
     {
@@ -44,7 +104,11 @@ class ClientRegistrationTest extends TestCase
             ->assertOk()
             ->assertSee('Cadastro de Cliente')
             ->assertSee('Dados pessoais')
-            ->assertSee('Enviar cadastro');
+            ->assertSee('Enviar cadastro')
+            ->assertSee('Contrato e assinatura')
+            ->assertSee('id="signature-canvas"', false)
+            ->assertSee('Sua assinatura')
+            ->assertSee(route('client-registrations.contract'));
     }
 
     public function test_public_pages_use_vca_brand_and_have_no_protected_badge(): void
@@ -75,15 +139,9 @@ class ClientRegistrationTest extends TestCase
 
     public function test_client_can_submit_registration_with_documents(): void
     {
-        Storage::fake('local');
+        $this->seedContractTemplate();
 
-        $response = $this->post('/cadastro', [
-            ...$this->baseData,
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-        ]);
+        $response = $this->post('/cadastro', $this->validPayload());
 
         $response
             ->assertRedirect(route('client-registrations.success'))
@@ -95,6 +153,9 @@ class ClientRegistrationTest extends TestCase
             'facial_status' => 'pending',
             'veracity_declaration_accepted' => true,
             'privacy_policy_accepted' => true,
+            'contract_signed' => true,
+            'contract_signer_name' => 'Maria da Silva Souza',
+            'contract_signer_ip' => '127.0.0.1',
         ]);
 
         $registration = ClientRegistration::query()->firstOrFail();
@@ -106,17 +167,17 @@ class ClientRegistrationTest extends TestCase
 
         Storage::disk('local')->assertExists($registration->cnh_front_path);
         Storage::disk('local')->assertExists($registration->selfie_path);
+        Storage::disk('local')->assertExists($registration->contract_signature_path);
+        Storage::disk('local')->assertExists($registration->contract_signed_pdf_path);
     }
 
     public function test_registration_rejects_invalid_cpf(): void
     {
+        $this->seedContractTemplate();
+
         $response = $this->post('/cadastro', [
-            ...$this->baseData,
+            ...$this->validPayload(),
             'cpf' => '123.456.789-00',
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
         ]);
 
         $response
@@ -128,13 +189,15 @@ class ClientRegistrationTest extends TestCase
 
     public function test_registration_requires_documents_and_acceptances(): void
     {
+        $payload = $this->validPayload();
+
         unset(
-            $this->baseData['cnh_front_file'],
-            $this->baseData['veracity_declaration_accepted'],
-            $this->baseData['privacy_policy_accepted'],
+            $payload['cnh_front_file'],
+            $payload['veracity_declaration_accepted'],
+            $payload['privacy_policy_accepted'],
         );
 
-        $response = $this->post('/cadastro', $this->baseData);
+        $response = $this->post('/cadastro', $payload);
 
         $response->assertSessionHasErrors([
             'cnh_front_file',
@@ -148,12 +211,8 @@ class ClientRegistrationTest extends TestCase
     public function test_minors_are_not_accepted(): void
     {
         $data = [
-            ...$this->baseData,
+            ...$this->validPayload(),
             'birth_date' => now()->subYears(17)->format('Y-m-d'),
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
         ];
 
         $this->post('/cadastro', $data)
@@ -164,15 +223,9 @@ class ClientRegistrationTest extends TestCase
 
     public function test_documents_are_stored_privately_and_not_publicly_served(): void
     {
-        Storage::fake('local');
+        $this->seedContractTemplate();
 
-        $this->post('/cadastro', [
-            ...$this->baseData,
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-        ]);
+        $this->post('/cadastro', $this->validPayload());
 
         $registration = ClientRegistration::query()->firstOrFail();
 
@@ -193,17 +246,12 @@ class ClientRegistrationTest extends TestCase
     public function test_admins_are_notified_by_email_when_registration_is_created(): void
     {
         Mail::fake();
-        Storage::fake('local');
+        $this->seedContractTemplate();
 
         User::factory()->count(2)->create();
 
-        $this->post('/cadastro', [
-            ...$this->baseData,
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-        ])->assertRedirect(route('client-registrations.success'));
+        $this->post('/cadastro', $this->validPayload())
+            ->assertRedirect(route('client-registrations.success'));
 
         Mail::assertSent(NewRegistrationMail::class, 2);
 
@@ -212,7 +260,7 @@ class ClientRegistrationTest extends TestCase
 
     public function test_mail_failure_does_not_lose_the_registration(): void
     {
-        Storage::fake('local');
+        $this->seedContractTemplate();
 
         $this->mock(NewRegistrationNotifier::class, function (MockInterface $mock): void {
             $mock->shouldReceive('notifyAdmins')
@@ -220,13 +268,7 @@ class ClientRegistrationTest extends TestCase
                 ->andThrow(new RuntimeException('SMTP indisponível'));
         });
 
-        $response = $this->post('/cadastro', [
-            ...$this->baseData,
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-        ]);
+        $response = $this->post('/cadastro', $this->validPayload());
 
         $response->assertRedirect(route('client-registrations.success'));
         $this->assertDatabaseCount('client_registrations', 1);

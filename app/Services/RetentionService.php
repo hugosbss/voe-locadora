@@ -96,5 +96,6 @@ class RetentionService
         }
 
         app(DocumentStorageService::class)->deleteRegistrationDirectory($registration->uuid);
+        app(ContractStorageService::class)->deleteRegistrationDirectory($registration->uuid);
     }
 }

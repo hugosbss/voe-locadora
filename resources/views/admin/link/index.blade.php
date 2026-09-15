@@ -1,17 +1,17 @@
 @extends('layouts.admin')
 
-@section('title', 'Link de cadastro &middot; Painel da Locadora')
+@section('title', 'Link de cadastro')
 
 @section('content')
     <div class="mx-auto w-full max-w-2xl">
         <div class="card p-6 sm:p-8">
             <div class="flex items-start gap-4">
-                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-100">
+                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/15 text-brand ring-1 ring-inset ring-brand/30">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
                 </span>
                 <div class="min-w-0">
-                    <h1 class="text-xl font-semibold tracking-tight text-slate-900">Link de cadastro</h1>
-                    <p class="mt-1 text-sm text-slate-500">
+                    <h1 class="text-xl font-semibold tracking-tight text-white">Link de cadastro</h1>
+                    <p class="mt-1 text-sm text-zinc-400">
                         Copie e envie ao cliente.
                     </p>
                 </div>
@@ -22,7 +22,7 @@
             <div class="mt-6">
                 <p class="form-label mb-1.5">Link público do cadastro</p>
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <p class="min-w-0 flex-1 rounded-lg bg-slate-50 px-3.5 py-3 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-200 break-all sm:py-2.5">
+                    <p class="min-w-0 flex-1 rounded-lg bg-surface-850 px-3.5 py-3 text-sm font-medium text-gray-200 ring-1 ring-inset ring-line-dark break-all sm:py-2.5">
                         {{ $publicUrl }}
                     </p>
                     <div class="flex shrink-0 gap-2">
@@ -37,9 +37,6 @@
                         </x-button>
                     </div>
                 </div>
-                <p class="mt-3 text-xs text-slate-500">
-                    O link é público e não dá acesso ao painel.
-                </p>
             </div>
         </div>
     </div>

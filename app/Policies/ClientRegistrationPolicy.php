@@ -49,6 +49,18 @@ class ClientRegistrationPolicy
         return $registration->documentPath($document) !== null;
     }
 
+    /**
+     * Acesso ao contrato assinado (PDF e assinatura) de um cadastro.
+     */
+    public function viewContract(User $user, ClientRegistration $registration): bool
+    {
+        if (! $this->hasAdminRole($user)) {
+            return false;
+        }
+
+        return $registration->hasSignedContract();
+    }
+
     public function updateStatus(User $user, ClientRegistration $registration): bool
     {
         return $this->hasAdminRole($user);

@@ -87,8 +87,7 @@ class AdminEntryPointTest extends TestCase
             ->assertSee('Copie e envie ao cliente.')
             ->assertSee($publicUrl)
             ->assertSee('data-js-copy')
-            ->assertSee('data-js-share')
-            ->assertSee('não dá acesso ao painel', false);
+            ->assertSee('data-js-share');
     }
 
     public function test_side_nav_marks_current_section_on_registrations(): void

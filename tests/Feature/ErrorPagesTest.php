@@ -51,17 +51,21 @@ class ErrorPagesTest extends TestCase
             ->assertStatus(404)
             ->getContent();
 
-        $this->assertStringContainsString('Painel da Locadora', $html);
-        $this->assertStringNotContainsString('Cadastro de Clientes', $html);
-        $this->assertStringNotContainsString('Locadora</span>', $html);
+        $this->assertStringContainsString('admin-body', $html);
+        $this->assertStringContainsString('VCA', $html);
+        $this->assertStringNotContainsString('Formulário de cadastro', $html);
+        $this->assertStringNotContainsString('Painel da Locadora', $html);
     }
 
-    public function test_public_404_does_not_expose_admin_brand(): void
+    public function test_public_404_does_not_expose_admin_brand_and_has_no_protected_badge(): void
     {
         $html = $this->get('/pagina-que-nao-existe')->assertStatus(404)->getContent();
 
+        $this->assertStringContainsString('VCA', $html);
+        $this->assertStringContainsString('Formulário de cadastro', $html);
+        $this->assertStringContainsString('app-body', $html);
         $this->assertStringNotContainsString('Painel da Locadora', $html);
-        $this->assertStringContainsString('Cadastro de Clientes', $html);
+        $this->assertStringNotContainsString('Dados protegidos', $html);
     }
 
     public function test_419_surfaces_session_expiry_copy_and_reload_action(): void

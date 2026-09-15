@@ -7,9 +7,11 @@ use App\Enums\RegistrationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ClientRegistration;
 use App\Services\AuditService;
+use App\Services\ContractStorageService;
 use App\Services\DocumentStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +20,7 @@ class RegistrationController extends Controller
 {
     public function __construct(
         private readonly DocumentStorageService $documentStorage,
+        private readonly ContractStorageService $contractStorage,
         private readonly AuditService $audit,
     ) {}
 
@@ -39,17 +42,31 @@ class RegistrationController extends Controller
         }
 
         $statusFilter = $request->query('status');
+        $status = is_string($statusFilter) ? RegistrationStatus::tryFrom($statusFilter) : null;
+
+        $dateFrom = $request->query('date_from');
+        if (! is_string($dateFrom) || ! Carbon::hasFormat($dateFrom, 'Y-m-d')) {
+            $dateFrom = null;
+        }
+
+        $name = $request->query('name');
+        $name = is_string($name) ? trim(mb_substr($name, 0, 100)) : '';
 
         $registrations = ClientRegistration::query()
-            ->when(RegistrationStatus::tryFrom($statusFilter), fn ($query, $status) => $query->where('status', $status))
+            ->when($status, fn ($query, $status) => $query->where('status', $status))
+            ->when($dateFrom, fn ($query, $dateFrom) => $query->whereDate('created_at', '>=', $dateFrom))
+            ->when($name !== '', fn ($query) => $query->where('full_name', 'like', '%'.$name.'%'))
             ->latest()
-            ->paginate(20)
+            ->paginate(10)
             ->withQueryString();
 
         return view('admin.registrations.index', [
             'registrations' => $registrations,
             'statuses' => RegistrationStatus::cases(),
-            'currentStatus' => $statusFilter,
+            'currentStatus' => is_string($statusFilter) ? $statusFilter : null,
+            'currentDateFrom' => $dateFrom,
+            'currentName' => $name,
+            'hasActiveFilters' => $status !== null || $dateFrom !== null || $name !== '',
         ]);
     }
 
@@ -147,6 +164,89 @@ class RegistrationController extends Controller
         $response = $this->documentStorage->response($path);
 
         // Impede cache compartilhado e navegação indevida.
+        $response->headers->set('Cache-Control', 'private, no-store');
+
+        return $response;
+    }
+
+    /**
+     * Serve o contrato assinado (visualização inline), somente para
+     * usuários autorizados sobre o cadastro específico.
+     */
+    public function contract(ClientRegistration $registration): Response
+    {
+        $this->authorize('viewContract', $registration);
+
+        $path = $registration->contract_signed_pdf_path;
+
+        if (! is_string($path) || ! $registration->ownsStoredContractFile($path) || ! $this->contractStorage->isSafeSignedPath($path)) {
+            abort(404);
+        }
+
+        $this->audit->log(
+            AuditAction::ViewContract,
+            ['registration_uuid' => $registration->uuid, 'mode' => 'view'],
+            $registration,
+        );
+
+        $response = $this->contractStorage->response($path, null, ['Content-Disposition' => 'inline']);
+
+        $response->headers->set('Cache-Control', 'private, no-store');
+
+        return $response;
+    }
+
+    /**
+     * Download do contrato assinado (autorização + auditoria).
+     */
+    public function contractDownload(ClientRegistration $registration): Response
+    {
+        $this->authorize('viewContract', $registration);
+
+        $path = $registration->contract_signed_pdf_path;
+
+        if (! is_string($path) || ! $registration->ownsStoredContractFile($path) || ! $this->contractStorage->isSafeSignedPath($path)) {
+            abort(404);
+        }
+
+        $this->audit->log(
+            AuditAction::ViewContract,
+            ['registration_uuid' => $registration->uuid, 'mode' => 'download'],
+            $registration,
+        );
+
+        $response = $this->contractStorage->response(
+            $path,
+            'contrato-assinado.pdf',
+            ['Content-Disposition' => 'attachment; filename="contrato-assinado.pdf"'],
+        );
+
+        $response->headers->set('Cache-Control', 'private, no-store');
+
+        return $response;
+    }
+
+    /**
+     * Serve a imagem da assinatura (PNG) do contrato assinado.
+     */
+    public function contractSignature(ClientRegistration $registration): Response
+    {
+        $this->authorize('viewContract', $registration);
+
+        $path = $registration->contract_signature_path;
+
+        if (! is_string($path) || ! $registration->ownsStoredContractFile($path) || ! $this->contractStorage->isSafeSignedPath($path)) {
+            abort(404);
+        }
+
+        $this->audit->log(
+            AuditAction::ViewContract,
+            ['registration_uuid' => $registration->uuid, 'mode' => 'signature'],
+            $registration,
+        );
+
+        $response = $this->contractStorage->response($path);
+
         $response->headers->set('Cache-Control', 'private, no-store');
 
         return $response;
