@@ -1,136 +1,89 @@
-# Relatório de Atualização VCA
+# Relatório de Atualização — VCA Cadastro
 
-Registro das entregas realizadas na branch `vca`, com foco em correções de UI,
-documentação e identidade visual.
+Atualização pré-deploy da aplicação de cadastro de clientes da VCA (branch `vca`).
 
----
+## 1. O que foi feito
 
-## 1. Correção: toast de atualização de status
+### 1.1 Contrato assinado (entrega final)
 
-**Commit:** `9f4936a` — `fix(vca): consumir toast de atualização de status`
+- **Assinatura por canvas** na etapa final do formulário público, sem prévia visual da assinatura (requisito: PDF oficial + assinatura + aceite → PDF final assinado).
+- **Aceite obrigatório** dos termos antes do envio.
+- **Nome do signatário espelhado** do `full_name` (mesma regra validada no backend: `same:full_name`).
+- **Geração do PDF final assinado** (FPDF/FPDI) com assinatura embutida, armazenado em área privada por UUID.
+- **Preservação do PDF oficial** modelado em `config/contracts.php`, servido de forma controlada (rota `/cadastro/contrato`), nunca pelo webroot público.
+- **Rotas administrativas do contrato** por UUID: visualização inline, download do PDF assinado e visualização da assinatura (PNG), sempre com autorização por policy, ownership do arquivo (`ownsStoredContractFile`) e auditoria de acesso.
+- **Armazenamento privado** de todos os arquivos (documentos + contrato) em `storage/app/private`, isolados por UUID.
+- **Retenção**: o diretório do contrato também é removido pelo serviço de retenção.
 
-### Sintoma
+### 1.2 CPF duplicado
 
-Depois de alterar o status de um cadastro, o toast de confirmação ("Status atualizado")
-reaparecia a cada nova renderização da lista — ao aplicar filtro de status, trocar de
-página ou recarregar o navegador. O indicador `status_updated=1` ficava preso na sessão.
+- Removida a validação `unique` de CPF no `StoreClientRegistrationRequest`.
+- Migration aditiva `remove_unique_cpf_on_client_registrations` que remove apenas a constraint (não destrutiva — registros preservados).
+- UUID independente e imprevisível para cada cadastro; arquivos privados e PDFs de contrato independentes por UUID.
+- Testado no navegador (dois cadastros completos com o mesmo CPF) e por teste funcional no admin (ambos listados, UUIDs distintos).
 
-### Causa
+### 1.3 Fechamento administrativo
 
-A flag `status_updated` era gravada na sessão no POST de atualização, mas a leitura
-ocorria no mesmo controller sem nunca ser consumida (removida), deixando o toast
-"eterno".
+- Rotas admin passam a usar `{registration:uuid}` (nunca CPF/nome/e-mail/id na URL).
+- Recuperação de senha admin (link por e-mail com identidade VCA), gestão de usuários e notificações por e-mail aos administradores sobre novos cadastros.
+- Throttling com dois contadores por IP (envios vs. cadastros criados) e throttling da recuperação de senha.
 
-### Correção
+## 2. Arquivos principais alterados
 
-- `App\Http\Controllers\Admin\RegistrationController::index()` passou a consumir a flag
-  **uma única vez**: ao detectar `has('status_updated')`, remonta a URL com os mesmos
-  parâmetros de filtro/paginação e redireciona (PRG), liberando a flag da sessão.
-- O retorno do método tornou-se `View|RedirectResponse` para refletir os dois fluxos.
-- Testes cobrem que o toast aparece exatamente uma vez e não reaparece ao filtrar,
-  paginar ou recarregar.
+- `resources/views/client-registrations/create.blade.php`, `resources/js/client-registration.js` — assinatura em canvas, etapa "Contrato e assinatura", revisão/correção e layout desktop (≥768px).
+- `app/Services/ContractPdfService.php`, `app/Services/ContractStorageService.php`, `app/Rules/ValidSignatureData.php`, `config/contracts.php` — validação (inclusive assinatura vazia/branca) e geração/armazenamento do contrato.
+- `app/Http/Controllers/Public/ClientRegistrationController.php`, `app/Http/Requests/StoreClientRegistrationRequest.php` — fluxo de envio com contrato e CPF sem unique; rota de leitura do modelo; notificação aos admins.
+- `app/Services/ClientRegistrationService.php`, `app/Services/RetentionService.php` — criação transacional do cadastro com contrato e limpeza em falha.
+- `app/Http/Controllers/Admin/RegistrationController.php`, `app/Policies/ClientRegistrationPolicy.php`, `app/Models/ClientRegistration.php` — rotas por UUID, visualização/baixar/assinatura do contrato, ownership e auditoria.
+- `app/Http/Controllers/Admin/PasswordResetLinkController.php`, `NewPasswordController.php`, `UserController.php`, `app/Mail/*`, `app/Services/NewRegistrationNotifier.php`, `resources/views/emails/*`, `resources/views/admin/users/*`, `resources/views/admin/auth/password/*` — recuperação de senha, gestão de usuários e notificações.
+- `app/Http/Middleware/ThrottleCadastroSubmissions.php`, `config/rate.php`, `bootstrap/app.php` — throttling de cadastro e de senha.
+- `tests/Feature/*` — novos/atualizados: `ClientContractTest`, `AdminPasswordResetTest`, `AdminUsersTest`, `AdminRegistrationTest` (+ teste CPF duplicado), `ClientRegistrationTest`, `UploadSecurityTest`, `ThrottleTest`, `ErrorPagesTest`, `AdminAuthTest`, `AdminEntryPointTest`.
+- `resources/css/app.css`, `public/img/logo-vca.jpeg`, `public/images/brand/vca-logo.jpeg`, `config/app.php` — identidade visual VCA e tema do painel.
 
-### Validação
+## 3. Migrations
 
-- Suíte completa: 141 testes / 602 asserts, verde em MySQL.
-- Headless browser: o toast aparece uma única vez e não se repete após navegação.
-- Banco devolvido ao estado original (18 registros de cadastro).
+| Migration | O que faz |
+| --- | --- |
+| `2026_09_13_031259_backfill_uuids_for_client_registrations` | Preenche UUID para registros históricos sem UUID (chunk `whereNull`, aditivo; `down()` vazio). |
+| `2026_09_14_000000_add_contract_columns_to_client_registrations` | Adiciona colunas `contract_*` (nullable/`default false`); `down()` apenas `dropColumn`. |
+| `2026_09_15_021839_remove_unique_cpf_on_client_registrations` | Remove a constraint `client_registrations_cpf_unique` (não remove dados); `down()` recria o unique. |
 
----
+Nenhuma migration usa `DROP DATABASE/TABLE`, `TRUNCATE`, `db:wipe`, `migrate:fresh|refresh` nem remove dados. Não foram executadas em produção.
 
-## 2. Documentação e identidade visual
+## 4. Testes / validações
 
-**Commit:** `9755c98` — `docs(vca): atualizar documentação e identidade visual`
+Executados localmente (22/09/2026, sem alterar `.env`):
 
-### O que foi feito
+- `DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test --compact` → **169 testes / 718 assertions, 100% verde** (inclui fluxos: mobile/desktop, cadastro completo, revisão/correção, assinatura, aceite, CPF inválido, CNH vencida, assinatura vazia/branca rejeitada sem criar registro, CPF duplicado, UUIDs distintos, arquivos privados, PDF assinado, acesso administrativo).
+- `vendor/bin/pint --test` → **passed**.
+- `npm run build` → **✓ built**.
+- `php artisan view:cache` (e `config:cache`) → **OK**.
+- Auditoria headless adicional (Chrome CDP, instância SQLite isolada): fluxo 1→7 em 390/430/640/767/768/820/1024/1280/1440/1920px sem overflow; rejeição de assinatura em branco pelo servidor; dois cadastros com o mesmo CPF concluídos com independência de arquivos/PDFs por UUID.
 
-- **Protótipos migrados para a identidade VCA** (`docs/`): as 10 páginas anteriores
-  (identidade clara/azul da época de mockup) foram reconstruídas no tema escuro oficial
-  e ganharam uma nova página: **`admin-users.html`** (gestão de usuários). Total: **11
-  páginas** — `index`, `form` (6 etapas), `sucesso`, `privacidade`, `admin-login`,
-  `admin-dashboard`, `admin-list` (filtro + tabela + paginação), `admin-detalhe`
-  (endereço, CNH, documentos em lightbox, status e facial), `admin-link`, `admin-users`,
-  `admin-seguranca` (2FA).
-- **Novo design system dos protótipos**: `docs/assets/css/style.css` (tokens da marca,
-  superfícies `#050505`–`#161616`, destaque `#fed106`, tipografia Inter) e
-  `docs/assets/js/main.js` (copiar link, compartilhar, mostrar/ocultar senha, menu mobile).
-- **Logo real** copiada para `docs/assets/img/vca-logo.jpeg` (`public/images/brand/vca-logo.jpeg`).
-- **Revisão do manual** `docs/seguranca-e-operacao.md`:
-  - Corrigidas as variáveis de rate limiting para os nomes reais
-    (`RATE_LIMIT_CADASTRO_MAX_ATTEMPTS`, `RATE_LIMIT_CADASTRO_SUCCESS_MAX_ATTEMPTS`,
-    `RATE_LIMIT_CADASTRO_DECAY_MINUTES`, `RATE_LIMIT_CADASTRO_SUCCESS_DECAY_MINUTES`,
-    `RATE_LIMIT_PASSWORD_RESET`, `RATE_LIMIT_PASSWORD_RESET_DECAY_MINUTES`).
-  - Backup: esclarecido que a criptografia AES-256-CBC usa a própria **`APP_KEY`**
-    (não existe `BACKUP_ENCRYPTION_KEY`); opções `--only`/`--keep`; rotatória de cópias.
-  - Nova seção **Identidade Visual (VCA)** e alinhamento da suíte de testes
-    (141 testes / 602 asserts).
-- **`README.md` atualizado** com o estado real: stack (Laravel 13 `^13.17`, PHP `^8.3`,
-  MySQL, Tailwind 4, Vite), features atuais (dashboard, link de cadastro, usuários,
-  recuperação de senha, notificação por e-mail, toast único), operação (backup, expurgo,
-  migração legado) e referência aos protótipos com identidade VCA.
-- **Limpeza**: removidos `.agents/`, `.claude/` e `opencode.json`. O `.mcp.json` foi
-  **mantido** (intencional).
+## 5. Segurança
 
-### Validação
+- Uploads e contrato em `storage/app/private`; sem exposição pelo webroot.
+- Assinatura validada no servidor (tinta detectada: alpha ≤ 90 e rgb < 660, mínimo 40 px) — PNG sem tinta é rejeitado e nenhum cadastro é criado.
+- Ownership por UUID nos arquivos do contrato (caminhos nunca vêm do cliente).
+- Rotas admin autenticadas + policy `viewContract` + auditoria (`ViewContract`), URLs por UUID (sem CPF/nome/e-mail).
+- Throttle por IP (envios e criações) e na recuperação de senha; CSRF em todos os POSTs.
+- Admin: roles, 2FA, gestão de usuários e auditoria de ações; log de falhas de notificação sem bloquear o cadastro.
 
-- Protótipos validados em headless (Playwright/Chromium) via `file://`:
-  **11/11 páginas OK** — fundo escuro, fonte Inter carregada, logo sem quebra, zero erros
-  de console/página.
-- `php artisan test` verde; `pint` sem pendências nos arquivos tocados.
+## 6. Estado final
 
----
+Validações verdes. Código pronto para a próxima etapa de deploy na Hostinger (o deploy em si não é parte desta tarefa). XAMPP, `.env` e o banco MySQL local permanecem inalterados (18 registros preservados).
 
-## 3. Correção: layout responsivo do formulário público
+## 7. Git
 
-**Commit:** `7f34b8d` — `fix(vca): adaptar cadastro para tablet e desktop`
+- Branch atual: `vca`
+- Remote: `origin` → `https://github.com/hugosbss/voe-locadora.git`
+- Commits criados (sem force, sem rebase, sem alteração de histórico):
+  - `44d334f` — feat(vca): contrato assinado, CPF duplicado e fechamento administrativo
+  - `723486b` — style(vca): identidade visual, ativos de marca e tema da administração
+  - *(este relatório)* — docs(vca): relatório da entrega final e estado pré-deploy
+- Push: `git push origin vca` — confirmação e estado da branch remota registrados na resposta final.
 
-### O que foi feito
+### Pendências
 
-- **Breakpoint `md` (768px)**: o formulário público (`/cadastro`) ganhou layout multi-coluna
-  a partir de 768px. Abaixo disso o layout **mobile existente é preservado** na íntegra.
-- Distribuições aplicadas (somente a partir de 768px):
-  - Etapa 1 (dados pessoais): **3 colunas** — linha 1: Nome / CPF / Nascimento; linha 2:
-    Telefone / WhatsApp / E-mail (ordem de DOM mantida).
-  - Etapa 2 (endereço): grid de **12 colunas** — CEP (4), Rua (6), Número (2), Bairro (5),
-    Cidade (4), Estado (3).
-  - Etapa 3 (CNH): grid de **12 colunas** — Número (5), Categoria (3), Validade (4).
-  - Etapa 4 (documentos): os 3 cards de upload em **3 colunas**.
-  - Etapa 6 (revisão): declaração de veracidade e política de privacidade lado a lado
-    (**2 colunas**).
-- **Largura do container**: header e main passam de `max-w-2xl` para `md:max-w-4xl`
-  (cap de 896px, centralizado) em `resources/views/layouts/public.blade.php`.
-- **Texto da declaração** ajustado para o texto exato exigido:
-  "Declaro que os dados e documentos enviados são verdadeiros." (regra de validação inalterada).
-- **Sem mudanças de comportamento**: nenhuma alteração em controllers, requests, rotas,
-  banco, validações ou JS. A selfie continua **somente câmera** (sem opção de galeria).
-
-### Arquivos alterados
-
-- `resources/views/client-registrations/create.blade.php` — grids responsivos (etapas 1–6)
-  e texto da declaração.
-- `resources/views/layouts/public.blade.php` — container `md:max-w-4xl` no header e no main.
-
-### Validação
-
-- `php artisan test`: **141 testes / 602 asserts verdes**.
-- Headless (Playwright/Chromium) nas larguras **390, 430, 640, 768, 820, 1024, 1280, 1440
-  e 1920px**:
-  - 390/430px → 1 coluna (mobile original); telefone/WhatsApp 2 colunas em 640px preservado.
-  - 768px+ → dados pessoais 3 colunas, endereço/CNH 12 colunas, cards 3 colunas, revisão
-    2 colunas.
-  - **Zero overflow horizontal** em todas as larguras (inclusive com mensagens de erro longas).
-- `npm run build` ok; utilitários `md:grid-cols-*`, `md:col-span-*`, `md:contents` e
-  `md:max-w-4xl` presentes no CSS gerado.
-
----
-
-## Resumo Git
-
-```
-7f34b8d fix(vca): adaptar cadastro para tablet e desktop
-9755c98 docs(vca): atualizar documentação e identidade visual
-9f4936a fix(vca): consumir toast de atualização de status
-dd0bbc2 docs: relatório de atualização VCA (fotos e documentos)
-```
-
-Branch: `vca` · Remote: `origin` (`hugosbss/voe-locadora`)
+- Nenhuma pendência funcional. Ficaram fora dos commits apenas artefatos locais de ferramenta de agente (`boost.json`, `.mcp.json`, `AGENTS.md`, `CLAUDE.md`, `briefing.MD` vazio), preservados no working tree.
+- Deploy na Hostinger (composer, `.env` de produção, migrations, caches) deliberadamente não executado nesta tarefa.
