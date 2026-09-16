@@ -23,7 +23,7 @@
                     @include('components.data-row', ['label' => 'Telefone', 'value' => $registration->phone])
                     @include('components.data-row', ['label' => 'WhatsApp', 'value' => $registration->whatsapp])
                     @include('components.data-row', ['label' => 'E-mail', 'value' => $registration->email])
-                    @include('components.data-row', ['label' => 'Data do cadastro', 'value' => $registration->created_at->format('d/m/Y H:i')])
+                    @include('components.data-row', ['label' => 'Data do cadastro', 'value' => $registration->created_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i')])
                 </dl>
             </div>
 

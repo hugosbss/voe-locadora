@@ -76,7 +76,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-medium text-gray-100">{{ $registration->full_name }}</p>
                                 <p class="truncate text-xs text-zinc-500">
-                                    {{ $registration->maskedCpf() }} &middot; {{ $registration->created_at->format('d/m/Y H:i') }}
+                                    {{ $registration->maskedCpf() }} &middot; {{ $registration->created_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
                                 </p>
                             </div>
                             <div class="flex shrink-0 items-center gap-3">

@@ -67,7 +67,7 @@
                             {{ $registration->maskedCpf() }} &middot; {{ $registration->phone }}
                         </p>
                         <p class="mt-0.5 text-xs text-zinc-600">
-                            Cadastrado em {{ $registration->created_at->format('d/m/Y H:i') }}
+                            Cadastrado em {{ $registration->created_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
                         </p>
                     </div>
                     <div class="flex shrink-0 flex-col items-end gap-2">
@@ -98,7 +98,7 @@
                             <td class="text-zinc-400">{{ $registration->maskedCpf() }}</td>
                             <td class="text-zinc-400 hidden md:table-cell">{{ $registration->phone }}</td>
                             <td class="text-zinc-400 hidden lg:table-cell">
-                                {{ $registration->created_at->format('d/m/Y H:i') }}
+                                {{ $registration->created_at->timezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
                             </td>
                             <td>
                                 @include('components.status-badge', ['status' => $registration->status])
