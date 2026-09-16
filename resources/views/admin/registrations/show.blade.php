@@ -119,14 +119,15 @@
                 </form>
             </div>
 
-            <div class="card p-5">
+            {{-- <div class="card p-5">
                 <h2 class="section-title mb-3">Validação facial</h2>
                 <div class="flex items-center gap-2">
                     @include('components.status-badge', ['status' => $registration->facial_status])
                 </div>
                 <p class="mt-3 text-sm text-zinc-400">
                     {{ $registration->facial_status->label() }}.
-                </p>            </div>
+                </p>            
+            </div> --}}
 
             <div class="card p-5">
                 <h2 class="section-title mb-3">Contrato</h2>

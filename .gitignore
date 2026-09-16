@@ -37,3 +37,12 @@ Thumbs.db
 /storage/logs/*.log
 !/storage/logs/.gitignore
 /bootstrap/cache/*.php
+
+# Arquivos de agentes de código (não vão ao repositório remoto)
+/AGENTS.md
+/AGENTS.local.md
+/CLAUDE.md
+/CLAUDE.local.md
+/.mcp.json
+/boost.json
+/briefing.MD
