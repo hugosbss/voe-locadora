@@ -152,6 +152,8 @@ class ThrottleTest extends TestCase
             'cnh_number' => '12345678901',
             'cnh_category' => 'B',
             'cnh_expiry_date' => '2030-01-01',
+            'start_date' => '2026-09-19',
+            'end_date' => '2026-10-19',
             'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),

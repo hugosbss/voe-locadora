@@ -35,6 +35,8 @@ class ClientContractTest extends TestCase
         'cnh_number' => '99887766554',
         'cnh_category' => 'B',
         'cnh_expiry_date' => '2031-01-01',
+        'start_date' => '2026-09-19',
+        'end_date' => '2026-10-19',
         'veracity_declaration_accepted' => '1',
         'privacy_policy_accepted' => '1',
         'contract_signer_name' => 'Joao Oliveira Santos',
