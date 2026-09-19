@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Vehicle;
+use App\Models\VehicleQuotaConfiguration;
 use App\Rules\UploadBatchMax;
 use App\Rules\ValidCpf;
 use App\Rules\ValidSignatureData;
@@ -56,6 +58,30 @@ class StoreClientRegistrationRequest extends FormRequest
             $fileRules[$field] = $imageRules;
         }
 
+        $availableVehicleIds = Vehicle::query()
+            ->where('active', true)
+            ->with(['quotaConfigurations' => fn ($query) => $query->where('active', true)])
+            ->get()
+            ->filter(fn (Vehicle $vehicle) => $vehicle->quotaConfigurations->some(fn ($configuration) => $configuration->availableCount() > 0))
+            ->pluck('id')
+            ->all();
+
+        $availableQuotaTypeIds = VehicleQuotaConfiguration::query()
+            ->where('active', true)
+            ->with('quotaType')
+            ->get()
+            ->filter(fn (VehicleQuotaConfiguration $configuration) => $configuration->availableCount() > 0)
+            ->pluck('quota_type_id')
+            ->all();
+
+        $vehicleSelectionRules = empty($availableVehicleIds)
+            ? ['nullable', 'integer', 'exists:vehicles,id']
+            : ['required', 'integer', 'exists:vehicles,id', Rule::in($availableVehicleIds)];
+
+        $quotaSelectionRules = empty($availableQuotaTypeIds)
+            ? ['nullable', 'integer', 'exists:quota_types,id']
+            : ['required', 'integer', 'exists:quota_types,id', Rule::in($availableQuotaTypeIds)];
+
         return [
             'full_name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\.\'\-]+$/u'],
             'cpf' => ['required', new ValidCpf],
@@ -75,6 +101,11 @@ class StoreClientRegistrationRequest extends FormRequest
             'cnh_category' => ['required', 'string', 'max:2', Rule::in(config('locations.cnh_categories', []))],
             'cnh_expiry_date' => ['required', 'date', 'after:today'],
 
+            'vehicle_id' => $vehicleSelectionRules,
+            'quota_type_id' => $quotaSelectionRules,
+            'start_date' => ['required', 'date', 'before_or_equal:end_date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+
             ...$fileRules,
 
             'veracity_declaration_accepted' => ['required', 'accepted'],
@@ -83,6 +114,35 @@ class StoreClientRegistrationRequest extends FormRequest
             'contract_signature' => ['required', new ValidSignatureData],
             'contract_signer_name' => ['required', 'string', 'max:255', 'same:full_name'],
             'contract_accepted' => ['required', 'accepted'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $vehicleId = $this->input('vehicle_id');
+                $quotaTypeId = $this->input('quota_type_id');
+
+                if (! is_numeric($vehicleId) || ! is_numeric($quotaTypeId)) {
+                    return;
+                }
+
+                $configuration = VehicleQuotaConfiguration::query()
+                    ->where('vehicle_id', (int) $vehicleId)
+                    ->where('quota_type_id', (int) $quotaTypeId)
+                    ->where('active', true)
+                    ->first();
+
+                if (! $configuration) {
+                    $validator->errors()->add('quota_type_id', 'Esta cota não está disponível para o veículo selecionado.');
+                    return;
+                }
+
+                if ($configuration->availableCount() <= 0) {
+                    $validator->errors()->add('quota_type_id', 'Esta cota não possui disponibilidade no momento.');
+                }
+            },
         ];
     }
 

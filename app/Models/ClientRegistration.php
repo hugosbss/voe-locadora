@@ -23,6 +23,20 @@ class ClientRegistration extends Model
         'cnh_back' => 'Foto da CNH (verso)',
         'proof_of_residence' => 'Comprovante de residência',
         'selfie' => 'Selfie do cliente',
+        'vehicle_pickup' => 'Foto da retirada',
+        'vehicle_delivery' => 'Foto da entrega',
+    ];
+
+    /**
+     * Documentos enviados pelo formulário público de cadastro. As fotos de
+     * retirada/entrega de veículo (em DOCUMENTS) não têm upload no fluxo
+     * público atual.
+     */
+    public const UPLOAD_DOCUMENTS = [
+        'cnh_front' => 'Foto da CNH (frente)',
+        'cnh_back' => 'Foto da CNH (verso)',
+        'proof_of_residence' => 'Comprovante de residência',
+        'selfie' => 'Selfie do cliente',
     ];
 
     /**
@@ -47,6 +61,14 @@ class ClientRegistration extends Model
         'cnh_number',
         'cnh_category',
         'cnh_expiry_date',
+        'vehicle_id',
+        'quota_type_id',
+        'start_date',
+        'end_date',
+        'quota_days',
+        'vehicle_pickup_photo_path',
+        'vehicle_delivery_photo_path',
+        'vehicle_observation',
     ];
 
     protected function casts(): array
@@ -100,11 +122,17 @@ class ClientRegistration extends Model
      */
     public function documentPath(string $document): ?string
     {
-        if (! array_key_exists($document, self::DOCUMENTS) || $this->{$document.'_path'} === null) {
+        if (! array_key_exists($document, self::DOCUMENTS)) {
             return null;
         }
 
-        return $this->{$document.'_path'};
+        $field = match ($document) {
+            'vehicle_pickup' => 'vehicle_pickup_photo_path',
+            'vehicle_delivery' => 'vehicle_delivery_photo_path',
+            default => $document.'_path',
+        };
+
+        return $this->{$field} ?? null;
     }
 
     /**
@@ -163,5 +191,15 @@ class ClientRegistration extends Model
         return $this->contract_signed === true
             && $this->contract_signed_pdf_path !== null
             && $this->contract_signature_path !== null;
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function quotaType()
+    {
+        return $this->belongsTo(QuotaType::class);
     }
 }

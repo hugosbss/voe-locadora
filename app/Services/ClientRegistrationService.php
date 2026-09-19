@@ -6,6 +6,7 @@ use App\Enums\AuditAction;
 use App\Enums\FacialStatus;
 use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
+use App\Models\QuotaType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -49,7 +50,7 @@ class ClientRegistrationService
                 $registration = new ClientRegistration;
                 $registration->uuid = $uuid;
 
-                foreach (ClientRegistration::DOCUMENTS as $document => $label) {
+                foreach (ClientRegistration::UPLOAD_DOCUMENTS as $document => $label) {
                     $file = $data["{$document}_file"] ?? null;
 
                     $registration->{$document.'_path'} = $file
@@ -76,6 +77,19 @@ class ClientRegistrationService
                 );
 
                 $registration->fill($this->mapFormData($data));
+
+                if (! empty($data['vehicle_id']) && ! empty($data['quota_type_id'])) {
+                    $quotaType = QuotaType::query()->find($data['quota_type_id']);
+                    $startDate = $data['start_date'] ?? now('America/Sao_Paulo')->toDateString();
+                    $endDate = $data['end_date'] ?? null;
+                    $quotaDays = $quotaType?->days ?? 0;
+
+                    $registration->vehicle_id = (int) $data['vehicle_id'];
+                    $registration->quota_type_id = (int) $data['quota_type_id'];
+                    $registration->start_date = $startDate;
+                    $registration->end_date = $endDate;
+                    $registration->quota_days = $quotaDays;
+                }
 
                 // Valores controlados pelo servidor.
                 $registration->status = RegistrationStatus::Novo;
@@ -139,6 +153,12 @@ class ClientRegistrationService
             $data['contract_signer_name'],
             $data['contract_accepted'],
         );
+
+        foreach (['vehicle_id', 'quota_type_id', 'start_date', 'end_date', 'quota_days'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = $data[$field] ?? null;
+            }
+        }
 
         return $data;
     }

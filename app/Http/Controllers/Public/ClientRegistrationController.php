@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ThrottleCadastroSubmissions;
 use App\Http\Requests\StoreClientRegistrationRequest;
+use App\Models\Vehicle;
 use App\Services\CepService;
 use App\Services\ClientRegistrationService;
 use App\Services\ContractStorageService;
@@ -40,10 +41,29 @@ class ClientRegistrationController extends Controller
             'Contrato e assinatura',
         ];
 
+        $vehicles = Vehicle::query()
+            ->where('active', true)
+            ->with(['quotaConfigurations' => fn ($query) => $query->where('active', true)->with('quotaType')])
+            ->get()
+            ->filter(fn (Vehicle $vehicle) => $vehicle->availableQuotaConfigurations()->isNotEmpty())
+            ->values();
+
+        $availableQuotaOptions = $vehicles->flatMap(fn (Vehicle $vehicle) => $vehicle->availableQuotaConfigurations()->map(fn ($configuration) => [
+            'id' => $configuration->quota_type_id,
+            'vehicle_id' => $vehicle->id,
+            'label' => sprintf('%s · %s (%d disponíveis)', $configuration->quotaType->code, $configuration->quotaType->name, $configuration->availableCount()),
+            'vehicle_model' => $vehicle->model,
+            'vehicle_plate' => $vehicle->plate,
+            'quota_type' => $configuration->quotaType,
+            'available_count' => $configuration->availableCount(),
+        ]))->values();
+
         return view('client-registrations.create', [
             'steps' => $steps,
             'states' => config('locations.states'),
             'cnhCategories' => config('locations.cnh_categories'),
+            'vehicles' => $vehicles,
+            'availableQuotaOptions' => $availableQuotaOptions,
         ]);
     }
 
@@ -88,7 +108,7 @@ class ClientRegistrationController extends Controller
         StoreClientRegistrationRequest $request,
         NewRegistrationNotifier $notifier,
         RateLimiter $limiter,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         try {
             $registration = $this->registrationService->create(
                 $request->validated(),
@@ -105,14 +125,26 @@ class ClientRegistrationController extends Controller
             // Arquivo legitimamente inválido que escapou da validação, ou
             // falha inesperada no reprocessamento: resposta genérica. A
             // exceção da assinatura/contrato recebe destaque no campo.
-            Log::warning('Registration storage failed', ['kind' => get_class($e)]);
+            Log::warning('Registration storage failed', [
+                'kind' => get_class($e),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             $field = str_contains($e->getMessage(), 'assinatura') || str_contains($e->getMessage(), 'contrato')
                 ? 'contract_signature'
                 : 'documentos';
 
+            $message = 'Não foi possível processar a assinatura do contrato. Tente novamente.';
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => [$field => [$message]],
+                ], 422);
+            }
+
             return back()
-                ->withErrors([$field => 'Não foi possível processar a assinatura do contrato. Tente novamente.'])
+                ->withErrors([$field => $message])
                 ->withInput($request->except(['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file', 'selfie_file', 'contract_signature']));
         }
 

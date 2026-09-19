@@ -170,6 +170,36 @@
                             type="date" min="{{ now()->addDay()->format('Y-m-d') }}" required
                             hint="A CNH deve estar dentro da validade." />
                     </div>
+
+                    <div class="md:col-span-4">
+                        <x-select-field label="Veículo" name="vehicle_id" placeholder="Selecione o veículo..." required>
+                            @foreach ($vehicles as $vehicle)
+                                @if ($vehicle->availableQuotaConfigurations()->isNotEmpty())
+                                    <option value="{{ $vehicle->id }}" @selected(old('vehicle_id') == $vehicle->id)>{{ $vehicle->model }} · {{ $vehicle->plate }}</option>
+                                @endif
+                            @endforeach
+                        </x-select-field>
+                    </div>
+
+                    <div class="md:col-span-4">
+                        <x-select-field label="Tipo de cota" name="quota_type_id" placeholder="Selecione a cota..." required>
+                            @foreach ($availableQuotaOptions as $option)
+                                <option value="{{ $option['id'] }}" data-vehicle-id="{{ $option['vehicle_id'] }}" @selected(old('quota_type_id') == $option['id'])>
+                                    {{ $option['label'] }}
+                                </option>
+                            @endforeach
+                        </x-select-field>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <x-form-field label="Data de início" name="start_date" value="{{ old('start_date') }}"
+                            type="date" required />
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <x-form-field label="Data de fim" name="end_date" value="{{ old('end_date') }}"
+                            type="date" required />
+                    </div>
                 </div>
             </section>
 
@@ -408,6 +438,7 @@
             'full_name' => 1, 'cpf' => 1, 'birth_date' => 1, 'phone' => 1, 'whatsapp' => 1, 'email' => 1,
             'cep' => 2, 'address' => 2, 'address_number' => 2, 'neighborhood' => 2, 'city' => 2, 'state' => 2,
             'cnh_number' => 3, 'cnh_category' => 3, 'cnh_expiry_date' => 3,
+            'vehicle_id' => 3, 'quota_type_id' => 3, 'start_date' => 3, 'end_date' => 3,
             'cnh_front_file' => 4, 'cnh_back_file' => 4, 'proof_of_residence_file' => 4,
             'documentos' => 4,
             'selfie_file' => 5,

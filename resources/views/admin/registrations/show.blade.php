@@ -50,11 +50,38 @@
                 </dl>
             </div>
 
+            {{-- Informações do veículo --}}
+            <div class="card p-5 sm:p-6">
+                <h2 class="section-title mb-4">Informações do veículo</h2>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="rounded-xl border border-line-dark bg-surface-850 p-4">
+                        <p class="text-xs uppercase tracking-wider text-zinc-500">Fotos da retirada</p>
+                        @if ($registration->vehicle_pickup_photo_path)
+                            <img src="{{ route('admin.registrations.photo', [$registration, 'vehicle_pickup']) }}" alt="Foto da retirada" class="mt-3 aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-line-dark">
+                        @else
+                            <p class="mt-3 text-sm text-zinc-400">Não enviada</p>
+                        @endif
+                    </div>
+                    <div class="rounded-xl border border-line-dark bg-surface-850 p-4">
+                        <p class="text-xs uppercase tracking-wider text-zinc-500">Fotos da entrega</p>
+                        @if ($registration->vehicle_delivery_photo_path)
+                            <img src="{{ route('admin.registrations.photo', [$registration, 'vehicle_delivery']) }}" alt="Foto da entrega" class="mt-3 aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-line-dark">
+                        @else
+                            <p class="mt-3 text-sm text-zinc-400">Não enviada</p>
+                        @endif
+                    </div>
+                </div>
+                <div class="mt-4 rounded-xl border border-line-dark bg-surface-850 p-4">
+                    <p class="text-xs uppercase tracking-wider text-zinc-500">Obs</p>
+                    <p class="mt-2 text-sm text-zinc-200">{{ $registration->vehicle_observation ?: 'Sem observação.' }}</p>
+                </div>
+            </div>
+
             {{-- Documentos --}}
             <div class="card p-5 sm:p-6">
                 <h2 class="section-title mb-4">Fotos e documentos</h2>
                 <div class="mx-auto grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
-                    @foreach (App\Models\ClientRegistration::DOCUMENTS as $doc => $label)
+                    @foreach (App\Models\ClientRegistration::UPLOAD_DOCUMENTS as $doc => $label)
                         <div class="min-w-0">
                             <div class="mb-2 flex min-h-[2.5rem] items-start">
                                 <p class="text-xs font-medium leading-snug text-zinc-500">{{ $label }}</p>
