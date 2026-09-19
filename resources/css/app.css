@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @source '../../resources/views/vendor/pagination/*.blade.php';
+@source '../js/**/*.js';
+@source '../../resources/views/admin/dashboard/index.blade.php';
 @source not '../../docs';
 @source '../../storage/framework/views/*.php';
 

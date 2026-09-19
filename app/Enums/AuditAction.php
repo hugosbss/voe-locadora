@@ -13,6 +13,7 @@ enum AuditAction: string
     case ViewRegistration = 'view_registration';
     case ViewDocument = 'view_document';
     case UpdateStatus = 'update_status';
+    case UpdateRegistration = 'update_registration';
     case DeleteRegistration = 'delete_registration';
     case LoginSuccess = 'login_success';
     case LoginFailed = 'login_failed';
@@ -31,6 +32,7 @@ enum AuditAction: string
             self::ViewRegistration => 'Visualização de cadastro',
             self::ViewDocument => 'Visualização de documento',
             self::UpdateStatus => 'Alteração de status',
+            self::UpdateRegistration => 'Alteração de cadastro',
             self::DeleteRegistration => 'Exclusão de cadastro',
             self::LoginSuccess => 'Login administrativo',
             self::LoginFailed => 'Falha de login administrativo',

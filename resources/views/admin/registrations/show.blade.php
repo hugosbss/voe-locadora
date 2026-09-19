@@ -8,11 +8,62 @@
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Voltar
         </a>
-        @include('components.status-badge', ['status' => $registration->status, 'size' => 'md'])
+        <div class="flex items-center gap-3">
+            <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm">Editar cadastro</a>
+            @include('components.status-badge', ['status' => $registration->status, 'size' => 'md'])
+        </div>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
+
+            {{-- Informações do veículo --}}
+            <div class="card p-5 sm:p-6">
+                <h2 class="section-title mb-4">Informações do veículo</h2>
+                <div class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-line-dark bg-surface-850 p-4 text-sm sm:grid-cols-2">
+                    <div class="sm:col-span-3">
+                        @include('components.data-row', [
+                            'label' => 'Veículo',
+                            'value' => $registration->vehicle
+                                ? $registration->vehicle->model.' · '.$registration->vehicle->plate
+                                : 'Não informado',
+                        ])
+                    </div>
+                    @include('components.data-row', ['label' => 'Tipo', 'value' => $registration->quotaType?->code ?: 'Não informado'])
+                    @include('components.data-row', ['label' => 'Cota', 'value' => $registration->quotaType?->name ?: 'Não informada'])
+                    @include('components.data-row', [
+                        'label' => 'Período da cota',
+                        'value' => $registration->start_date && $registration->end_date
+                            ? \Illuminate\Support\Carbon::parse($registration->start_date)->format('d/m/Y').' → '.\Illuminate\Support\Carbon::parse($registration->end_date)->format('d/m/Y')
+                            : 'Não informado',
+                    ])
+                </div>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="rounded-xl border border-line-dark bg-surface-850 p-4">
+                        <p class="text-xs uppercase tracking-wider text-zinc-500">Fotos do veículo</p>
+                        @if ($registration->vehicle_pickup_photo_path)
+                            <img src="{{ route('admin.registrations.photo', [$registration, 'vehicle_pickup']) }}" alt="Foto da retirada" class="mt-3 aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-line-dark">
+                        @else
+                            {{-- <p class="mt-3 text-sm text-zinc-400">Não enviada</p> --}}
+                        @endif
+                        <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm mt-4 w-full">{{ $registration->vehicle_pickup_photo_path ? 'Alterar foto' : 'Adicionar foto' }}</a>
+                    </div>
+                    <div class="rounded-xl border border-line-dark bg-surface-850 p-4">
+                        <p class="text-xs uppercase tracking-wider text-zinc-500">Fotos do veículo</p>
+                        @if ($registration->vehicle_delivery_photo_path)
+                            <img src="{{ route('admin.registrations.photo', [$registration, 'vehicle_delivery']) }}" alt="Foto da entrega" class="mt-3 aspect-[4/3] w-full rounded-lg object-cover ring-1 ring-line-dark">
+                        @else
+                            {{-- <p class="mt-3 text-sm text-zinc-400">Não enviada</p> --}}
+                        @endif
+                        <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm mt-4 w-full">{{ $registration->vehicle_delivery_photo_path ? 'Alterar foto' : 'Adicionar foto' }}</a>
+                    </div>
+                </div>
+                <div class="mt-4 rounded-xl border border-line-dark bg-surface-850 p-4">
+                    <p class="text-xs uppercase tracking-wider text-zinc-500">Obs</p>
+                    <p class="mt-2 text-sm text-zinc-200">{{ $registration->vehicle_observation ?: '...' }}</p>
+                </div>
+            </div>
+
             {{-- Dados do cliente --}}
             <div class="card p-5 sm:p-6">
                 <h2 class="section-title mb-4">Dados do cliente</h2>
@@ -54,7 +105,7 @@
             <div class="card p-5 sm:p-6">
                 <h2 class="section-title mb-4">Fotos e documentos</h2>
                 <div class="mx-auto grid w-full max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
-                    @foreach (App\Models\ClientRegistration::DOCUMENTS as $doc => $label)
+                    @foreach (App\Models\ClientRegistration::UPLOAD_DOCUMENTS as $doc => $label)
                         <div class="min-w-0">
                             <div class="mb-2 flex min-h-[2.5rem] items-start">
                                 <p class="text-xs font-medium leading-snug text-zinc-500">{{ $label }}</p>
@@ -161,13 +212,13 @@
                             rel="noopener"
                             class="btn btn-secondary w-full">
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                            Visualizar contrato assinado
+                            Visualizar
                         </a>
                         <a
                             href="{{ route('admin.registrations.contract.download', $registration) }}"
                             class="btn btn-primary w-full">
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                            Baixar contrato
+                            Baixar
                         </a>
                     </div>
                 @else

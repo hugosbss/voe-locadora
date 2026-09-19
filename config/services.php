@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'vca' => [
+        'whatsapp' => env('VCA_WHATSAPP', '5579991379313'),
+        'city' => env('VCA_CITY', 'Itabaianinha'),
+        'price_from' => env('VCA_PRICE_FROM', '599,00'),
+        'vehicle_year' => env('VCA_VEHICLE_YEAR', '2027'),
+        'pre_launch_label' => env('VCA_PRE_LAUNCH_LABEL', 'Cotas promocionais — Pré lançamento'),
+        'instagram' => env('VCA_INSTAGRAM', 'vcaclube'),
+        'instagram_url' => env('VCA_INSTAGRAM_URL'),
+    ],
+
 ];

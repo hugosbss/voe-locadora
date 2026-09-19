@@ -30,6 +30,8 @@ export const initClientRegistration = () => {
     const totalSteps = Number(config.totalSteps ?? 6);
     const reviewStep = totalSteps - 1;
     const cepLookupUrl = config.cepLookupUrl ?? '/cep';
+    const quotaAvailabilityUrl = config.quotaAvailabilityUrl ?? null;
+    const quotaDurationMode = String(config.quotaDurationMode ?? 'exact');
     const successUrl = config.successUrl ?? null;
     const fieldToStep = config.fieldToStep ?? {};
 
@@ -188,6 +190,10 @@ export const initClientRegistration = () => {
         cnh_number: 'Número da CNH',
         cnh_category: 'Categoria da CNH',
         cnh_expiry_date: 'Validade da CNH',
+        vehicle_id: 'Veículo',
+        quota_type_id: 'Cota',
+        start_date: 'Data de início',
+        end_date: 'Data de fim',
         cnh_front_file: 'Foto da CNH (frente)',
         cnh_back_file: 'Foto da CNH (verso)',
         proof_of_residence_file: 'Comprovante de residência',
@@ -381,6 +387,10 @@ export const initClientRegistration = () => {
         cnh_number: 'Informe o número da CNH.',
         cnh_category: 'Selecione a categoria da CNH.',
         cnh_expiry_date: 'Informe a validade da CNH.',
+        vehicle_id: 'Selecione um veículo disponível.',
+        quota_type_id: 'Selecione uma cota disponível.',
+        start_date: 'Informe a data de início.',
+        end_date: 'Informe a data de fim.',
         cnh_front_file: 'Adicione a foto da frente da CNH.',
         cnh_back_file: 'Adicione a foto do verso da CNH.',
         proof_of_residence_file: 'Adicione o comprovante de residência.',
@@ -473,7 +483,7 @@ export const initClientRegistration = () => {
     const requiredFieldNames = {
         1: ['full_name', 'cpf', 'birth_date', 'phone', 'whatsapp', 'email'],
         2: ['cep', 'address', 'address_number', 'neighborhood', 'city', 'state'],
-        3: ['cnh_number', 'cnh_category', 'cnh_expiry_date'],
+        3: ['cnh_number', 'cnh_category', 'cnh_expiry_date', 'vehicle_id', 'quota_type_id', 'start_date', 'end_date'],
         4: ['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file'],
         5: ['selfie_file'],
         6: ['veracity_declaration_accepted', 'privacy_policy_accepted'],
@@ -481,6 +491,27 @@ export const initClientRegistration = () => {
     };
 
     const isEmailValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+    const hasCompatibleQuotaSelection = () => {
+        const vehicleId = String(form.elements.namedItem('vehicle_id')?.value ?? '');
+        const quotaId = String(form.elements.namedItem('quota_type_id')?.value ?? '');
+
+        if (!vehicleId || !quotaId) {
+            return false;
+        }
+
+        const quotaInput = form.elements.namedItem('quota_type_id');
+        if (!(quotaInput instanceof HTMLSelectElement)) {
+            return false;
+        }
+
+        return Array.from(quotaInput.options).some((option) => {
+            const optionVehicleId = String(option.dataset.vehicleId ?? '');
+            const optionQuotaId = String(option.value ?? '');
+
+            return optionVehicleId === vehicleId && optionQuotaId === quotaId && !option.hidden && !option.disabled;
+        });
+    };
 
     const validateStep = (step) => {
         const fields = requiredFieldNames[step] ?? [];
@@ -511,6 +542,8 @@ export const initClientRegistration = () => {
                 valid = value.replace(/\D/g, '').length >= 10;
             } else if (name === 'cep') {
                 valid = /^\d{5}-?\d{3}$/.test(value);
+            } else if (name === 'quota_type_id') {
+                valid = hasCompatibleQuotaSelection();
             }
 
             if (!valid) {
@@ -707,8 +740,271 @@ export const initClientRegistration = () => {
         });
     };
 
+    const setupQuotaVehicleFilter = () => {
+        const vehicleInput = form.elements.namedItem('vehicle_id');
+        const quotaInput = form.elements.namedItem('quota_type_id');
+        const startInput = form.elements.namedItem('start_date');
+        const endInput = form.elements.namedItem('end_date');
+
+        if (!vehicleInput || !quotaInput) {
+            return;
+        }
+
+        // Guard de reentrância: refreshQuotaOptions() é listener de 'change' do
+        // quotaInput E dispara 'change' no próprio quotaInput. Sem o guard
+        // haveria recursão infinita (RangeError: Maximum call stack size exceeded).
+        let applyingQuotaValue = false;
+        let availabilityByQuota = new Map();
+        let availabilityFetched = false;
+        let fetchToken = 0;
+
+        const quotaField = document.querySelector('[data-field="quota_type_id"]');
+        const statusEl = document.createElement('p');
+        statusEl.className = 'field-hint';
+        statusEl.hidden = true;
+        quotaField?.appendChild(statusEl);
+
+        const setStatus = (message) => {
+            statusEl.textContent = message ?? '';
+            statusEl.hidden = !message;
+        };
+
+        const readDates = () => {
+            const start = String(startInput?.value ?? '');
+            const end = String(endInput?.value ?? '');
+
+            if (!start || !end || end < start) {
+                return null;
+            }
+
+            return { start, end };
+        };
+
+        const selectedQuotaOption = () => quotaInput.options[quotaInput.selectedIndex] ?? null;
+        const quotaInfo = (quotaId) => availabilityByQuota.get(String(quotaId)) ?? null;
+        const baseLabel = (option) => option.dataset.baseLabel || option.textContent;
+
+        const refreshQuotaOptions = () => {
+            if (applyingQuotaValue) {
+                return;
+            }
+
+            const selectedVehicleId = String(vehicleInput.value ?? '');
+            const previousQuotaValue = String(quotaInput.value ?? '');
+            const dates = readDates();
+
+            Array.from(quotaInput.options).forEach((option) => {
+                const optionVehicleId = String(option.dataset.vehicleId ?? '');
+                const matchesVehicle = !selectedVehicleId || optionVehicleId === selectedVehicleId;
+                const info = availabilityFetched ? quotaInfo(option.value) : null;
+
+                let availabilityOk = true;
+
+                if (matchesVehicle && dates && availabilityFetched) {
+                    availabilityOk = !!info && info.available > 0 && info.valid_duration;
+                }
+
+                option.hidden = !matchesVehicle;
+                option.disabled = !matchesVehicle || !availabilityOk;
+                option.selected = false;
+
+                if (matchesVehicle && dates && info) {
+                    const suffix = info.valid_duration
+                        ? `${info.available} ${info.available === 1 ? 'disponível' : 'disponíveis'}`
+                        : 'duração inválida';
+                    option.textContent = `${baseLabel(option)} — ${suffix}`;
+                } else {
+                    option.textContent = baseLabel(option);
+                }
+            });
+
+            const compatibleOptions = Array.from(quotaInput.options).filter(
+                (option) => !option.hidden && !option.disabled,
+            );
+
+            if (!selectedVehicleId) {
+                applyingQuotaValue = true;
+                quotaInput.value = '';
+                quotaInput.dispatchEvent(new Event('change', { bubbles: true }));
+                applyingQuotaValue = false;
+                syncQuotaOptions();
+                return;
+            }
+
+            const nextQuotaValue = compatibleOptions.some((option) => String(option.value ?? '') === previousQuotaValue)
+                ? previousQuotaValue
+                : compatibleOptions[0]?.value ?? '';
+
+            applyingQuotaValue = true;
+            quotaInput.value = nextQuotaValue;
+            quotaInput.dispatchEvent(new Event('change', { bubbles: true }));
+            applyingQuotaValue = false;
+            syncQuotaOptions();
+        };
+
+        const updateStatusMessage = () => {
+            if (!availabilityFetched) {
+                setStatus('');
+                return;
+            }
+
+            const option = selectedQuotaOption();
+
+            if (!option || option.hidden || option.disabled) {
+                setStatus('Sem vagas para o período selecionado.');
+                return;
+            }
+
+            const info = quotaInfo(option.value);
+
+            if (!info) {
+                setStatus('');
+                return;
+            }
+
+            if (!info.valid_duration) {
+                setStatus('A duração selecionada não é compatível com esta cota.');
+                return;
+            }
+
+            if (info.available <= 0) {
+                setStatus('Sem vagas para o período selecionado.');
+                return;
+            }
+
+            setStatus('');
+        };
+
+        // Em modo "exato", a data de fim é derivada do início + quota_type.days - 1.
+        const applyDuration = () => {
+            if (!startInput || !endInput) {
+                return;
+            }
+
+            const days = Number(selectedQuotaOption()?.dataset.days ?? 0);
+            const start = String(startInput.value ?? '');
+
+            if (!start || !days) {
+                return;
+            }
+
+            if (quotaDurationMode === 'exact') {
+                const [year, month, day] = start.split('-').map(Number);
+
+                if (!year || !month || !day) {
+                    return;
+                }
+
+                const end = new Date(Date.UTC(year, month - 1, day + days - 1));
+                const iso = end.toISOString().slice(0, 10);
+
+                if (endInput.value !== iso) {
+                    endInput.value = iso;
+                }
+
+                endInput.readOnly = true;
+            } else {
+                endInput.readOnly = false;
+            }
+        };
+
+        const fetchAvailability = async () => {
+            const dates = readDates();
+
+            if (!vehicleInput.value || !dates || !quotaAvailabilityUrl) {
+                availabilityFetched = false;
+                availabilityByQuota.clear();
+                refreshQuotaOptions();
+                updateStatusMessage();
+                return;
+            }
+
+            const token = ++fetchToken;
+
+            try {
+                const url = new URL(quotaAvailabilityUrl, window.location.href);
+                url.searchParams.set('vehicle_id', vehicleInput.value);
+                url.searchParams.set('start_date', dates.start);
+                url.searchParams.set('end_date', dates.end);
+
+                const response = await fetch(url, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+
+                if (!response.ok) {
+                    throw new Error('availability');
+                }
+
+                const data = await response.json();
+
+                if (token !== fetchToken) {
+                    return;
+                }
+
+                availabilityByQuota = new Map(
+                    (data.quotas ?? []).map((quota) => [String(quota.quota_type_id), quota]),
+                );
+                availabilityFetched = true;
+            } catch {
+                if (token !== fetchToken) {
+                    return;
+                }
+
+                availabilityFetched = false;
+                availabilityByQuota.clear();
+            }
+
+            refreshQuotaOptions();
+            updateStatusMessage();
+        };
+
+        const syncQuotaOptions = () => {
+            quotaInput.dispatchEvent(new CustomEvent('cs:sync', { bubbles: true }));
+        };
+
+        vehicleInput.addEventListener('change', () => {
+            refreshQuotaOptions();
+            fetchAvailability();
+        });
+        vehicleInput.addEventListener('input', () => {
+            refreshQuotaOptions();
+            fetchAvailability();
+        });
+        quotaInput.addEventListener('change', () => {
+            applyDuration();
+            updateStatusMessage();
+
+            if (!availabilityFetched) {
+                refreshQuotaOptions();
+            }
+        });
+        startInput?.addEventListener('change', () => {
+            applyDuration();
+            fetchAvailability();
+        });
+        endInput?.addEventListener('change', () => {
+            fetchAvailability();
+        });
+
+        if (quotaDurationMode === 'exact' && endInput) {
+            endInput.readOnly = true;
+        }
+
+        refreshQuotaOptions();
+        applyDuration();
+    };
+
     /* ---------- Resumo da última etapa ---------- */
     const setupSummary = () => {
+        const syncContractSignerName = () => {
+            const name = form.elements.namedItem('full_name')?.value ?? '';
+            const signer = form.elements.namedItem('contract_signer_name');
+
+            if (signer && name.trim() !== '') {
+                signer.value = name.trim();
+            }
+        };
+
         const update = () => {
             const name = form.elements.namedItem('full_name')?.value ?? '';
             const cpf = form.elements.namedItem('cpf')?.value ?? '';
@@ -717,11 +1013,7 @@ export const initClientRegistration = () => {
             const city = form.elements.namedItem('city')?.value ?? '';
             const state = form.elements.namedItem('state')?.value ?? '';
 
-            // O signatário do contrato espelha o nome completo informado.
-            const signer = form.elements.namedItem('contract_signer_name');
-            if (signer && signer.value.trim() === '' && name.trim() !== '') {
-                signer.value = name.trim();
-            }
+            syncContractSignerName();
 
             document.getElementById('summary-name').textContent = name;
             document.getElementById('summary-cpf').textContent = cpf ? `CPF: ${cpf}` : '';
@@ -1082,6 +1374,7 @@ export const initClientRegistration = () => {
     bindLiveClear();
     setupFileInputs();
     setupCepLookup();
+    setupQuotaVehicleFilter();
     setupSummary();
     signatureSetup();
 

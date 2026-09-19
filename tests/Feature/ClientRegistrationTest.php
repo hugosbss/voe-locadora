@@ -4,7 +4,11 @@ namespace Tests\Feature;
 
 use App\Mail\NewRegistrationMail;
 use App\Models\ClientRegistration;
+use App\Models\QuotaType;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleQuotaConfiguration;
+use App\Services\ClientRegistrationService;
 use App\Services\NewRegistrationNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -12,10 +16,12 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
 use RuntimeException;
+use Tests\Concerns\CreatesQuotaContext;
 use Tests\TestCase;
 
 class ClientRegistrationTest extends TestCase
 {
+    use CreatesQuotaContext;
     use RefreshDatabase;
 
     private array $baseData = [
@@ -88,8 +94,15 @@ class ClientRegistrationTest extends TestCase
      */
     private function validPayload(bool $withSignature = true): array
     {
+        [$vehicle, $quota] = $this->createQuotaContext(30);
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
         return [
             ...$this->baseData,
+            'vehicle_id' => (string) $vehicle->id,
+            'quota_type_id' => (string) $quota->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
@@ -135,6 +148,191 @@ class ClientRegistrationTest extends TestCase
         foreach (['cnh_front', 'cnh_back', 'proof_of_residence'] as $doc) {
             $this->assertStringContainsString('gallery-input sr-only" data-doc="'.$doc.'"', $html);
         }
+    }
+
+    public function test_public_form_lists_only_quota_code_name_and_availability_for_the_selected_vehicle(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'F-10',
+            'name' => 'Mensal',
+            'days' => 30,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 2,
+            'active' => true,
+        ]);
+
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+
+        $this->assertStringContainsString('F-10 · Mensal (2 disponíveis)', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-vehicle-id="'.$vehicle->id.'"[^>]*>\s*F-10 · Mensal \(2 disponíveis\)\s*<\/option>/',
+            $html,
+        );
+        $this->assertStringNotContainsString('Civic 2025 · ABC-1234 · Mensal', $html);
+    }
+
+    public function test_valid_vehicle_and_quota_combination_is_accepted(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'F-10',
+            'name' => 'Mensal',
+            'days' => 30,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 2,
+            'active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['vehicle_id'] = (string) $vehicle->id;
+        $payload['quota_type_id'] = (string) $quota->id;
+
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $payload)
+            ->assertRedirect(route('client-registrations.success'));
+    }
+
+    public function test_invalid_vehicle_and_quota_combination_is_rejected(): void
+    {
+        $vehicleA = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $vehicleB = Vehicle::query()->create([
+            'model' => 'Corolla 2025',
+            'plate' => 'XYZ-5678',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'FS',
+            'name' => 'Semanal',
+            'days' => 7,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicleA->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 1,
+            'active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['vehicle_id'] = (string) $vehicleB->id;
+        $payload['quota_type_id'] = (string) $quota->id;
+
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $payload)
+            ->assertSessionHasErrors('quota_type_id');
+    }
+
+    public function test_ajax_submission_returns_422_json_when_registration_processing_fails(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'F-10',
+            'name' => 'Mensal',
+            'days' => 30,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 2,
+            'active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['vehicle_id'] = (string) $vehicle->id;
+        $payload['quota_type_id'] = (string) $quota->id;
+
+        $service = \Mockery::mock(ClientRegistrationService::class);
+        $service->shouldReceive('create')
+            ->once()
+            ->andThrow(new RuntimeException('Não foi possível processar a assinatura do contrato. Tente novamente.'));
+
+        $this->app->instance(ClientRegistrationService::class, $service);
+
+        $this->seedContractTemplate();
+
+        $response = $this->postJson('/cadastro', $payload);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('errors.contract_signature.0', 'Não foi possível processar a assinatura do contrato. Tente novamente.');
+    }
+
+    public function test_admin_registration_detail_shows_vehicle_information_section_when_present(): void
+    {
+        $registration = ClientRegistration::factory()->create();
+        $registration->update([
+            'vehicle_pickup_photo_path' => 'cadastros/'.$registration->uuid.'/vehicle_pickup/retirada.jpg',
+            'vehicle_delivery_photo_path' => 'cadastros/'.$registration->uuid.'/vehicle_delivery/entrega.jpg',
+            'vehicle_observation' => 'Veículo entregue com chave no painel.',
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.show', $registration))
+            ->assertOk()
+            ->assertSee('Informações do veículo')
+            ->assertSee('Fotos do veículo')
+            ->assertSee('Veículo entregue com chave no painel.');
+    }
+
+    public function test_client_signer_name_and_dates_are_preserved_verbatim(): void
+    {
+        $this->seedContractTemplate();
+
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
+        $payload = $this->validPayload();
+        $payload['full_name'] = 'João da Silva Santos';
+        $payload['contract_signer_name'] = 'João da Silva Santos';
+        $payload['start_date'] = $startDate;
+        $payload['end_date'] = $endDate;
+
+        $response = $this->post('/cadastro', $payload);
+
+        $response->assertRedirect(route('client-registrations.success'));
+
+        $this->assertDatabaseHas('client_registrations', [
+            'full_name' => 'João da Silva Santos',
+            'contract_signer_name' => 'João da Silva Santos',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
     }
 
     public function test_client_can_submit_registration_with_documents(): void

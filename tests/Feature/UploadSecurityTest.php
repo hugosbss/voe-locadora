@@ -6,14 +6,19 @@ use App\Models\ClientRegistration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\CreatesQuotaContext;
 use Tests\TestCase;
 
 class UploadSecurityTest extends TestCase
 {
+    use CreatesQuotaContext;
     use RefreshDatabase;
 
     private function baseData(): array
     {
+        [$vehicle, $quota] = $this->createQuotaContext(30);
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
         return [
             'full_name' => 'João Testador',
             'cpf' => '529.982.247-25',
@@ -30,6 +35,10 @@ class UploadSecurityTest extends TestCase
             'cnh_number' => '12345678901',
             'cnh_category' => 'B',
             'cnh_expiry_date' => '2030-01-01',
+            'vehicle_id' => (string) $vehicle->id,
+            'quota_type_id' => (string) $quota->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'veracity_declaration_accepted' => '1',
             'privacy_policy_accepted' => '1',
             'contract_signature' => $this->signatureDataUrl(),

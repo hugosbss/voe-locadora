@@ -24,7 +24,14 @@ const buildOptions = (select) =>
         value: option.value,
         label: option.textContent,
         index,
+        hidden: option.hidden,
+        disabled: option.disabled,
     }));
+
+// Opções que podem ser escolhidas pelo usuário. Opções ocultas ou
+// desabilitadas (ex.: cotas de outro veículo) não aparecem no menu nem no
+// bottom sheet e não podem ser selecionadas.
+const visibleOptions = (options) => options.filter((option) => !option.hidden && !option.disabled);
 
 const highlightOption = (option) => {
     option.closest('.cs-menu, .cs-sheet-list')?.querySelectorAll('.is-highlighted')
@@ -36,7 +43,7 @@ const enhance = (wrapper) => {
     const select = wrapper.querySelector('select');
     const label = wrapper.dataset.csLabel || select.name || '';
     const placeholder = wrapper.dataset.csPlaceholder || 'Selecione...';
-    const options = buildOptions(select);
+    let options = buildOptions(select);
 
     /* ---------- Trigger ---------- */
     const trigger = document.createElement('button');
@@ -78,7 +85,7 @@ const enhance = (wrapper) => {
     const menuId = uid();
     menu.id = menuId;
 
-    options.forEach((option) => {
+    const buildMenuOption = (option) => {
         const li = document.createElement('li');
         li.id = `${menuId}-opt-${option.index}`;
         li.className = 'cs-option';
@@ -97,8 +104,10 @@ const enhance = (wrapper) => {
             closeMenu();
         });
         li.addEventListener('mousemove', () => setHighlighted(li));
-        menu.appendChild(li);
-    });
+        return li;
+    };
+
+    visibleOptions(options).forEach((option) => menu.appendChild(buildMenuOption(option)));
 
     document.body.appendChild(menu);
 
@@ -228,19 +237,21 @@ const enhance = (wrapper) => {
     sheetList.setAttribute('role', 'listbox');
     sheetList.setAttribute('aria-labelledby', sheetTitleId);
 
-    options.forEach((option) => {
+    const buildSheetOption = (option) => {
         const li = document.createElement('li');
         li.className = 'cs-sheet-option';
         li.dataset.value = option.value;
         li.textContent = option.label;
         li.setAttribute('role', 'option');
-        li.setAttribute('aria-selected', 'false');
+        li.setAttribute('aria-selected', String(option.value === select.value));
         li.addEventListener('click', () => {
             pick(option);
             closeSheet();
         });
-        sheetList.appendChild(li);
-    });
+        return li;
+    };
+
+    visibleOptions(options).forEach((option) => sheetList.appendChild(buildSheetOption(option)));
 
     sheet.append(sheetHandle, sheetHead, sheetList);
     document.body.append(backdrop, sheet);
@@ -263,6 +274,7 @@ const enhance = (wrapper) => {
 
     const dismiss = () => (isMobile() ? closeSheet() : closeMenu());
     const open = () => {
+        syncOptions();
         syncSelected();
         if (isMobile()) {
             openSheet();
@@ -273,10 +285,28 @@ const enhance = (wrapper) => {
 
     /* ---------- Ação compartilhada ---------- */
     const pick = (option) => {
+        if (option.hidden || option.disabled) {
+            return; // nunca seleciona opções ocultas para o veículo atual
+        }
         select.value = option.value;
         renderTriggerValue();
         syncSelected();
         select.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    // Reconstrói a lista exibida a partir do estado atual do <select> nativo.
+    // Opções ocultas/desabilitadas (ex.: cotas de outro veículo) passam a não
+    // aparecer no menu nem no bottom sheet.
+    const syncOptions = () => {
+        options = buildOptions(select);
+        const visible = visibleOptions(options);
+
+        menu.replaceChildren(...visible.map(buildMenuOption));
+        sheetList.replaceChildren(...visible.map(buildSheetOption));
+
+        renderTriggerValue();
+        syncSelected();
+        setHighlighted(menuItems()[select.selectedIndex] || menuItems()[0]);
     };
 
     /* ---------- Eventos ---------- */
@@ -351,7 +381,14 @@ const enhance = (wrapper) => {
 
     sheetClose.addEventListener('click', closeSheet);
 
+    // O <select> nativo é a fonte da verdade. Atualizar o menu visual daqui não
+    // deve reemitir eventos customizados nem reentrar na própria sincronização.
     select.addEventListener('change', renderTriggerValue);
+
+    // Reconstrução acionada externamente (ex.: filtro de cotas por veículo no
+    // cadastro). Reajusta a lista exibida sem reabrir o seletor e sem reemitir
+    // eventos customizados que poderiam reintroduzir recursão.
+    select.addEventListener('cs:sync', syncOptions);
 
     wrapper.insertBefore(trigger, select);
     select.classList.add('hidden');
@@ -359,7 +396,9 @@ const enhance = (wrapper) => {
     select.setAttribute('aria-hidden', 'true');
     wrapper.dataset.csReady = '1';
 
-    renderTriggerValue();
+    // Mantém o estado inicial (o <select> já pode vir com a opção selecionada)
+    // e garante que o menu reflita as opções atuais ao ser aberto.
+    syncOptions();
 };
 
 export const initCustomSelects = (scope = document) => {

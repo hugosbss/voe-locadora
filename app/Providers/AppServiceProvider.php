@@ -3,8 +3,12 @@
 namespace App\Providers;
 
 use App\Models\ClientRegistration;
+use App\Models\QuotaType;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Policies\ClientRegistrationPolicy;
+use App\Policies\QuotaTypePolicy;
+use App\Policies\VehiclePolicy;
 use App\Support\Totp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -40,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
                 ->by((string) $request->ip());
         });
 
+        RateLimiter::for('quota_availability', function (Request $request): Limit {
+            return Limit::perMinute((int) config('rate.limits.quota_availability_per_minute', 60))
+                ->by((string) $request->ip());
+        });
+
         RateLimiter::for('admin_login', function (Request $request): Limit {
             $email = strtolower(trim((string) $request->input('email', '')));
 
@@ -60,6 +69,8 @@ class AppServiceProvider extends ServiceProvider
     private function registerAuthorization(): void
     {
         Gate::policy(ClientRegistration::class, ClientRegistrationPolicy::class);
+        Gate::policy(Vehicle::class, VehiclePolicy::class);
+        Gate::policy(QuotaType::class, QuotaTypePolicy::class);
 
         // Gestão de usuários administrativos: restrita ao papel admin.
         Gate::define('manage-users', fn (User $user) => $user->isAdmin());

@@ -2,23 +2,33 @@
 
 namespace Tests\Feature;
 
+use App\Models\QuotaType;
 use App\Models\User;
+use App\Models\Vehicle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\CreatesQuotaContext;
 use Tests\TestCase;
 
 class ThrottleTest extends TestCase
 {
+    use CreatesQuotaContext;
     use RefreshDatabase;
+
+    private Vehicle $vehicle;
+
+    private QuotaType $quota;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         Http::fake(['https://viacep.com.br/*' => Http::response([], 404)]);
+
+        [$this->vehicle, $this->quota] = $this->createQuotaContext(30);
     }
 
     public function test_registration_endpoint_is_rate_limited_against_floods(): void
@@ -136,6 +146,8 @@ class ThrottleTest extends TestCase
 
     private function validPayload(int $seed = 0): array
     {
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
         return [
             'full_name' => 'Maria da Silva Souza',
             'cpf' => $this->validCpf($seed + 100000000),
@@ -152,6 +164,10 @@ class ThrottleTest extends TestCase
             'cnh_number' => '12345678901',
             'cnh_category' => 'B',
             'cnh_expiry_date' => '2030-01-01',
+            'vehicle_id' => (string) $this->vehicle->id,
+            'quota_type_id' => (string) $this->quota->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
