@@ -5,10 +5,13 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LinkController;
 use App\Http\Controllers\Admin\NewPasswordController;
 use App\Http\Controllers\Admin\PasswordResetLinkController;
+use App\Http\Controllers\Admin\QuotaTypeController;
 use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Public\ClientRegistrationController;
+use App\Http\Controllers\Public\HowItWorksController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,6 +54,9 @@ Route::get('/cep', [ClientRegistrationController::class, 'lookupCep'])
 
 Route::view('/politica-de-privacidade', 'policy.index')
     ->name('policy.index');
+
+Route::get('/como-funciona', [HowItWorksController::class, 'index'])
+    ->name('public.how-it-works');
 
 /*
 |--------------------------------------------------------------------------
@@ -136,6 +142,72 @@ Route::middleware(['auth'])->prefix('admin')->group(function (): void {
 
     Route::get('/cadastros/{registration:uuid}', [RegistrationController::class, 'show'])
         ->name('admin.registrations.show');
+
+    Route::get('/cotas', [QuotaTypeController::class, 'index'])
+        ->name('admin.quotas.index');
+
+    Route::get('/cotas/criar', [QuotaTypeController::class, 'create'])
+        ->name('admin.quotas.create');
+
+    Route::post('/cotas', [QuotaTypeController::class, 'store'])
+        ->name('admin.quotas.store');
+
+    Route::get('/cotas/{quotaType}', [QuotaTypeController::class, 'show'])
+        ->name('admin.quotas.show');
+
+    Route::get('/cotas/{quotaType}/editar', [QuotaTypeController::class, 'edit'])
+        ->name('admin.quotas.edit');
+
+    Route::put('/cotas/{quotaType}', [QuotaTypeController::class, 'update'])
+        ->name('admin.quotas.update');
+
+    Route::delete('/cotas/{quotaType}', [QuotaTypeController::class, 'destroy'])
+        ->name('admin.quotas.destroy');
+
+    Route::post('/cotas/{quotaType}/toggle-status', [QuotaTypeController::class, 'toggleStatus'])
+        ->name('admin.quotas.toggle-status');
+
+    Route::post('/cotas/{quotaType}/veiculos', [QuotaTypeController::class, 'addVehicle'])
+        ->name('admin.quotas.add-vehicle');
+
+    Route::patch('/cotas/{quotaType}/veiculos/{configuration}', [QuotaTypeController::class, 'updateVehicleConfiguration'])
+        ->name('admin.quotas.update-vehicle');
+
+    Route::delete('/cotas/{quotaType}/veiculos/{configuration}', [QuotaTypeController::class, 'removeVehicleConfiguration'])
+        ->name('admin.quotas.remove-vehicle');
+
+    Route::get('/veiculos', [VehicleController::class, 'index'])
+        ->name('admin.vehicles.index');
+
+    Route::get('/veiculos/criar', [VehicleController::class, 'create'])
+        ->name('admin.vehicles.create');
+
+    Route::post('/veiculos', [VehicleController::class, 'store'])
+        ->name('admin.vehicles.store');
+
+    Route::get('/veiculos/{vehicle}', [VehicleController::class, 'show'])
+        ->name('admin.vehicles.show');
+
+    Route::get('/veiculos/{vehicle}/editar', [VehicleController::class, 'edit'])
+        ->name('admin.vehicles.edit');
+
+    Route::put('/veiculos/{vehicle}', [VehicleController::class, 'update'])
+        ->name('admin.vehicles.update');
+
+    Route::delete('/veiculos/{vehicle}', [VehicleController::class, 'destroy'])
+        ->name('admin.vehicles.destroy');
+
+    Route::post('/veiculos/{vehicle}/toggle-status', [VehicleController::class, 'toggleStatus'])
+        ->name('admin.vehicles.toggle-status');
+
+    Route::post('/veiculos/{vehicle}/configuracoes', [VehicleController::class, 'addQuotaConfiguration'])
+        ->name('admin.vehicles.add-quota');
+
+    Route::patch('/veiculos/{vehicle}/configuracoes/{configuration}', [VehicleController::class, 'updateQuotaConfiguration'])
+        ->name('admin.vehicles.update-quota');
+
+    Route::delete('/veiculos/{vehicle}/configuracoes/{configuration}', [VehicleController::class, 'removeQuotaConfiguration'])
+        ->name('admin.vehicles.remove-quota');
 
     Route::patch('/cadastros/{registration:uuid}/status', [RegistrationController::class, 'updateStatus'])
         ->name('admin.registrations.status');

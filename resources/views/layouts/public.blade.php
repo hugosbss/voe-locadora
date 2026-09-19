@@ -28,6 +28,10 @@
                             <p class="truncate text-xs text-gray-400">Formulário de cadastro</p>
                         </div>
                     </div>
+                    <nav class="hidden items-center gap-4 text-sm text-zinc-300 md:flex" aria-label="Navegação pública">
+                        <a href="{{ route('public.how-it-works') }}" class="hover:text-white">Como funciona</a>
+                        <a href="{{ route('client-registrations.create') }}" class="hover:text-white">Cadastro</a>
+                    </nav>
                 </div>
             </div>
         </header>
@@ -35,6 +39,16 @@
         <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-6 md:max-w-4xl">
             @yield('content')
         </main>
+
+        <footer class="border-t border-line-dark bg-surface-900/80">
+            <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-between gap-3 px-4 py-4 text-sm text-zinc-400 md:max-w-4xl md:flex-row">
+                <p>VCA Clube de Mobilidade</p>
+                <nav class="flex items-center gap-4" aria-label="Rodapé público">
+                    <a href="{{ route('public.how-it-works') }}" class="hover:text-white">Como funciona</a>
+                    <a href="{{ route('client-registrations.create') }}" class="hover:text-white">Cadastro</a>
+                </nav>
+            </div>
+        </footer>
 
         </div>
 
