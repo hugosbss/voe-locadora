@@ -24,7 +24,7 @@
             </div>
 
             <div class="w-full sm:w-auto">
-                <label class="form-label mb-1.5" for="date-from-filter">Data a partir de</label>
+                <label class="form-label mb-1.5" for="date-from-filter">Exibir a partir de</label>
                 <input type="date" name="date_from" id="date-from-filter"
                     value="{{ $currentDateFrom }}"
                     class="form-input w-full sm:w-44">

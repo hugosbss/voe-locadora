@@ -4,17 +4,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\AuditAction;
 use App\Enums\RegistrationStatus;
+use App\Exceptions\QuotaUnavailableException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateClientRegistrationRequest;
 use App\Models\ClientRegistration;
 use App\Services\AuditService;
 use App\Services\ContractStorageService;
 use App\Services\DocumentStorageService;
+use App\Services\QuotaAvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class RegistrationController extends Controller
 {
@@ -22,6 +27,7 @@ class RegistrationController extends Controller
         private readonly DocumentStorageService $documentStorage,
         private readonly ContractStorageService $contractStorage,
         private readonly AuditService $audit,
+        private readonly QuotaAvailabilityService $quotaAvailability,
     ) {}
 
     /**
@@ -77,6 +83,8 @@ class RegistrationController extends Controller
     {
         $this->authorize('view', $registration);
 
+        $registration->load(['vehicle', 'quotaType']);
+
         $this->audit->log(
             AuditAction::ViewRegistration,
             ['registration_uuid' => $registration->uuid],
@@ -87,6 +95,87 @@ class RegistrationController extends Controller
             'registration' => $registration,
             'statuses' => RegistrationStatus::cases(),
         ]);
+    }
+
+    public function edit(ClientRegistration $registration): View
+    {
+        $this->authorize('update', $registration);
+
+        return view('admin.registrations.edit', [
+            'registration' => $registration,
+        ]);
+    }
+
+    public function update(UpdateClientRegistrationRequest $request, ClientRegistration $registration): RedirectResponse
+    {
+        $this->authorize('update', $registration);
+
+        $validated = $request->validated();
+        $newPaths = [];
+        $oldPaths = [];
+
+        try {
+            foreach ([
+                'vehicle_pickup_photo' => 'vehicle_pickup',
+                'vehicle_delivery_photo' => 'vehicle_delivery',
+            ] as $field => $document) {
+                if (! $request->hasFile($field)) {
+                    continue;
+                }
+
+                $newPaths[$document] = $this->documentStorage->store(
+                    $request->file($field),
+                    (string) $registration->uuid,
+                    $document,
+                );
+                $oldPaths[$document] = $registration->documentPath($document);
+            }
+
+            $registration->fill([
+                'vehicle_observation' => $validated['vehicle_observation'] ?? null,
+            ]);
+
+            foreach ($newPaths as $document => $path) {
+                $registration->{$document === 'vehicle_pickup'
+                    ? 'vehicle_pickup_photo_path'
+                    : 'vehicle_delivery_photo_path'} = $path;
+            }
+
+            $registration->save();
+        } catch (Throwable $exception) {
+            foreach ($newPaths as $path) {
+                $this->documentStorage->delete($path);
+            }
+
+            throw $exception;
+        }
+
+        foreach ($oldPaths as $path) {
+            if (is_string($path)) {
+                $this->documentStorage->delete($path);
+            }
+        }
+
+        $this->audit->log(
+            AuditAction::UpdateRegistration,
+            [
+                'registration_uuid' => $registration->uuid,
+                'pickup_photo_updated' => array_key_exists('vehicle_pickup', $newPaths),
+                'delivery_photo_updated' => array_key_exists('vehicle_delivery', $newPaths),
+            ],
+            $registration,
+        );
+
+        $message = match (array_keys($newPaths)) {
+            ['vehicle_pickup'] => 'Foto da retirada atualizada com sucesso.',
+            ['vehicle_delivery'] => 'Foto da entrega atualizada com sucesso.',
+            ['vehicle_pickup', 'vehicle_delivery'], ['vehicle_delivery', 'vehicle_pickup'] => 'Fotos do veículo atualizadas com sucesso.',
+            default => 'Cadastro atualizado com sucesso.',
+        };
+
+        return redirect()
+            ->route('admin.registrations.show', $registration)
+            ->with('success', $message);
     }
 
     /**
@@ -109,6 +198,17 @@ class RegistrationController extends Controller
         $previous = $registration->status;
         $next = RegistrationStatus::from($validated['status']);
 
+        // Reativar um cadastro reprovado faz ele voltar a ocupar vaga:
+        // revalida a disponibilidade no período sob lock (ignorando o
+        // próprio cadastro) para não gerar overbooking.
+        if (! $previous->consumesQuota() && $next->consumesQuota()) {
+            $refusal = $this->revalidateQuotaOnReactivate($registration);
+
+            if ($refusal !== null) {
+                return $refusal;
+            }
+        }
+
         $registration->status = $next;
         $registration->save();
 
@@ -127,6 +227,37 @@ class RegistrationController extends Controller
         return back()
             ->with('success', 'Status atualizado com sucesso.')
             ->with('status_updated_redirect', true);
+    }
+
+    /**
+     * Revalida a cota ao sair de "reprovado" para um status consumidor.
+     * Retorna um redirect com erro amigável quando não há vaga; null quando
+     * a transição pode seguir.
+     */
+    private function revalidateQuotaOnReactivate(ClientRegistration $registration): ?RedirectResponse
+    {
+        if (! $registration->vehicle_id || ! $registration->quota_type_id || ! $registration->start_date || ! $registration->end_date) {
+            return null;
+        }
+
+        try {
+            DB::transaction(function () use ($registration): void {
+                $this->quotaAvailability->assertCanReserve(
+                    (int) $registration->vehicle_id,
+                    (int) $registration->quota_type_id,
+                    Carbon::parse($registration->start_date),
+                    Carbon::parse($registration->end_date),
+                    $registration->getKey(),
+                    lock: true,
+                );
+            });
+        } catch (QuotaUnavailableException $e) {
+            return back()->withErrors([
+                'status' => 'Não é possível reativar este cadastro: '.$e->getMessage(),
+            ]);
+        }
+
+        return null;
     }
 
     /**

@@ -7,6 +7,7 @@ import { toast } from './toasts';
 
 export const initAdmin = (root = document) => {
     initDocumentGallery(root);
+    initVehiclePhotoUploads(root);
     // Após salvar um status, a página de detalhes exibe a confirmação e,
     // passado o intervalo (ex.: 2000 ms), volta automaticamente à listagem.
     const redirectAfter = Number(root.body?.dataset.statusRedirectAfter ?? 0);
@@ -145,6 +146,86 @@ export const initAdmin = (root = document) => {
         });
     });
 };
+
+/**
+ * Handles vehicle photo uploads on the registration edit form.
+ *
+ * The gallery input is intentionally nameless: the selected file is copied
+ * into the named input before the form is submitted.
+ */
+function initVehiclePhotoUploads(root) {
+    root.querySelectorAll('[data-admin-upload-card]').forEach((card) => {
+        const input = card.querySelector('[data-admin-upload-input]');
+        const gallery = card.querySelector('[data-admin-gallery-input]');
+        const preview = card.querySelector('.preview-image');
+        const empty = card.querySelector('.preview-empty-icon');
+        const fileName = card.querySelector('.file-name');
+        const existingSrc = card.dataset.existingSrc ?? '';
+
+        const showFile = (file) => {
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                empty?.classList.add('hidden');
+                preview?.classList.remove('hidden');
+                preview.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+            card.classList.add('is-filled');
+            if (fileName) {
+                fileName.textContent = file.name;
+            }
+        };
+
+        const restorePreview = () => {
+            if (input) {
+                input.value = '';
+            }
+            if (gallery) {
+                gallery.value = '';
+            }
+
+            if (existingSrc) {
+                empty?.classList.add('hidden');
+                preview?.classList.remove('hidden');
+                preview.src = existingSrc;
+                card.classList.add('is-filled');
+                if (fileName) {
+                    fileName.textContent = 'Foto salva';
+                }
+            } else {
+                empty?.classList.remove('hidden');
+                preview?.classList.add('hidden');
+                preview?.removeAttribute('src');
+                card.classList.remove('is-filled');
+                if (fileName) {
+                    fileName.textContent = 'Nenhuma imagem selecionada';
+                }
+            }
+        };
+
+        input?.addEventListener('change', () => showFile(input.files?.[0]));
+        gallery?.addEventListener('change', () => {
+            const file = gallery.files?.[0];
+            if (!file || !input) {
+                return;
+            }
+
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            input.files = transfer.files;
+            showFile(file);
+            gallery.value = '';
+        });
+        card.querySelector('.remove-preview')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            restorePreview();
+        });
+    });
+}
 
 function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {

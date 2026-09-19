@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use App\Enums\RegistrationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A ocupação de uma cota é sempre calculada por período por
+ * App\Services\QuotaAvailabilityService. Contadores globais (sem datas)
+ * não representam a regra de negócio e não devem existir aqui.
+ */
 class QuotaType extends Model
 {
     protected $fillable = [
@@ -31,12 +35,5 @@ class QuotaType extends Model
     public function registrations(): HasMany
     {
         return $this->hasMany(ClientRegistration::class);
-    }
-
-    public function soldCount(): int
-    {
-        return $this->registrations()
-            ->where('status', RegistrationStatus::Aprovado->value)
-            ->count();
     }
 }

@@ -15,8 +15,17 @@ class HowItWorksController extends Controller
             ->orderBy('days')
             ->get();
 
+        $vca = config('services.vca');
+
         return view('public.how-it-works', [
             'quotaTypes' => $quotaTypes,
+            // 'whatsappUrl' => 'https://wa.me/'.$vca['whatsapp'],
+            // 'city' => $vca['city'],
+            // 'priceFrom' => $vca['price_from'],
+            // 'vehicleYear' => $vca['vehicle_year'],
+            // 'preLaunchLabel' => $vca['pre_launch_label'],
+            // 'instagram' => $vca['instagram'],
+            // 'instagramUrl' => $vca['instagram_url'],
         ]);
     }
 }

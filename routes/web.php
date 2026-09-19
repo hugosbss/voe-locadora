@@ -38,6 +38,10 @@ Route::get('/', fn () => redirect()->route(
 */
 Route::get('/cadastro', [ClientRegistrationController::class, 'create'])->name('client-registrations.create');
 
+Route::get('/cadastro/disponibilidade', [ClientRegistrationController::class, 'quotaAvailability'])
+    ->middleware('throttle:quota_availability')
+    ->name('client-registrations.quota-availability');
+
 Route::post('/cadastro', [ClientRegistrationController::class, 'store'])
     ->middleware('cadastro-throttle')
     ->name('client-registrations.store');
@@ -142,6 +146,12 @@ Route::middleware(['auth'])->prefix('admin')->group(function (): void {
 
     Route::get('/cadastros/{registration:uuid}', [RegistrationController::class, 'show'])
         ->name('admin.registrations.show');
+
+    Route::get('/cadastros/{registration:uuid}/editar', [RegistrationController::class, 'edit'])
+        ->name('admin.registrations.edit');
+
+    Route::put('/cadastros/{registration:uuid}', [RegistrationController::class, 'update'])
+        ->name('admin.registrations.update');
 
     Route::get('/cotas', [QuotaTypeController::class, 'index'])
         ->name('admin.quotas.index');

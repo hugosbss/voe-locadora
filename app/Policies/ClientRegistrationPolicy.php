@@ -66,6 +66,11 @@ class ClientRegistrationPolicy
         return $this->hasAdminRole($user);
     }
 
+    public function update(User $user, ClientRegistration $registration): bool
+    {
+        return $this->hasAdminRole($user);
+    }
+
     public function delete(User $user, ClientRegistration $registration): bool
     {
         return $this->hasAdminRole($user);

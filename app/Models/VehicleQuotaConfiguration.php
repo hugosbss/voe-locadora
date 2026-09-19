@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use App\Enums\RegistrationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Disponibilidade e ocupação de cotas são responsabilidade exclusiva de
+ * App\Services\QuotaAvailabilityService. Não adicione contadores globais
+ * (sem período) aqui: eles ignoram datas e status configuráveis.
+ */
 class VehicleQuotaConfiguration extends Model
 {
     protected $table = 'vehicle_quota_configurations';
@@ -33,19 +37,5 @@ class VehicleQuotaConfiguration extends Model
     public function quotaType(): BelongsTo
     {
         return $this->belongsTo(QuotaType::class);
-    }
-
-    public function soldCount(): int
-    {
-        return ClientRegistration::query()
-            ->where('vehicle_id', $this->vehicle_id)
-            ->where('quota_type_id', $this->quota_type_id)
-            ->where('status', RegistrationStatus::Aprovado->value)
-            ->count();
-    }
-
-    public function availableCount(): int
-    {
-        return max($this->quantity - $this->soldCount(), 0);
     }
 }

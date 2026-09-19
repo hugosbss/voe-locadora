@@ -11,10 +11,13 @@ use App\Services\RetentionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use setasign\Fpdi\Fpdi;
+use Tests\Concerns\CreatesQuotaContext;
 use Tests\TestCase;
 
 class ClientContractTest extends TestCase
 {
+    use CreatesQuotaContext;
     use RefreshDatabase;
 
     private array $baseData = [
@@ -90,8 +93,15 @@ class ClientContractTest extends TestCase
      */
     private function validPayload(array $overrides = []): array
     {
+        [$vehicle, $quota] = $this->createQuotaContext(30);
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
         return array_merge([
             ...$this->baseData,
+            'vehicle_id' => (string) $vehicle->id,
+            'quota_type_id' => (string) $quota->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
@@ -119,10 +129,8 @@ class ClientContractTest extends TestCase
         $signaturePath = $storage->storeSignature($this->signatureDataUrl(), $registration->uuid);
 
         $contractPath = app(ContractPdfService::class)->generate(
-            $registration->uuid,
+            $registration,
             $signaturePath,
-            $registration->full_name,
-            $registration->cpf,
             now('America/Sao_Paulo')->format('d/m/Y H:i'),
         );
 
@@ -200,13 +208,74 @@ class ClientContractTest extends TestCase
 
         // O documento assinado mantém as 12 páginas do modelo (nenhuma
         // página é perdida no processo de overlay).
-        $this->assertSame(12, app(ContractPdfService::class)->pageCount($absolute));
+        $reader = new Fpdi('P', 'pt');
+        $this->assertSame(12, $reader->setSourceFile($absolute));
 
         // A página de assinatura recebe o nome, CPF e data do participante.
         // Fontes base do FPDF gravam strings ASCII como literais
         // `(...) Tj` no content stream — conferimos o overlay sem parser.
         $content = (string) file_get_contents($absolute);
         $this->assertStringContainsString('(Joao Oliveira Santos)', $content);
+        $this->assertStringContainsString('529.982.247-25', $content);
+        $this->assertMatchesRegularExpression('/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/', $content);
+    }
+
+    public function test_signed_contract_fills_page_one_and_signs_page_twelve(): void
+    {
+        $this->seedContractTemplate();
+
+        $registration = ClientRegistration::factory()->create([
+            'full_name' => 'Joao Oliveira Santos',
+            'cpf' => '529.982.247-25',
+            'birth_date' => '1988-03-22',
+            'phone' => '(11) 98765-4321',
+            'whatsapp' => '(11) 98765-4321',
+            'email' => 'joao@example.com',
+            'cep' => '01310-100',
+            'address' => 'Avenida Paulista',
+            'address_number' => '500',
+            'neighborhood' => 'Bela Vista',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'cnh_number' => '99887766554',
+        ]);
+
+        $signaturePath = app(ContractStorageService::class)->storeSignature(
+            $this->signatureDataUrl(),
+            $registration->uuid,
+        );
+
+        $pdfPath = app(ContractPdfService::class)->generate(
+            $registration,
+            $signaturePath,
+            now('America/Sao_Paulo')->format('d/m/Y H:i'),
+        );
+
+        $absolute = Storage::disk('local')->path($pdfPath);
+        $this->assertFileExists($absolute);
+
+        // O contrato definitivo mantém as 12 páginas do modelo.
+        $reader = new Fpdi('P', 'pt');
+        $this->assertSame(12, $reader->setSourceFile($absolute));
+
+        $content = (string) file_get_contents($absolute);
+
+        // Página 1 preenchida: dados completos do PARTICIPANTE.
+        $this->assertStringContainsString('Joao Oliveira Santos', $content);
+        $this->assertStringContainsString('529.982.247-25', $content);
+        $this->assertStringContainsString('99887766554', $content);
+        $this->assertStringContainsString('22/03/1988', $content);
+        $this->assertStringContainsString('98765-4321', $content);
+        $this->assertStringContainsString('joao@example.com', $content);
+        $this->assertStringContainsString('CEP 01310-100', $content);
+
+        // Os placeholders da página 1 ("[NOME COMPLETO]", "[●]") são
+        // cobertos por um retângulo branco (fill) antes de cada valor — um
+        // `re f` por campo preenchido na página 1.
+        $this->assertGreaterThanOrEqual(7, substr_count($content, ' re f'));
+
+        // Página 12 assinada: nome, CPF formatado e data/hora.
+        $this->assertStringContainsString('Joao Oliveira Santos', $content);
         $this->assertStringContainsString('529.982.247-25', $content);
         $this->assertMatchesRegularExpression('/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/', $content);
     }
@@ -381,5 +450,169 @@ class ClientContractTest extends TestCase
 
         Storage::disk('local')->assertMissing($registration->contract_signature_path);
         Storage::disk('local')->assertMissing($registration->contract_signed_pdf_path);
+    }
+
+    /* ---------- Contrato preenchido (página 1) ---------- */
+
+    public function test_filled_contract_is_generated_on_submission(): void
+    {
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $this->validPayload())
+            ->assertRedirect(route('client-registrations.success'));
+
+        $registration = ClientRegistration::query()->firstOrFail();
+
+        $this->assertNotNull($registration->filled_contract_path);
+        $this->assertStringStartsWith('contracts/generated/'.$registration->uuid.'/', $registration->filled_contract_path);
+        Storage::disk('local')->assertExists($registration->filled_contract_path);
+    }
+
+    public function test_filled_contract_has_all_template_pages(): void
+    {
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $this->validPayload());
+
+        $registration = ClientRegistration::query()->firstOrFail();
+        $absolute = Storage::disk('local')->path((string) $registration->filled_contract_path);
+
+        $this->assertFileExists($absolute);
+
+        $reader = new Fpdi('P', 'pt');
+        $this->assertSame(12, $reader->setSourceFile($absolute));
+    }
+
+    public function test_filled_contract_contains_participant_data_on_page_one(): void
+    {
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $this->validPayload());
+
+        $registration = ClientRegistration::query()->firstOrFail();
+        $absolute = Storage::disk('local')->path((string) $registration->filled_contract_path);
+        $content = (string) file_get_contents($absolute);
+
+        // Nome completo
+        $this->assertStringContainsString('Joao Oliveira Santos', $content);
+
+        // CPF formatado
+        $this->assertStringContainsString('529.982.247-25', $content);
+
+        // CNH
+        $this->assertStringContainsString('99887766554', $content);
+
+        // Data de nascimento
+        $this->assertStringContainsString('22/03/1988', $content);
+
+        // Telefone — FPDF escapa parenteses no stream: \(11\) em vez de (11)
+        $this->assertStringContainsString('98765-4321', $content);
+
+        // E-mail
+        $this->assertStringContainsString('joao@example.com', $content);
+
+        // Endereço composto — FPDF grava em ISO-8859-1, converter antes de buscar
+        $this->assertStringContainsString('Avenida Paulista', $content);
+        $this->assertStringContainsString('500', $content);
+        $this->assertStringContainsString('Bela Vista', $content);
+        $this->assertStringContainsString(iconv('UTF-8', 'ISO-8859-1', 'São Paulo/SP'), $content);
+    }
+
+    public function test_filled_contract_does_not_stamp_pages_beyond_one(): void
+    {
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $this->validPayload());
+
+        $registration = ClientRegistration::query()->firstOrFail();
+        $absolute = Storage::disk('local')->path((string) $registration->filled_contract_path);
+        $content = (string) file_get_contents($absolute);
+
+        // O conteúdo do teste sintético tem "pagina X" em cada página.
+        // Os dados do participante NÃO devem aparecer mais de uma vez.
+        // Conta quantas vezes o nome aparece: deve ser apenas 1 (página 1).
+        $occurrences = substr_count($content, 'Joao Oliveira Santos');
+        $this->assertSame(1, $occurrences);
+    }
+
+    public function test_filled_contract_handles_accented_characters(): void
+    {
+        $this->seedContractTemplate();
+
+        $registration = ClientRegistration::factory()->create([
+            'full_name' => 'Maria da Conceicao',
+            'city' => 'Sao Paulo',
+            'neighborhood' => 'Vila Mariana',
+        ]);
+
+        $path = app(ContractPdfService::class)->generateFilled($registration);
+
+        Storage::disk('local')->assertExists($path);
+
+        $absolute = Storage::disk('local')->path($path);
+        $this->assertFileExists($absolute);
+        $this->assertGreaterThan(0, filesize($absolute));
+
+        $content = (string) file_get_contents($absolute);
+        $this->assertStringContainsString('Maria da Conceicao', $content);
+    }
+
+    public function test_filled_contract_handles_missing_data_gracefully(): void
+    {
+        $this->seedContractTemplate();
+
+        $registration = ClientRegistration::factory()->create([
+            'cnh_number' => '',
+            'phone' => '',
+        ]);
+
+        $path = app(ContractPdfService::class)->generateFilled($registration);
+
+        Storage::disk('local')->assertExists($path);
+
+        $absolute = Storage::disk('local')->path($path);
+        $this->assertFileExists($absolute);
+        $this->assertGreaterThan(0, filesize($absolute));
+
+        // O nome e o e-mail devem aparecer mesmo com campos faltantes.
+        $content = (string) file_get_contents($absolute);
+        // FPDF grava em ISO-8859-1, converter strings com acentos antes de buscar
+        $this->assertStringContainsString(iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $registration->full_name), $content);
+        $this->assertStringContainsString($registration->email, $content);
+    }
+
+    public function test_generate_filled_works_independently(): void
+    {
+        $this->seedContractTemplate();
+
+        $registration = ClientRegistration::factory()->create([
+            'full_name' => 'Carlos Alberto',
+            'cpf' => '12345678901',
+            'cnh_number' => '11223344556',
+            'birth_date' => '1990-06-15',
+            'address' => 'Rua das Flores',
+            'address_number' => '123',
+            'neighborhood' => 'Centro',
+            'city' => 'Itabaianinha',
+            'state' => 'SE',
+            'phone' => '(79) 99999-0000',
+            'email' => 'carlos@test.com',
+        ]);
+
+        $service = app(ContractPdfService::class);
+        $path = $service->generateFilled($registration);
+
+        $this->assertStringStartsWith('contracts/generated/'.$registration->uuid.'/', $path);
+        Storage::disk('local')->assertExists($path);
+
+        $absolute = Storage::disk('local')->path($path);
+        $content = (string) file_get_contents($absolute);
+
+        $this->assertStringContainsString('Carlos Alberto', $content);
+        $this->assertStringContainsString('123.456.789-01', $content);
+        $this->assertStringContainsString('15/06/1990', $content);
+        $this->assertStringContainsString('Rua das Flores', $content);
+        $this->assertStringContainsString('123', $content);
+        $this->assertStringContainsString('Itabaianinha/SE', $content);
     }
 }

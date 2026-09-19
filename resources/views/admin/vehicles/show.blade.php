@@ -41,25 +41,28 @@
         </div>
 
         <div class="card p-5 sm:p-6">
-            <h2 class="section-title mb-4">Resumo</h2>
+            <h2 class="section-title mb-4">Resumo de hoje</h2>
             <dl class="space-y-3 text-sm">
-                <div class="flex items-center justify-between"><dt class="text-zinc-400">Disponíveis</dt><dd class="font-semibold text-white">{{ $vehicle->totalAvailableQuotaCount() }}</dd></div>
-                <div class="flex items-center justify-between"><dt class="text-zinc-400">Vendidas</dt><dd class="font-semibold text-white">{{ $vehicle->totalSoldQuotaCount() }}</dd></div>
+                <div class="flex items-center justify-between"><dt class="text-zinc-400">Total de cotas</dt><dd class="font-semibold text-white">{{ $vehicleStats['total'] }}</dd></div>
+                <div class="flex items-center justify-between"><dt class="text-zinc-400">Reservadas hoje</dt><dd class="font-semibold text-white">{{ $vehicleStats['reserved_today'] }}</dd></div>
+                <div class="flex items-center justify-between"><dt class="text-zinc-400">Disponíveis hoje</dt><dd class="font-semibold text-white">{{ $vehicleStats['available_today'] }}</dd></div>
             </dl>
         </div>
     </div>
 
     <div class="mt-6 card p-5 sm:p-6">
         <div class="mb-4 flex items-center justify-between gap-3">
-            <h2 class="section-title">Configuração de cotas</h2>
-            <form method="POST" action="{{ route('admin.vehicles.add-quota', $vehicle) }}" class="flex items-center gap-2">
+            <h2 class="section-title">Cotas</h2>
+            <form method="POST" action="{{ route('admin.vehicles.add-quota', $vehicle) }}" class="flex flex-wrap items-center gap-2">
                 @csrf
-                <select name="quota_type_id" class="form-input text-sm" required>
-                    <option value="">Tipo</option>
-                    @foreach ($quotaTypes as $quotaType)
-                        <option value="{{ $quotaType->id }}">{{ $quotaType->code }} - {{ $quotaType->name }}</option>
-                    @endforeach
-                </select>
+                <div data-custom-select data-cs-label="Tipo de cota" data-cs-placeholder="Tipo" class="w-full sm:w-44">
+                    <select name="quota_type_id" class="form-input" required>
+                        <option value="">Tipo</option>
+                        @foreach ($quotaTypes as $quotaType)
+                            <option value="{{ $quotaType->id }}">{{ $quotaType->code }} - {{ $quotaType->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="number" name="quantity" min="0" value="1" class="form-input w-24 text-sm" required>
                 <button type="submit" class="btn btn-primary btn-sm">+ Adicionar</button>
             </form>
@@ -76,8 +79,8 @@
                         <th class="px-3 py-3">Nome</th>
                         <th class="px-3 py-3">Quantidade</th>
                         <th class="px-3 py-3">Dias</th>
-                        <th class="px-3 py-3">Vendidas</th>
-                        <th class="px-3 py-3">Disponíveis</th>
+                        <th class="px-3 py-3">Reservadas hoje</th>
+                        <th class="px-3 py-3">Disponíveis hoje</th>
                         <th class="px-3 py-3">Status</th>
                         <th class="px-3 py-3 text-right">Ações</th>
                     </tr>
@@ -89,8 +92,8 @@
                             <td class="px-3 py-3">{{ $configuration->quotaType->name }}</td>
                             <td class="px-3 py-3">{{ $configuration->quantity }}</td>
                             <td class="px-3 py-3">{{ $configuration->quotaType->days }}</td>
-                            <td class="px-3 py-3">{{ $configuration->soldCount() }}</td>
-                            <td class="px-3 py-3">{{ $configuration->availableCount() }}</td>
+                            <td class="px-3 py-3">{{ $configurationStats[$configuration->id]['reserved_today'] ?? 0 }}</td>
+                            <td class="px-3 py-3">{{ $configurationStats[$configuration->id]['available_today'] ?? 0 }}</td>
                             <td class="px-3 py-3">
                                 <span class="inline-flex rounded-full px-2 py-1 text-[11px] font-semibold {{ $configuration->active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-zinc-700/60 text-zinc-300' }}">
                                     {{ $configuration->active ? 'Ativo' : 'Inativo' }}

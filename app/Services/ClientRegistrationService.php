@@ -7,9 +7,12 @@ use App\Enums\FacialStatus;
 use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
 use App\Models\QuotaType;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 /**
  * Orquestra a criação de um cadastro de cliente, incluindo a
@@ -28,6 +31,7 @@ class ClientRegistrationService
         private readonly ContractPdfService $contractPdf,
         private readonly FacialValidationService $facialValidation,
         private readonly AuditService $audit,
+        private readonly QuotaAvailabilityService $quotaAvailability,
     ) {}
 
     /**
@@ -47,6 +51,19 @@ class ClientRegistrationService
 
         try {
             return DB::transaction(function () use ($data, $uuid, $signerIp): ClientRegistration {
+                // Revalida a disponibilidade sob lock ANTES de gravar
+                // qualquer arquivo: protege contra a corrida entre a
+                // validação do formulário e a criação (overbooking).
+                if (! empty($data['vehicle_id']) && ! empty($data['quota_type_id'])) {
+                    $this->quotaAvailability->assertCanReserve(
+                        (int) $data['vehicle_id'],
+                        (int) $data['quota_type_id'],
+                        Carbon::parse($data['start_date']),
+                        Carbon::parse($data['end_date']),
+                        lock: true,
+                    );
+                }
+
                 $registration = new ClientRegistration;
                 $registration->uuid = $uuid;
 
@@ -57,6 +74,10 @@ class ClientRegistrationService
                         ? $this->documentStorage->store($file, $uuid, $document)
                         : null;
                 }
+
+                // Dados pessoais preenchidos antes do contrato: o PDF usa o
+                // model para montar a página 1 e o bloco de assinatura.
+                $registration->fill($this->mapFormData($data));
 
                 // Contrato: gera os arquivos ANTES de salvar o cadastro.
                 // Se qualquer passo falhar, a exceção propaga e o catch
@@ -69,14 +90,10 @@ class ClientRegistrationService
                 $signedAt = now('America/Sao_Paulo');
 
                 $contractPath = $this->contractPdf->generate(
-                    $uuid,
+                    $registration,
                     $signaturePath,
-                    (string) $data['contract_signer_name'],
-                    (string) $data['cpf'],
                     $signedAt->format('d/m/Y H:i'),
                 );
-
-                $registration->fill($this->mapFormData($data));
 
                 if (! empty($data['vehicle_id']) && ! empty($data['quota_type_id'])) {
                     $quotaType = QuotaType::query()->find($data['quota_type_id']);
@@ -112,6 +129,17 @@ class ClientRegistrationService
                 $registration->contract_signer_ip = $signerIp ?? app('request')->ip();
 
                 $registration->save();
+
+                // Gera o contrato com dados preenchidos na página 1.
+                try {
+                    $filledPath = $this->contractPdf->generateFilled($registration);
+                    $registration->update(['filled_contract_path' => $filledPath]);
+                } catch (Throwable $e) {
+                    Log::warning('Failed to generate filled contract', [
+                        'registration_uuid' => $uuid,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
                 $this->audit->log(
                     AuditAction::ConsentRecorded,

@@ -44,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
                 ->by((string) $request->ip());
         });
 
+        RateLimiter::for('quota_availability', function (Request $request): Limit {
+            return Limit::perMinute((int) config('rate.limits.quota_availability_per_minute', 60))
+                ->by((string) $request->ip());
+        });
+
         RateLimiter::for('admin_login', function (Request $request): Limit {
             $email = strtolower(trim((string) $request->input('email', '')));
 

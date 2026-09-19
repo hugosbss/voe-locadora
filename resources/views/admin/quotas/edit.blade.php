@@ -16,8 +16,8 @@
             @method('PUT')
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <x-form-field label="Código" name="code" value="{{ old('code', $quotaType->code) }}" placeholder="S" required />
-                <x-form-field label="Nome" name="name" value="{{ old('name', $quotaType->name) }}" placeholder="Semanal" required />
+                <x-form-field label="Código" name="code" value="{{ old('code', $quotaType->code) }}" placeholder="Cota F" required />
+                <x-form-field label="Nome" name="name" value="{{ old('name', $quotaType->name) }}" placeholder="Família" required />
             </div>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

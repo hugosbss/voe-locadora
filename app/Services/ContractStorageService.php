@@ -70,6 +70,7 @@ class ContractStorageService
     public function deleteRegistrationDirectory(string $registrationUuid): void
     {
         Storage::disk(self::DISK)->deleteDirectory('contracts/signed/'.$registrationUuid);
+        Storage::disk(self::DISK)->deleteDirectory('contracts/generated/'.$registrationUuid);
     }
 
     /**

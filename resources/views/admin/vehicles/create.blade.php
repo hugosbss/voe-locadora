@@ -16,7 +16,7 @@
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <x-form-field label="Modelo" name="model" value="{{ old('model') }}" placeholder="Ex.: Chevrolet Onix" required />
-                <x-form-field label="Placa" name="plate" value="{{ old('plate') }}" placeholder="TXD6J56" required />
+                <x-form-field label="Placa" name="plate" value="{{ old('plate') }}" required />
             </div>
 
             <div class="flex items-center gap-3">

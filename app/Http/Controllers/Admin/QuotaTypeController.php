@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\QuotaType;
 use App\Models\Vehicle;
 use App\Models\VehicleQuotaConfiguration;
+use App\Services\QuotaAvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,10 @@ use Illuminate\View\View;
 
 class QuotaTypeController extends Controller
 {
+    public function __construct(
+        private readonly QuotaAvailabilityService $quotaAvailability,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('viewAny', QuotaType::class);
@@ -69,9 +74,16 @@ class QuotaTypeController extends Controller
             ->orderBy('model')
             ->get();
 
+        $configurationStats = $quotaType->configurations->mapWithKeys(
+            fn (VehicleQuotaConfiguration $configuration): array => [
+                $configuration->id => $this->quotaAvailability->statsForConfiguration($configuration),
+            ],
+        );
+
         return view('admin.quotas.show', [
             'quotaType' => $quotaType,
             'vehicles' => $vehicles,
+            'configurationStats' => $configurationStats,
         ]);
     }
 
@@ -166,6 +178,14 @@ class QuotaTypeController extends Controller
             'active' => ['nullable', 'boolean'],
         ]);
 
+        $peak = $this->quotaAvailability->peakConcurrentReservations($configuration);
+
+        if ((int) $validated['quantity'] < $peak) {
+            return back()->withErrors([
+                'quantity' => "A quantidade não pode ser menor que o pico de reservas simultâneas ({$peak}).",
+            ]);
+        }
+
         $configuration->update([
             'quantity' => $validated['quantity'],
             'active' => (bool) ($validated['active'] ?? $configuration->active),
@@ -178,10 +198,10 @@ class QuotaTypeController extends Controller
     {
         $this->authorize('update', $quotaType);
 
-        if ($configuration->soldCount() > 0) {
+        if ($this->quotaAvailability->hasActiveReservations($configuration)) {
             $configuration->update(['active' => false]);
 
-            return back()->with('success', 'Configuração desativada porque já existem vendas registradas.');
+            return back()->with('success', 'Configuração desativada porque já existem reservas ativas no período.');
         }
 
         $configuration->delete();

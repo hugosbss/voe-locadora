@@ -174,31 +174,31 @@
                     <div class="md:col-span-4">
                         <x-select-field label="Veículo" name="vehicle_id" placeholder="Selecione o veículo..." required>
                             @foreach ($vehicles as $vehicle)
-                                @if ($vehicle->availableQuotaConfigurations()->isNotEmpty())
-                                    <option value="{{ $vehicle->id }}" @selected(old('vehicle_id') == $vehicle->id)>{{ $vehicle->model }} · {{ $vehicle->plate }}</option>
-                                @endif
+                                <option value="{{ $vehicle->id }}" @selected(old('vehicle_id') == $vehicle->id)>{{ $vehicle->model }} · {{ $vehicle->plate }}</option>
                             @endforeach
                         </x-select-field>
                     </div>
 
-                    <div class="md:col-span-4">
-                        <x-select-field label="Tipo de cota" name="quota_type_id" placeholder="Selecione a cota..." required>
+                    <div class="md:col-span-4 min-w-0">
+                        <x-form-field label="Data de início" name="start_date" value="{{ old('start_date') }}"
+                            type="date" min="{{ now('America/Sao_Paulo')->format('Y-m-d') }}" required />
+                    </div>
+
+                    <div class="md:col-span-4 min-w-0">
+                        <x-form-field label="Data de fim" name="end_date" value="{{ old('end_date') }}"
+                            type="date" min="{{ now('America/Sao_Paulo')->format('Y-m-d') }}" required />
+                    </div>
+
+                    <div class="md:col-span-12">
+                        <x-select-field label="Cota" name="quota_type_id" placeholder="Selecione a cota..." required>
                             @foreach ($availableQuotaOptions as $option)
-                                <option value="{{ $option['id'] }}" data-vehicle-id="{{ $option['vehicle_id'] }}" @selected(old('quota_type_id') == $option['id'])>
+                                <option value="{{ $option['id'] }}" data-vehicle-id="{{ $option['vehicle_id'] }}"
+                                    data-days="{{ $option['days'] }}" data-base-label="{{ $option['label'] }}"
+                                    @selected(old('quota_type_id') == $option['id'])>
                                     {{ $option['label'] }}
                                 </option>
                             @endforeach
                         </x-select-field>
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <x-form-field label="Data de início" name="start_date" value="{{ old('start_date') }}"
-                            type="date" required />
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <x-form-field label="Data de fim" name="end_date" value="{{ old('end_date') }}"
-                            type="date" required />
                     </div>
                 </div>
             </section>
@@ -422,7 +422,7 @@
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Voltar
                 </x-button>
-                <span id="step-counter" class="text-sm font-medium text-zinc-500">1 / {{ count($steps) }}</span>
+                {{-- <span id="step-counter" class="text-sm font-medium text-zinc-500">1 / {{ count($steps) }}</span> --}}
                 <x-button type="button" id="next-btn" class="flex-1 sm:flex-none sm:px-8">
                     <span data-next-label>Continuar</span>
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 7l5 5m0 0-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -460,6 +460,8 @@
         $registrationFormConfig = [
             'totalSteps' => count($steps),
             'cepLookupUrl' => route('cep.lookup'),
+            'quotaAvailabilityUrl' => route('client-registrations.quota-availability'),
+            'quotaDurationMode' => config('quotas.duration_mode', 'exact'),
             'successUrl' => route('client-registrations.success'),
             'fieldToStep' => $serverFieldToStep,
             'serverErrorSteps' => empty($serverErrorSteps) ? new stdClass : $serverErrorSteps,

@@ -16,7 +16,7 @@ class VehicleAndHowItWorksTest extends TestCase
         $this->get(route('public.how-it-works'))
             ->assertOk()
             ->assertSee('Como funciona')
-            ->assertSee('Quero fazer meu cadastro');
+            ->assertSee('FALE AGORA PELO WHATSAPP');
     }
 
     public function test_vehicle_can_be_created_with_quota_configuration(): void

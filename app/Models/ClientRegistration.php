@@ -69,6 +69,7 @@ class ClientRegistration extends Model
         'vehicle_pickup_photo_path',
         'vehicle_delivery_photo_path',
         'vehicle_observation',
+        'filled_contract_path',
     ];
 
     protected function casts(): array
@@ -178,9 +179,11 @@ class ClientRegistration extends Model
             return false;
         }
 
-        $expected = $this->contractStorageDirectory().'/';
+        $expectedSigned = $this->contractStorageDirectory().'/';
+        $expectedGenerated = 'contracts/generated/'.$this->uuid.'/';
 
-        return Str::startsWith($path, $expected);
+        return Str::startsWith($path, $expectedSigned)
+            || Str::startsWith($path, $expectedGenerated);
     }
 
     /**

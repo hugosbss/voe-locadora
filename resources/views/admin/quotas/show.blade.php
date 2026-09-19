@@ -44,7 +44,7 @@
             <h2 class="section-title mb-4">Resumo</h2>
             <dl class="space-y-3 text-sm">
                 <div class="flex items-center justify-between"><dt class="text-zinc-400">Veículos vinculados</dt><dd class="font-semibold text-white">{{ $quotaType->configurations()->count() }}</dd></div>
-                <div class="flex items-center justify-between"><dt class="text-zinc-400">Vendas aprovadas</dt><dd class="font-semibold text-white">{{ $quotaType->soldCount() }}</dd></div>
+                <div class="flex items-center justify-between"><dt class="text-zinc-400">Reservadas hoje</dt><dd class="font-semibold text-white">{{ collect($configurationStats)->sum('reserved_today') }}</dd></div>
             </dl>
         </div>
     </div>
@@ -52,14 +52,16 @@
     <div class="mt-6 card p-5 sm:p-6">
         <div class="mb-4 flex items-center justify-between gap-3">
             <h2 class="section-title">Veículos vinculados</h2>
-            <form method="POST" action="{{ route('admin.quotas.add-vehicle', $quotaType) }}" class="flex items-center gap-2">
+            <form method="POST" action="{{ route('admin.quotas.add-vehicle', $quotaType) }}" class="flex flex-wrap items-center gap-2">
                 @csrf
-                <select name="vehicle_id" class="form-input text-sm" required>
-                    <option value="">Veículo</option>
-                    @foreach ($vehicles as $vehicle)
-                        <option value="{{ $vehicle->id }}">{{ $vehicle->model }} · {{ $vehicle->plate }}</option>
-                    @endforeach
-                </select>
+                <div data-custom-select data-cs-label="Veículo" data-cs-placeholder="Veículo" class="w-full sm:w-44">
+                    <select name="vehicle_id" class="form-input" required>
+                        <option value="">Veículo</option>
+                        @foreach ($vehicles as $vehicle)
+                            <option value="{{ $vehicle->id }}">{{ $vehicle->model }} · {{ $vehicle->plate }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <input type="number" name="quantity" min="0" value="1" class="form-input w-24 text-sm" required>
                 <button type="submit" class="btn btn-primary btn-sm">+ Associar</button>
             </form>
@@ -74,8 +76,8 @@
                     <tr>
                         <th class="px-3 py-3">Veículo</th>
                         <th class="px-3 py-3">Quantidade</th>
-                        <th class="px-3 py-3">Vendidas</th>
-                        <th class="px-3 py-3">Disponíveis</th>
+                        <th class="px-3 py-3">Reservadas hoje</th>
+                        <th class="px-3 py-3">Disponíveis hoje</th>
                         <th class="px-3 py-3">Status</th>
                         <th class="px-3 py-3 text-right">Ações</th>
                     </tr>
@@ -85,8 +87,8 @@
                         <tr class="border-b border-line-dark/80">
                             <td class="px-3 py-3">{{ $configuration->vehicle->model }} · {{ $configuration->vehicle->plate }}</td>
                             <td class="px-3 py-3">{{ $configuration->quantity }}</td>
-                            <td class="px-3 py-3">{{ $configuration->soldCount() }}</td>
-                            <td class="px-3 py-3">{{ $configuration->availableCount() }}</td>
+                            <td class="px-3 py-3">{{ $configurationStats[$configuration->id]['reserved_today'] ?? 0 }}</td>
+                            <td class="px-3 py-3">{{ $configurationStats[$configuration->id]['available_today'] ?? 0 }}</td>
                             <td class="px-3 py-3">
                                 <span class="inline-flex rounded-full px-2 py-1 text-[11px] font-semibold {{ $configuration->active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-zinc-700/60 text-zinc-300' }}">
                                     {{ $configuration->active ? 'Ativo' : 'Inativo' }}

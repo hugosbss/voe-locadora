@@ -2,13 +2,15 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Vehicle;
-use App\Models\VehicleQuotaConfiguration;
+use App\Exceptions\QuotaUnavailableException;
 use App\Rules\UploadBatchMax;
 use App\Rules\ValidCpf;
 use App\Rules\ValidSignatureData;
+use App\Services\QuotaAvailabilityService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class StoreClientRegistrationRequest extends FormRequest
 {
@@ -58,30 +60,6 @@ class StoreClientRegistrationRequest extends FormRequest
             $fileRules[$field] = $imageRules;
         }
 
-        $availableVehicleIds = Vehicle::query()
-            ->where('active', true)
-            ->with(['quotaConfigurations' => fn ($query) => $query->where('active', true)])
-            ->get()
-            ->filter(fn (Vehicle $vehicle) => $vehicle->quotaConfigurations->some(fn ($configuration) => $configuration->availableCount() > 0))
-            ->pluck('id')
-            ->all();
-
-        $availableQuotaTypeIds = VehicleQuotaConfiguration::query()
-            ->where('active', true)
-            ->with('quotaType')
-            ->get()
-            ->filter(fn (VehicleQuotaConfiguration $configuration) => $configuration->availableCount() > 0)
-            ->pluck('quota_type_id')
-            ->all();
-
-        $vehicleSelectionRules = empty($availableVehicleIds)
-            ? ['nullable', 'integer', 'exists:vehicles,id']
-            : ['required', 'integer', 'exists:vehicles,id', Rule::in($availableVehicleIds)];
-
-        $quotaSelectionRules = empty($availableQuotaTypeIds)
-            ? ['nullable', 'integer', 'exists:quota_types,id']
-            : ['required', 'integer', 'exists:quota_types,id', Rule::in($availableQuotaTypeIds)];
-
         return [
             'full_name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\.\'\-]+$/u'],
             'cpf' => ['required', new ValidCpf],
@@ -101,9 +79,9 @@ class StoreClientRegistrationRequest extends FormRequest
             'cnh_category' => ['required', 'string', 'max:2', Rule::in(config('locations.cnh_categories', []))],
             'cnh_expiry_date' => ['required', 'date', 'after:today'],
 
-            'vehicle_id' => $vehicleSelectionRules,
-            'quota_type_id' => $quotaSelectionRules,
-            'start_date' => ['required', 'date', 'before_or_equal:end_date'],
+            'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
+            'quota_type_id' => ['required', 'integer', 'exists:quota_types,id'],
+            'start_date' => ['required', 'date', 'after_or_equal:'.$this->today(), 'before_or_equal:end_date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
 
             ...$fileRules,
@@ -123,27 +101,40 @@ class StoreClientRegistrationRequest extends FormRequest
             function ($validator): void {
                 $vehicleId = $this->input('vehicle_id');
                 $quotaTypeId = $this->input('quota_type_id');
+                $startDate = $this->input('start_date');
+                $endDate = $this->input('end_date');
 
-                if (! is_numeric($vehicleId) || ! is_numeric($quotaTypeId)) {
+                if (! is_numeric($vehicleId) || ! is_numeric($quotaTypeId) || ! $startDate || ! $endDate) {
                     return;
                 }
 
-                $configuration = VehicleQuotaConfiguration::query()
-                    ->where('vehicle_id', (int) $vehicleId)
-                    ->where('quota_type_id', (int) $quotaTypeId)
-                    ->where('active', true)
-                    ->first();
-
-                if (! $configuration) {
-                    $validator->errors()->add('quota_type_id', 'Esta cota não está disponível para o veículo selecionado.');
+                try {
+                    $start = Carbon::parse((string) $startDate);
+                    $end = Carbon::parse((string) $endDate);
+                } catch (Throwable) {
                     return;
                 }
 
-                if ($configuration->availableCount() <= 0) {
-                    $validator->errors()->add('quota_type_id', 'Esta cota não possui disponibilidade no momento.');
+                try {
+                    app(QuotaAvailabilityService::class)->assertCanReserve(
+                        (int) $vehicleId,
+                        (int) $quotaTypeId,
+                        $start,
+                        $end,
+                    );
+                } catch (QuotaUnavailableException $e) {
+                    $validator->errors()->add($e->field, $e->getMessage());
                 }
             },
         ];
+    }
+
+    /**
+     * Data de hoje (fuso America/Sao_Paulo) para a regra de início.
+     */
+    private function today(): string
+    {
+        return now('America/Sao_Paulo')->startOfDay()->format('Y-m-d');
     }
 
     /**
@@ -183,6 +174,16 @@ class StoreClientRegistrationRequest extends FormRequest
             'cnh_expiry_date.required' => 'Informe a data de validade da CNH.',
             'cnh_expiry_date.date' => 'Informe uma data válida.',
             'cnh_expiry_date.after' => 'Informe uma data de validade futura.',
+
+            'vehicle_id.required' => 'Selecione o veículo.',
+            'quota_type_id.required' => 'Selecione o tipo de cota.',
+            'start_date.required' => 'Informe a data de início.',
+            'start_date.date' => 'Informe uma data de início válida.',
+            'start_date.after_or_equal' => 'A data de início não pode ser anterior a hoje.',
+            'start_date.before_or_equal' => 'A data de início não pode ser posterior à data de término.',
+            'end_date.required' => 'Informe a data de término.',
+            'end_date.date' => 'Informe uma data de término válida.',
+            'end_date.after_or_equal' => 'A data de término não pode ser anterior à data de início.',
 
             'cnh_front_file.required' => 'Envie a foto da CNH (frente).',
             'cnh_front_file.image' => 'A foto da CNH (frente) deve ser uma imagem.',

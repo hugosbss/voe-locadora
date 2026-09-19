@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\QuotaType;
 use App\Models\Vehicle;
 use App\Models\VehicleQuotaConfiguration;
+use App\Services\QuotaAvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,10 @@ use Illuminate\View\View;
 
 class VehicleController extends Controller
 {
+    public function __construct(
+        private readonly QuotaAvailabilityService $quotaAvailability,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('viewAny', Vehicle::class);
@@ -22,8 +27,13 @@ class VehicleController extends Controller
             ->latest()
             ->get();
 
+        $quotaStats = $vehicles->mapWithKeys(
+            fn (Vehicle $vehicle): array => [$vehicle->id => $this->quotaAvailability->statsForVehicle($vehicle)],
+        );
+
         return view('admin.vehicles.index', [
             'vehicles' => $vehicles,
+            'quotaStats' => $quotaStats,
         ]);
     }
 
@@ -72,9 +82,17 @@ class VehicleController extends Controller
 
         $vehicle->load(['quotaConfigurations' => fn ($query) => $query->with('quotaType')]);
 
+        $configurationStats = $vehicle->quotaConfigurations->mapWithKeys(
+            fn (VehicleQuotaConfiguration $configuration): array => [
+                $configuration->id => $this->quotaAvailability->statsForConfiguration($configuration),
+            ],
+        );
+
         return view('admin.vehicles.show', [
             'vehicle' => $vehicle,
             'quotaTypes' => QuotaType::query()->where('active', true)->get(),
+            'configurationStats' => $configurationStats,
+            'vehicleStats' => $this->quotaAvailability->statsForVehicle($vehicle),
         ]);
     }
 
@@ -152,6 +170,14 @@ class VehicleController extends Controller
             'active' => ['nullable', 'boolean'],
         ]);
 
+        $peak = $this->quotaAvailability->peakConcurrentReservations($configuration);
+
+        if ((int) $validated['quantity'] < $peak) {
+            return back()->withErrors([
+                'quantity' => "A quantidade não pode ser menor que o pico de reservas simultâneas ({$peak}).",
+            ]);
+        }
+
         $configuration->update([
             'quantity' => $validated['quantity'],
             'active' => (bool) ($validated['active'] ?? $configuration->active),
@@ -163,6 +189,12 @@ class VehicleController extends Controller
     public function removeQuotaConfiguration(Vehicle $vehicle, VehicleQuotaConfiguration $configuration): RedirectResponse
     {
         $this->authorize('update', $vehicle);
+
+        if ($this->quotaAvailability->hasActiveReservations($configuration)) {
+            $configuration->update(['active' => false]);
+
+            return back()->with('success', 'Configuração desativada porque já existem reservas ativas no período.');
+        }
 
         $configuration->delete();
 

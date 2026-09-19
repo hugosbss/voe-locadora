@@ -8,18 +8,20 @@ use App\Models\QuotaType;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleQuotaConfiguration;
-use App\Services\NewRegistrationNotifier;
 use App\Services\ClientRegistrationService;
+use App\Services\NewRegistrationNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
 use RuntimeException;
+use Tests\Concerns\CreatesQuotaContext;
 use Tests\TestCase;
 
 class ClientRegistrationTest extends TestCase
 {
+    use CreatesQuotaContext;
     use RefreshDatabase;
 
     private array $baseData = [
@@ -38,8 +40,6 @@ class ClientRegistrationTest extends TestCase
         'cnh_number' => '12345678901',
         'cnh_category' => 'B',
         'cnh_expiry_date' => '2030-01-01',
-        'start_date' => '2026-09-19',
-        'end_date' => '2026-10-19',
         'veracity_declaration_accepted' => '1',
         'privacy_policy_accepted' => '1',
         'contract_signer_name' => 'Maria da Silva Souza',
@@ -94,8 +94,15 @@ class ClientRegistrationTest extends TestCase
      */
     private function validPayload(bool $withSignature = true): array
     {
+        [$vehicle, $quota] = $this->createQuotaContext(30);
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
         return [
             ...$this->baseData,
+            'vehicle_id' => (string) $vehicle->id,
+            'quota_type_id' => (string) $quota->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
             'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
@@ -169,7 +176,7 @@ class ClientRegistrationTest extends TestCase
 
         $this->assertStringContainsString('F-10 · Mensal (2 disponíveis)', $html);
         $this->assertMatchesRegularExpression(
-            '/data-vehicle-id="' . $vehicle->id . '"\s*>\s*F-10 · Mensal \(2 disponíveis\)\s*<\/option>/',
+            '/data-vehicle-id="'.$vehicle->id.'"[^>]*>\s*F-10 · Mensal \(2 disponíveis\)\s*<\/option>/',
             $html,
         );
         $this->assertStringNotContainsString('Civic 2025 · ABC-1234 · Mensal', $html);
@@ -300,8 +307,7 @@ class ClientRegistrationTest extends TestCase
             ->get(route('admin.registrations.show', $registration))
             ->assertOk()
             ->assertSee('Informações do veículo')
-            ->assertSee('Fotos da retirada')
-            ->assertSee('Fotos da entrega')
+            ->assertSee('Fotos do veículo')
             ->assertSee('Veículo entregue com chave no painel.');
     }
 
@@ -309,11 +315,13 @@ class ClientRegistrationTest extends TestCase
     {
         $this->seedContractTemplate();
 
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
         $payload = $this->validPayload();
         $payload['full_name'] = 'João da Silva Santos';
         $payload['contract_signer_name'] = 'João da Silva Santos';
-        $payload['start_date'] = '2026-09-19';
-        $payload['end_date'] = '2026-10-19';
+        $payload['start_date'] = $startDate;
+        $payload['end_date'] = $endDate;
 
         $response = $this->post('/cadastro', $payload);
 
@@ -322,8 +330,8 @@ class ClientRegistrationTest extends TestCase
         $this->assertDatabaseHas('client_registrations', [
             'full_name' => 'João da Silva Santos',
             'contract_signer_name' => 'João da Silva Santos',
-            'start_date' => '2026-09-19',
-            'end_date' => '2026-10-19',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
         ]);
     }
 

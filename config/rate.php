@@ -37,6 +37,9 @@ return [
         // Consulta de CEP (proxy para API externa).
         'cep_per_minute' => (int) env('RATE_LIMIT_CEP_PER_MINUTE', 30),
 
+        // Consulta de disponibilidade de cotas do formulário público.
+        'quota_availability_per_minute' => (int) env('RATE_LIMIT_QUOTA_AVAILABILITY_PER_MINUTE', 60),
+
         // Autenticação administrativa (janela curta).
         'login_per_minute' => (int) env('RATE_LIMIT_LOGIN_PER_MINUTE', 5),
 

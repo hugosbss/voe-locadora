@@ -21,8 +21,8 @@
                         <th class="px-3 py-3">Veículo</th>
                         <th class="px-3 py-3">Placa</th>
                         <th class="px-3 py-3">Cotas</th>
-                        <th class="px-3 py-3">Disponíveis</th>
-                        <th class="px-3 py-3">Vendidas</th>
+                        <th class="px-3 py-3">Reservadas hoje</th>
+                        <th class="px-3 py-3">Disponíveis hoje</th>
                         <th class="px-3 py-3">Status</th>
                         <th class="px-3 py-3 text-right">Ações</th>
                     </tr>
@@ -34,9 +34,9 @@
                                 <div class="font-medium text-white">{{ $vehicle->model }}</div>
                             </td>
                             <td class="px-3 py-3">{{ $vehicle->plate }}</td>
-                            <td class="px-3 py-3">{{ $vehicle->totalQuotaCount() }}</td>
-                            <td class="px-3 py-3">{{ $vehicle->totalAvailableQuotaCount() }}</td>
-                            <td class="px-3 py-3">{{ $vehicle->totalSoldQuotaCount() }}</td>
+                            <td class="px-3 py-3">{{ $quotaStats[$vehicle->id]['total'] ?? 0 }}</td>
+                            <td class="px-3 py-3">{{ $quotaStats[$vehicle->id]['reserved_today'] ?? 0 }}</td>
+                            <td class="px-3 py-3">{{ $quotaStats[$vehicle->id]['available_today'] ?? 0 }}</td>
                             <td class="px-3 py-3">
                                 <span class="inline-flex rounded-full px-2 py-1 text-[11px] font-semibold {{ $vehicle->active ? 'bg-emerald-500/15 text-emerald-300' : 'bg-zinc-700/60 text-zinc-300' }}">
                                     {{ $vehicle->active ? 'Ativo' : 'Inativo' }}
