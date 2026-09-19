@@ -188,6 +188,10 @@ export const initClientRegistration = () => {
         cnh_number: 'Número da CNH',
         cnh_category: 'Categoria da CNH',
         cnh_expiry_date: 'Validade da CNH',
+        vehicle_id: 'Veículo',
+        quota_type_id: 'Tipo de cota',
+        start_date: 'Data de início',
+        end_date: 'Data de fim',
         cnh_front_file: 'Foto da CNH (frente)',
         cnh_back_file: 'Foto da CNH (verso)',
         proof_of_residence_file: 'Comprovante de residência',
@@ -381,6 +385,10 @@ export const initClientRegistration = () => {
         cnh_number: 'Informe o número da CNH.',
         cnh_category: 'Selecione a categoria da CNH.',
         cnh_expiry_date: 'Informe a validade da CNH.',
+        vehicle_id: 'Selecione um veículo disponível.',
+        quota_type_id: 'Selecione uma cota disponível.',
+        start_date: 'Informe a data de início.',
+        end_date: 'Informe a data de fim.',
         cnh_front_file: 'Adicione a foto da frente da CNH.',
         cnh_back_file: 'Adicione a foto do verso da CNH.',
         proof_of_residence_file: 'Adicione o comprovante de residência.',
@@ -473,7 +481,7 @@ export const initClientRegistration = () => {
     const requiredFieldNames = {
         1: ['full_name', 'cpf', 'birth_date', 'phone', 'whatsapp', 'email'],
         2: ['cep', 'address', 'address_number', 'neighborhood', 'city', 'state'],
-        3: ['cnh_number', 'cnh_category', 'cnh_expiry_date'],
+        3: ['cnh_number', 'cnh_category', 'cnh_expiry_date', 'vehicle_id', 'quota_type_id', 'start_date', 'end_date'],
         4: ['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file'],
         5: ['selfie_file'],
         6: ['veracity_declaration_accepted', 'privacy_policy_accepted'],
@@ -481,6 +489,27 @@ export const initClientRegistration = () => {
     };
 
     const isEmailValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+    const hasCompatibleQuotaSelection = () => {
+        const vehicleId = String(form.elements.namedItem('vehicle_id')?.value ?? '');
+        const quotaId = String(form.elements.namedItem('quota_type_id')?.value ?? '');
+
+        if (!vehicleId || !quotaId) {
+            return false;
+        }
+
+        const quotaInput = form.elements.namedItem('quota_type_id');
+        if (!(quotaInput instanceof HTMLSelectElement)) {
+            return false;
+        }
+
+        return Array.from(quotaInput.options).some((option) => {
+            const optionVehicleId = String(option.dataset.vehicleId ?? '');
+            const optionQuotaId = String(option.value ?? '');
+
+            return optionVehicleId === vehicleId && optionQuotaId === quotaId && !option.hidden;
+        });
+    };
 
     const validateStep = (step) => {
         const fields = requiredFieldNames[step] ?? [];
@@ -511,6 +540,8 @@ export const initClientRegistration = () => {
                 valid = value.replace(/\D/g, '').length >= 10;
             } else if (name === 'cep') {
                 valid = /^\d{5}-?\d{3}$/.test(value);
+            } else if (name === 'quota_type_id') {
+                valid = hasCompatibleQuotaSelection();
             }
 
             if (!valid) {
@@ -707,8 +738,80 @@ export const initClientRegistration = () => {
         });
     };
 
+    const setupQuotaVehicleFilter = () => {
+        const vehicleInput = form.elements.namedItem('vehicle_id');
+        const quotaInput = form.elements.namedItem('quota_type_id');
+
+        if (!vehicleInput || !quotaInput) {
+            return;
+        }
+
+        // Guard de reentrância: refreshQuotaOptions() é listener de 'change' do
+        // quotaInput E dispara 'change' no próprio quotaInput. Sem o guard
+        // haveria recursão infinita (RangeError: Maximum call stack size exceeded).
+        let applyingQuotaValue = false;
+
+        const refreshQuotaOptions = () => {
+            if (applyingQuotaValue) {
+                return;
+            }
+
+            const selectedVehicleId = String(vehicleInput.value ?? '');
+            const previousQuotaValue = String(quotaInput.value ?? '');
+
+            Array.from(quotaInput.options).forEach((option) => {
+                const optionVehicleId = String(option.dataset.vehicleId ?? '');
+                const matchesVehicle = !selectedVehicleId || optionVehicleId === selectedVehicleId;
+                option.hidden = !matchesVehicle;
+                option.disabled = !matchesVehicle;
+                option.selected = false;
+            });
+
+            if (!selectedVehicleId) {
+                applyingQuotaValue = true;
+                quotaInput.value = '';
+                quotaInput.dispatchEvent(new Event('change', { bubbles: true }));
+                applyingQuotaValue = false;
+                syncQuotaOptions();
+                return;
+            }
+
+            const compatibleOptions = Array.from(quotaInput.options).filter(
+                (option) => String(option.dataset.vehicleId ?? '') === selectedVehicleId && !option.hidden,
+            );
+
+            const nextQuotaValue = compatibleOptions.some((option) => String(option.value ?? '') === previousQuotaValue)
+                ? previousQuotaValue
+                : compatibleOptions[0]?.value ?? '';
+
+            applyingQuotaValue = true;
+            quotaInput.value = nextQuotaValue;
+            quotaInput.dispatchEvent(new Event('change', { bubbles: true }));
+            applyingQuotaValue = false;
+            syncQuotaOptions();
+        };
+
+        const syncQuotaOptions = () => {
+            quotaInput.dispatchEvent(new CustomEvent('cs:sync', { bubbles: true }));
+        };
+
+        vehicleInput.addEventListener('change', refreshQuotaOptions);
+        vehicleInput.addEventListener('input', refreshQuotaOptions);
+        quotaInput.addEventListener('change', refreshQuotaOptions);
+        refreshQuotaOptions();
+    };
+
     /* ---------- Resumo da última etapa ---------- */
     const setupSummary = () => {
+        const syncContractSignerName = () => {
+            const name = form.elements.namedItem('full_name')?.value ?? '';
+            const signer = form.elements.namedItem('contract_signer_name');
+
+            if (signer && name.trim() !== '') {
+                signer.value = name.trim();
+            }
+        };
+
         const update = () => {
             const name = form.elements.namedItem('full_name')?.value ?? '';
             const cpf = form.elements.namedItem('cpf')?.value ?? '';
@@ -717,11 +820,7 @@ export const initClientRegistration = () => {
             const city = form.elements.namedItem('city')?.value ?? '';
             const state = form.elements.namedItem('state')?.value ?? '';
 
-            // O signatário do contrato espelha o nome completo informado.
-            const signer = form.elements.namedItem('contract_signer_name');
-            if (signer && signer.value.trim() === '' && name.trim() !== '') {
-                signer.value = name.trim();
-            }
+            syncContractSignerName();
 
             document.getElementById('summary-name').textContent = name;
             document.getElementById('summary-cpf').textContent = cpf ? `CPF: ${cpf}` : '';
@@ -1082,6 +1181,7 @@ export const initClientRegistration = () => {
     bindLiveClear();
     setupFileInputs();
     setupCepLookup();
+    setupQuotaVehicleFilter();
     setupSummary();
     signatureSetup();
 
