@@ -20,14 +20,14 @@
             {{-- Informações do veículo --}}
             <div class="card p-5 sm:p-6">
                 <h2 class="section-title mb-4">Informações do veículo</h2>
-                <div class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-line-dark bg-surface-850 p-4 text-sm sm:grid-cols-2">
-                    <div class="sm:col-span-2">
-                        @include('components.data-row', [
-                            'label' => 'Veículo',
-                            'value' => $registration->vehicle
-                                ? $registration->vehicle->model.' · '.$registration->vehicle->plate
-                                : 'Não informado',
-                        ])
+                <div class="mb-4 grid grid-cols-1 items-start gap-3 rounded-xl border border-line-dark bg-surface-850 p-4 text-sm sm:grid-cols-2">
+                    <div class="min-w-0">
+                        <dt class="text-xs font-medium text-zinc-500">Veículo</dt>
+                        <dd
+                            class="mt-0.5 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-gray-100"
+                            title="{{ $registration->vehicle ? $registration->vehicle->model.' · '.$registration->vehicle->plate : 'Não informado' }}">
+                            {{ $registration->vehicle ? $registration->vehicle->model.' · '.$registration->vehicle->plate : 'Não informado' }}
+                        </dd>
                     </div>
                     @include('components.data-row', ['label' => 'Tipo', 'value' => $registration->quotaType?->code ?: 'Não informado'])
                     @include('components.data-row', ['label' => 'Cota', 'value' => $registration->quotaType?->name ?: 'Não informada'])
