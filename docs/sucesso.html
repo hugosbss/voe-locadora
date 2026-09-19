@@ -3,55 +3,56 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#1e40af">
-    <title>Cadastro enviado &middot; Protótipo</title>
+    <meta name="theme-color" content="#050505">
+    <title>Cadastro enviado | VCA</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/vca-logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="app-body font-sans text-slate-800 antialiased">
+<body class="app-body">
     <div class="min-h-screen flex flex-col">
         <header class="app-header">
-            <div class="container">
-                <div class="bar">
-                    <div class="brand">
-                        <span class="brand-icon">
-                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M19 7h-1V6a3 3 0 0 0-6 0v1H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-7-1a1 1 0 0 1 2 0v1h-2V6Zm7 14H5v-9h14v9Zm-9-6a1 1 0 1 0 2 0v-2a1 1 0 1 0-2 0v2Zm5 0a1 1 0 1 0 0-2h-1.5a1 1 0 1 0 0 2H15Z" />
-                            </svg>
-                        </span>
-                        <div class="brand-text">
-                            <p class="brand-title">Locadora</p>
-                            <p class="brand-sub">Cadastro de Clientes</p>
-                        </div>
+            <div class="app-header-inner">
+                <div class="brand-row">
+                    <span class="brand-logo">
+                        <img src="assets/img/vca-logo.jpeg" alt="VCA Locadora">
+                    </span>
+                    <div class="min-w-0">
+                        <p class="brand-title">VCA</p>
+                        <p class="brand-sub">Formulário de cadastro</p>
                     </div>
-                    <span class="chip">
-                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Dados protegidos
+                    <span class="prototype-chip ml-auto">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Protótipo
                     </span>
                 </div>
             </div>
         </header>
 
-        <main class="container">
-            <div class="card p-6 sm:p-10 center-box" style="padding: 1.5rem;">
-                <div class="check-circle">
-                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+        <main class="public-main">
+            <div class="card p-5" style="padding: 1.5rem; max-width: 40rem; margin-inline: auto;">
+                <div class="success-box">
+                    <span class="success-check">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <h1 class="success-title">Cadastro enviado</h1>
+                    <p class="success-sub">
+                        Seu cadastro foi enviado para análise. A equipe da locadora irá analisar
+                        os dados e os documentos.
+                    </p>
+                    <a href="form.html" class="btn btn-ghost mt-3">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Preencher novo cadastro
+                    </a>
                 </div>
-
-                <h1 class="page-title" style="font-size: 1.5rem;">Cadastro enviado</h1>
-                <p class="page-sub" style="margin-top: 0.5rem; font-size: 1rem; line-height: 1.625; color: var(--slate-600);">
-                    Seu cadastro foi enviado para análise.
-                </p>
-
-                <a href="index.html" class="btn btn-ghost mt-8">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Voltar ao início
-                </a>
             </div>
+
+            <p class="demo-note">
+                Tela exibida após o envio do formulário no sistema real (rota /sucesso).
+                Nenhum cadastro foi criado por este protótipo.
+            </p>
         </main>
     </div>
 </body>

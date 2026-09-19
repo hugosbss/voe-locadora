@@ -14,7 +14,6 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
@@ -37,3 +36,13 @@ Thumbs.db
 /storage/logs/*.log
 !/storage/logs/.gitignore
 /bootstrap/cache/*.php
+
+# Arquivos de agentes de código (não vão ao repositório remoto)
+/AGENTS.md
+/AGENTS.local.md
+/CLAUDE.md
+/CLAUDE.local.md
+/.mcp.json
+/boost.json
+/briefing.MD
+RELATORIO_ATUALIZACAO_VCA.md

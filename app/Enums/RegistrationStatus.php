@@ -18,4 +18,30 @@ enum RegistrationStatus: string
             self::Reprovado => 'Reprovado',
         };
     }
+
+    /**
+     * Indica se o status consome (ocupa) uma vaga de cota no período.
+     * A lista é configurável em config/quotas.php.
+     */
+    public function consumesQuota(): bool
+    {
+        return in_array($this, self::consuming(), true);
+    }
+
+    /**
+     * @return array<int, self>
+     */
+    public static function consuming(): array
+    {
+        $values = config('quotas.consuming_statuses', [
+            self::Novo->value,
+            self::EmAnalise->value,
+            self::Aprovado->value,
+        ]);
+
+        return array_values(array_filter(array_map(
+            static fn (string $value): ?self => self::tryFrom($value),
+            $values,
+        )));
+    }
 }

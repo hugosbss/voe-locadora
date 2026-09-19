@@ -17,14 +17,21 @@ o README com os detalhes de implementação e configuração.
 | `APP_FORCE_HTTPS` | Habilita redirect HTTP→HTTPS e HSTS | `false` |
 | `APP_TRUSTED_PROXIES` | IPs dos proxies (LB/CDN) para respeitar `X-Forwarded-*` | — |
 | `ADMIN_PASSWORD` | Somente para `admin:provision`/seeder | obrigatória (≥12) |
-| `RATE_LIMIT_CADASTRO_PER_MINUTE` | Envio de cadastro por IP / janela | `8` / `15min` |
+| `DB_HOST`/`DB_PORT`/`DB_DATABASE`/`DB_USERNAME`/`DB_PASSWORD` | Credenciais do MySQL (o backup lê o `.env` da aplicação) | — |
+| `BACKUP_ENABLED` | Habilita `backup:cadastros` no cron | `false` |
+| `BACKUP_PATH` | Diretório de destino do backup criptografado (`config/backup.php`) | `storage/app/backups` |
+| `BACKUP_RETENTION_DAYS` | Retenção de cópias em `config/backup.php` | `30` |
+| `RATE_LIMIT_CADASTRO_MAX_ATTEMPTS` | Submissões totais do cadastro por IP / janela (anti-flood) | `60` / `15min` |
+| `RATE_LIMIT_CADASTRO_SUCCESS_MAX_ATTEMPTS` | Cadastros efetivamente criados por IP / janela (anti-spam) | `10` / `15min` |
+| `RATE_LIMIT_CADASTRO_DECAY_MINUTES` / `RATE_LIMIT_CADASTRO_SUCCESS_DECAY_MINUTES` | Janelas dos contadores de cadastro | `15` |
 | `RATE_LIMIT_CEP_PER_MINUTE` | Consultas de CEP por IP/minuto | `30` |
 | `RATE_LIMIT_LOGIN_PER_MINUTE` | Tentativas de login por IP+email/minuto | `5` |
+| `RATE_LIMIT_PASSWORD_RESET` | Solicitações de redefinição de senha por IP / janela | `6` / `10min` |
+| `RATE_LIMIT_PASSWORD_RESET_DECAY_MINUTES` | Janela do limite de redefinição de senha | `10` |
 | `LOGIN_LOCK_THRESHOLD` | Falhas para início do bloqueio progressivo | `10` |
 | `LOGIN_LOCK_MINUTES` | Duração inicial do bloqueio | `30` |
 | `RETENTION_*` | Prazos de retenção por status (dias) | ver `config/retention.php` |
-| `PRIVACY_POLICY_VERSION` | Versão da Política de Privacidade registrada em cada consentimento | — |
-| `BACKUP_ENCRYPTION_KEY` | Senha usada no AES-256-CBC do `backup:cadastros` | obrigatória |
+| `PRIVACY_POLICY_VERSION` | Versão da Política de Privacidade registrada em cada consentimento | `1.0` |
 
 ### Web server / proxies
 
@@ -105,14 +112,33 @@ física; o FK aponta para `registration_id` com `ON DELETE SET NULL`.
 ## 7. Backup
 
 ```bash
-php artisan backup:cadastros
+php artisan backup:cadastros [--only=tabela] [--keep=14]
 ```
 
-- `mysqldump` do banco de produção + envio para `storage/app/backups`.
-- Criptografia AES-256-CBC com OpenSSL usando `BACKUP_ENCRYPTION_KEY`.
-- Rotatória de arquivos (`BACKUP_KEEP`). Ideal para cron.
+- `mysqldump` com `--single-transaction --routines --triggers`, gravado em
+  `storage/app/backups/cadastros_<data>.sql`.
+- Criptografia **AES-256-CBC** com OpenSSL (`-pbkdf2 -salt`), usando a própria
+  `APP_KEY` como passphrase — **a chave do backup não é uma variável separada**;
+  guardar `APP_KEY` é o que protege os arquivos `.sql.enc`.
+- O `.sql` em claro é removido em seguida; só o `.sql.enc` permanece no disco.
+- Rotatória: mantém as N cópias mais recentes (`--keep`, padrão de `config('backup.retention')`).
+- Ideal para cron.
 
-## 8. Testes de segurança (resumo)
+## 8. Identidade Visual (VCA)
+
+Sistema atualmente conta com identidade escura própria, aplicada em `public/views/*` e espelhada nos protótipos em `docs/`:
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| Superfícies | `#050505`, `#0a0a0a`, `#101010`, `#161616` | fundo de página, painéis, cards |
+| Marca | `#fed106` (soft `#ffe15a`, hover `#e9bd05`, active `#c7a205`) | CTA e destaques |
+| Bordas | `#242424`, `#3a3a3a` | separadores e inputs |
+| Tipografia | Inter | corpo e títulos |
+| Logo | `public/images/brand/vca-logo.jpeg` | header e telas públicas/administrativas |
+
+Os protótipos estáticos em `docs/` (11 páginas: formulário público, sucesso, privacidade e área administrativa) seguem essa identidade e servem de referência visual para as telas reais.
+
+## 9. Testes de segurança (resumo)
 
 | Suíte | Cobre |
 | --- | --- |
@@ -123,15 +149,18 @@ php artisan backup:cadastros
 | `RetentionTest` | dry-run vs expurgo real, idempotência |
 | `UploadSecurityTest` | arquivo não-imagem com extensão `.jpg`, dimensões limites, normalização GD, CPF duplicado |
 | `CepLookupTest` | resposta controlada, 404 genérico, upstream fora do ar, formato inválido |
+| `AdminRegistrationTest` | gerenciamento de cadastros, status transitam, toast único após atualização |
 | `Unit/TotpTest` | vetores oficiais RFC 6238, rejeição de códigos inválidos |
 | `Unit/LoginThrottleServiceTest` | bloqueio progressivo e isolamento por credencial |
 
-## 9. Checklist de deploy
+Suíte completa: **141 testes / 602 asserts**, validada em MySQL.
+
+## 10. Checklist de deploy
 
 - [ ] HTTPS em produção + `APP_FORCE_HTTPS=true` e `APP_TRUSTED_PROXIES` corretos
-- [ ] `APP_KEY` única e `BACKUP_ENCRYPTION_KEY` forte em segredo
+- [ ] `APP_KEY` única e forte em segredo (protege sessões, dados e backups `.enc`)
 - [ ] `ADMIN_PASSWORD` removida após `admin:provision` criar o usuário
 - [ ] `storage/app/private` fora da raiz web e com permissões restritas
-- [ ] Cron: `cadastros:expurgo` (diário) e `backup:cadastros` (diário)
+- [ ] Cron: `cadastros:expurgo` (diário) e `backup:cadastros` (diário, com `--keep`)
 - [ ] `php artisan test` verde antes de cada release
 - [ ] Sem credenciais em arquivos versionados (`.env` gitignored)

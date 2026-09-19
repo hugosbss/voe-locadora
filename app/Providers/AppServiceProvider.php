@@ -3,7 +3,12 @@
 namespace App\Providers;
 
 use App\Models\ClientRegistration;
+use App\Models\QuotaType;
+use App\Models\User;
+use App\Models\Vehicle;
 use App\Policies\ClientRegistrationPolicy;
+use App\Policies\QuotaTypePolicy;
+use App\Policies\VehiclePolicy;
 use App\Support\Totp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -34,15 +39,13 @@ class AppServiceProvider extends ServiceProvider
 
     private function registerRateLimiters(): void
     {
-        RateLimiter::for('cadastro', function (Request $request): Limit {
-            return Limit::perMinutes(
-                (int) config('rate.limits.cadastro_decay_minutes', 15),
-                (int) config('rate.limits.cadastro_max_attempts', 8),
-            )->by((string) $request->ip());
-        });
-
         RateLimiter::for('cep', function (Request $request): Limit {
             return Limit::perMinute((int) config('rate.limits.cep_per_minute', 30))
+                ->by((string) $request->ip());
+        });
+
+        RateLimiter::for('quota_availability', function (Request $request): Limit {
+            return Limit::perMinute((int) config('rate.limits.quota_availability_per_minute', 60))
                 ->by((string) $request->ip());
         });
 
@@ -52,11 +55,25 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute((int) config('rate.limits.login_per_minute', 5))
                 ->by($request->ip().'|'.hash('sha256', $email));
         });
+
+        RateLimiter::for('admin_password', function (Request $request): Limit {
+            $policy = config('rate.limits.password_reset');
+
+            return Limit::perMinutes(
+                (int) ($policy['decay_minutes'] ?? 10),
+                (int) ($policy['max_attempts'] ?? 6),
+            )->by((string) $request->ip());
+        });
     }
 
     private function registerAuthorization(): void
     {
         Gate::policy(ClientRegistration::class, ClientRegistrationPolicy::class);
+        Gate::policy(Vehicle::class, VehiclePolicy::class);
+        Gate::policy(QuotaType::class, QuotaTypePolicy::class);
+
+        // Gestão de usuários administrativos: restrita ao papel admin.
+        Gate::define('manage-users', fn (User $user) => $user->isAdmin());
 
         // Habilita o helper `Route::model()` para evitar rota curinga
         // `/documents/{...}`: o binding é sempre por modelo/autorização.

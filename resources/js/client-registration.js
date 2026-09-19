@@ -10,12 +10,82 @@ export const initClientRegistration = () => {
         return;
     }
 
-    const totalSteps = Number(window.registrationForm?.totalSteps ?? 6);
-    const cepLookupUrl = window.registrationForm?.cepLookupUrl ?? '/cep';
+    // Configuração do servidor em bloco de dados (CSP-safe). Mantém o fallback
+    // para window.registrationForm apenas por compatibilidade.
+    const readConfig = () => {
+        const el = document.getElementById('registration-form-config');
+
+        if (el) {
+            try {
+                return JSON.parse(el.textContent) ?? {};
+            } catch {
+                return {};
+            }
+        }
+
+        return window.registrationForm ?? {};
+    };
+
+    const config = readConfig();
+    const totalSteps = Number(config.totalSteps ?? 6);
+    const reviewStep = totalSteps - 1;
+    const cepLookupUrl = config.cepLookupUrl ?? '/cep';
+    const quotaAvailabilityUrl = config.quotaAvailabilityUrl ?? null;
+    const quotaDurationMode = String(config.quotaDurationMode ?? 'exact');
+    const successUrl = config.successUrl ?? null;
+    const fieldToStep = config.fieldToStep ?? {};
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Reajusta o tamanho do canvas de assinatura quando o painel da etapa final
+    // fica visível (a largura só está disponível com o layout renderizado).
+    let resizeSignatureCanvas = () => {};
+
+    // A partir de 768px o formulário passa a ser uma página única onde todas as
+    // seções ficam visíveis simultaneamente. A navegação por etapas (wizard)
+    // continua exclusiva do mobile.
+    const isDesktopLayout = () => window.matchMedia('(min-width: 768px)').matches;
+
     let currentStep = 1;
+
+    // Erros vindos do servidor (após um envio rejeitado) agrupados por etapa.
+    // Só servem como "sugestão inicial" de correção; são limpos assim que o
+    // usuário revisa a etapa correspondente sem mais erros locais.
+    let serverErrorSteps = { ...(config.serverErrorSteps ?? {}) };
+
+    // Mensagens reais por campo (primeira de cada campo). Preservam o texto do
+    // servidor (ex.: "Informe uma data de validade futura.") sobre o genérico.
+    let serverErrors = { ...(config.serverFieldErrors ?? {}) };
+
+    // Recalcula o agrupamento por etapa a partir das mensagens por campo.
+    const rebuildServerErrorSteps = () => {
+        serverErrorSteps = {};
+
+        for (const field of Object.keys(serverErrors)) {
+            const step = fieldToStep[field] ?? 4;
+            serverErrorSteps[step] = (serverErrorSteps[step] ?? 0) + 1;
+        }
+    };
+
+    // Remove as mensagens do servidor da etapa informada (passou a ser validada).
+    const clearStepServerErrors = (step) => {
+        for (const field of Object.keys(serverErrors)) {
+            if ((fieldToStep[field] ?? 4) === step) {
+                delete serverErrors[field];
+            }
+        }
+
+        rebuildServerErrorSteps();
+    };
+
+    // Primeiro campo da etapa com erro do servidor (mensagem por campo).
+    const serverFieldOfStep = (step) =>
+        Object.keys(serverErrors).find((field) => (fieldToStep[field] ?? 4) === step) ?? null;
+
+    // Modo de correção: o usuário veio da revisão para ajustar uma etapa e o
+    // botão principal passa a ser "Revisar cadastro" (leva para a última etapa,
+    // Contrato e assinatura).
+    let correctionMode = false;
 
     const dot = (step) => document.querySelector(`.step-dot[data-step="${step}"]`);
     const label = (step) => document.querySelector(`.step-label[data-step="${step}"]`);
@@ -47,9 +117,13 @@ export const initClientRegistration = () => {
 
         currentStep = step;
 
-        document.querySelectorAll('.step-panel').forEach((el, index) => {
-            el.classList.toggle('hidden', index + 1 !== currentStep);
-        });
+        // No desktop (página única) todas as seções ficam visíveis por CSS; o
+        // controle de visibilidade por classe é aplicado somente no wizard mobile.
+        if (!isDesktopLayout()) {
+            document.querySelectorAll('.step-panel').forEach((el, index) => {
+                el.classList.toggle('hidden', index + 1 !== currentStep);
+            });
+        }
 
         for (let i = 1; i <= totalSteps; i++) {
             const el = dot(i);
@@ -66,13 +140,202 @@ export const initClientRegistration = () => {
 
         updateStepHeader(currentStep);
         updateNavigation();
-        window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+
+        if (currentStep === reviewStep) {
+            renderReviewProblems();
+        }
+
+        if (currentStep === totalSteps) {
+            resizeSignatureCanvas();
+        }
+
+        if (!isDesktopLayout()) {
+            window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+        }
     };
+
+    const nextLabelEl = document.getElementById('next-btn')?.querySelector('[data-next-label]');
 
     const updateNavigation = () => {
         document.getElementById('prev-btn').classList.toggle('invisible', currentStep === 1);
         document.getElementById('next-btn').classList.toggle('invisible', currentStep === totalSteps);
+
+        if (nextLabelEl) {
+            const inCorrection = correctionMode && currentStep !== reviewStep;
+            nextLabelEl.textContent = inCorrection ? 'Revisar cadastro' : 'Continuar';
+        }
     };
+
+    /* ---------- Revisão com problemas agrupados por etapa ---------- */
+    const reviewProblemsEl = document.getElementById('review-problems');
+    const reviewProblemsIntro = document.getElementById('review-problems-intro')?.querySelector('[data-review-problems-intro-text]');
+    const reviewProblemsList = document.querySelector('[data-review-problems-list]');
+
+    const pluralizeProblems = (count) =>
+        `${count} ${count === 1 ? 'campo precisa' : 'campos precisam'} de correção.`;
+
+    const fieldLabels = {
+        full_name: 'Nome completo',
+        cpf: 'CPF',
+        birth_date: 'Data de nascimento',
+        phone: 'Telefone',
+        whatsapp: 'WhatsApp',
+        email: 'E-mail',
+        cep: 'CEP',
+        address: 'Rua',
+        address_number: 'Número',
+        neighborhood: 'Bairro',
+        city: 'Cidade',
+        state: 'Estado',
+        cnh_number: 'Número da CNH',
+        cnh_category: 'Categoria da CNH',
+        cnh_expiry_date: 'Validade da CNH',
+        vehicle_id: 'Veículo',
+        quota_type_id: 'Cota',
+        start_date: 'Data de início',
+        end_date: 'Data de fim',
+        cnh_front_file: 'Foto da CNH (frente)',
+        cnh_back_file: 'Foto da CNH (verso)',
+        proof_of_residence_file: 'Comprovante de residência',
+        selfie_file: 'Selfie',
+        veracity_declaration_accepted: 'Declaração de veracidade',
+        privacy_policy_accepted: 'Política de privacidade',
+        contract_signature: 'Assinatura do contrato',
+        contract_signer_name: 'Nome do signatário',
+        contract_accepted: 'Aceite do contrato',
+    };
+
+    const buildProblemGroup = ({ step, count, field }) => {
+        const row = document.createElement('div');
+        row.className =
+            'flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3';
+
+        const text = document.createElement('div');
+        text.className = 'min-w-0';
+
+        const title = document.createElement('p');
+        title.className = 'truncate text-sm font-medium text-gray-100';
+        title.textContent = panel(step)?.dataset.title || `Etapa ${step}`;
+
+        const detail = document.createElement('p');
+        detail.className = 'mt-0.5 text-xs text-amber-200';
+        detail.textContent = fieldLabels[field] ? `Corrigir: ${fieldLabels[field]}` : pluralizeProblems(count);
+
+        text.append(title, detail);
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-secondary btn-sm shrink-0';
+        button.dataset.corrigirStep = String(step);
+        button.dataset.corrigirField = field ?? '';
+        button.setAttribute(
+            'aria-label',
+            `Corrigir ${panel(step)?.dataset.title || `etapa ${step}`}${fieldLabels[field] ? ` — ${fieldLabels[field]}` : ''}`,
+        );
+        button.textContent = 'Corrigir';
+
+        row.append(text, button);
+
+        return row;
+    };
+
+    // Aplica estilo e mensagem do servidor a cada campo com erro. É chamada
+    // após a validação local para que campos válidos localmente (ex.: validade
+    // passada) ainda exibam a mensagem do servidor na revisão.
+    const renderServerFieldErrors = () => {
+        for (const [name, message] of Object.entries(serverErrors)) {
+            const input = form.elements.namedItem(name);
+
+            if (!input) {
+                continue;
+            }
+
+            const el = findErrorEl(input);
+            if (el) {
+                el.textContent = message || messages[name] || 'Corrija este campo.';
+                el.hidden = false;
+            }
+
+            displayTarget(input).classList.add('input-invalid');
+            if (input instanceof HTMLSelectElement) {
+                input.closest('[data-custom-select]')?.classList.add('has-error');
+            }
+            input.closest('.upload-card')?.classList.add('has-error');
+            input.setAttribute('aria-invalid', 'true');
+        }
+    };
+
+    const renderReviewProblems = () => {
+        if (!reviewProblemsEl) {
+            return;
+        }
+
+        const groups = [];
+
+        for (let step = 1; step <= reviewStep; step++) {
+            const { errors, firstInvalid } = validateStep(step);
+            const liveCount = errors.length;
+            const serverField = serverFieldOfStep(step);
+            const serverCount = Number(serverErrorSteps[step] ?? 0);
+
+            if (liveCount > 0 || serverField) {
+                groups.push({
+                    step,
+                    count: Math.max(liveCount, serverCount),
+                    field: firstInvalid?.name ?? serverField,
+                });
+            }
+        }
+
+        // Mensagens do servidor por campo (ex.: validade futura) são renderizadas
+        // após a validação local para não serem apagadas por ela.
+        renderServerFieldErrors();
+
+        const total = groups.reduce((sum, group) => sum + group.count, 0);
+
+        if (groups.length === 0) {
+            reviewProblemsEl.hidden = true;
+            reviewProblemsEl.removeAttribute('aria-live');
+            reviewProblemsList.replaceChildren();
+            return;
+        }
+
+        if (reviewProblemsIntro) {
+            reviewProblemsIntro.textContent = `Encontramos ${total} ${total === 1 ? 'item' : 'itens'} para corrigir.`;
+        }
+
+        reviewProblemsList.replaceChildren(...groups.map(buildProblemGroup));
+        reviewProblemsEl.hidden = false;
+        reviewProblemsEl.setAttribute('aria-live', 'polite');
+    };
+
+    reviewProblemsList?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-corrigir-step]');
+        if (!button) {
+            return;
+        }
+
+        // Navegação direta para a etapa do campo: sem submit, sem reload e sem
+        // disparar a validação local no clique.
+        correctionMode = true;
+        const step = Number(button.dataset.corrigirStep);
+        gotoStep(step);
+
+        const targetName = button.dataset.corrigirField;
+        const target = targetName ? form.elements.namedItem(targetName) : null;
+        const uploadCard = target?.closest('.upload-card');
+        const scrollEl = uploadCard ?? target?.closest('[data-custom-select]') ?? target;
+
+        if (scrollEl) {
+            scrollEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        }
+
+        // Foco no campo quando tecnicamente apropriado (campos de upload não
+        // recebem foco de forma útil — nesses casos apenas o scroll é feito).
+        if (target && !uploadCard) {
+            displayTarget(target).focus({ preventScroll: true });
+        }
+    });
 
     /* ---------- Máscaras ---------- */
     const masks = {
@@ -124,12 +387,19 @@ export const initClientRegistration = () => {
         cnh_number: 'Informe o número da CNH.',
         cnh_category: 'Selecione a categoria da CNH.',
         cnh_expiry_date: 'Informe a validade da CNH.',
+        vehicle_id: 'Selecione um veículo disponível.',
+        quota_type_id: 'Selecione uma cota disponível.',
+        start_date: 'Informe a data de início.',
+        end_date: 'Informe a data de fim.',
         cnh_front_file: 'Adicione a foto da frente da CNH.',
         cnh_back_file: 'Adicione a foto do verso da CNH.',
         proof_of_residence_file: 'Adicione o comprovante de residência.',
         selfie_file: 'Adicione sua selfie.',
         veracity_declaration_accepted: 'Confirme a declaração de veracidade.',
         privacy_policy_accepted: 'Aceite a política de privacidade.',
+        contract_signature: 'Desenhe sua assinatura antes de continuar.',
+        contract_signer_name: 'Informe o nome do signatário.',
+        contract_accepted: 'Aceite os termos do contrato.',
     };
 
     const findErrorEl = (input) => {
@@ -143,6 +413,26 @@ export const initClientRegistration = () => {
     const displayTarget = (input) =>
         input.closest('[data-custom-select]')?.querySelector('.cs-trigger') ?? input;
 
+    // No desktop (página única) os erros ficam abaixo da dobra; rola até o
+    // container de problemas da revisão para que o usuário os localize.
+    const scrollReviewProblems = () => {
+        if (reviewProblemsEl && !reviewProblemsEl.hidden) {
+            reviewProblemsEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        }
+    };
+
+    // Rola até o cartão/controle do campo inválido e tenta dar foco no desktop.
+    const revealField = (input) => {
+        const uploadCard = input.closest('.upload-card');
+        const scrollEl = uploadCard ?? input.closest('[data-custom-select]') ?? input;
+
+        scrollEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+
+        if (!uploadCard) {
+            displayTarget(input).focus({ preventScroll: true });
+        }
+    };
+
     const markInvalid = (input, message) => {
         displayTarget(input).classList.add('input-invalid');
         if (input instanceof HTMLSelectElement) {
@@ -150,6 +440,9 @@ export const initClientRegistration = () => {
         }
         const card = input.closest('.upload-card');
         if (card) card.classList.add('has-error');
+        if (input.type === 'hidden' && input.id === 'contract_signature') {
+            document.getElementById('signature-canvas-wrap')?.classList.add('has-error');
+        }
         input.setAttribute('aria-invalid', 'true');
 
         const el = findErrorEl(input);
@@ -163,6 +456,9 @@ export const initClientRegistration = () => {
         displayTarget(input).classList.remove('input-invalid');
         input.closest('[data-custom-select]')?.classList.remove('has-error');
         input.closest('.upload-card')?.classList.remove('has-error');
+        if (input.type === 'hidden' && input.id === 'contract_signature') {
+            document.getElementById('signature-canvas-wrap')?.classList.remove('has-error');
+        }
         input.removeAttribute('aria-invalid');
 
         const el = findErrorEl(input);
@@ -187,13 +483,35 @@ export const initClientRegistration = () => {
     const requiredFieldNames = {
         1: ['full_name', 'cpf', 'birth_date', 'phone', 'whatsapp', 'email'],
         2: ['cep', 'address', 'address_number', 'neighborhood', 'city', 'state'],
-        3: ['cnh_number', 'cnh_category', 'cnh_expiry_date'],
+        3: ['cnh_number', 'cnh_category', 'cnh_expiry_date', 'vehicle_id', 'quota_type_id', 'start_date', 'end_date'],
         4: ['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file'],
         5: ['selfie_file'],
         6: ['veracity_declaration_accepted', 'privacy_policy_accepted'],
+        7: ['contract_signature', 'contract_signer_name', 'contract_accepted'],
     };
 
     const isEmailValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+    const hasCompatibleQuotaSelection = () => {
+        const vehicleId = String(form.elements.namedItem('vehicle_id')?.value ?? '');
+        const quotaId = String(form.elements.namedItem('quota_type_id')?.value ?? '');
+
+        if (!vehicleId || !quotaId) {
+            return false;
+        }
+
+        const quotaInput = form.elements.namedItem('quota_type_id');
+        if (!(quotaInput instanceof HTMLSelectElement)) {
+            return false;
+        }
+
+        return Array.from(quotaInput.options).some((option) => {
+            const optionVehicleId = String(option.dataset.vehicleId ?? '');
+            const optionQuotaId = String(option.value ?? '');
+
+            return optionVehicleId === vehicleId && optionQuotaId === quotaId && !option.hidden && !option.disabled;
+        });
+    };
 
     const validateStep = (step) => {
         const fields = requiredFieldNames[step] ?? [];
@@ -224,10 +542,12 @@ export const initClientRegistration = () => {
                 valid = value.replace(/\D/g, '').length >= 10;
             } else if (name === 'cep') {
                 valid = /^\d{5}-?\d{3}$/.test(value);
+            } else if (name === 'quota_type_id') {
+                valid = hasCompatibleQuotaSelection();
             }
 
             if (!valid) {
-                markInvalid(input);
+                markInvalid(input, serverErrors[name]);
                 errors.push(input);
                 if (!firstInvalid) firstInvalid = input;
             } else {
@@ -333,10 +653,10 @@ export const initClientRegistration = () => {
             if (!feedback) return;
             const tone =
                 state === 'success'
-                    ? 'text-emerald-600'
+                    ? 'text-emerald-400'
                     : state === 'error' || state === 'incomplete'
-                        ? 'text-red-600'
-                        : 'text-slate-500';
+                        ? 'text-red-400'
+                        : 'text-zinc-500';
             feedback.className = `mt-1.5 flex items-center gap-1.5 text-xs ${tone}`;
             feedback.textContent = {
                 looking: 'Buscando...',
@@ -420,8 +740,271 @@ export const initClientRegistration = () => {
         });
     };
 
+    const setupQuotaVehicleFilter = () => {
+        const vehicleInput = form.elements.namedItem('vehicle_id');
+        const quotaInput = form.elements.namedItem('quota_type_id');
+        const startInput = form.elements.namedItem('start_date');
+        const endInput = form.elements.namedItem('end_date');
+
+        if (!vehicleInput || !quotaInput) {
+            return;
+        }
+
+        // Guard de reentrância: refreshQuotaOptions() é listener de 'change' do
+        // quotaInput E dispara 'change' no próprio quotaInput. Sem o guard
+        // haveria recursão infinita (RangeError: Maximum call stack size exceeded).
+        let applyingQuotaValue = false;
+        let availabilityByQuota = new Map();
+        let availabilityFetched = false;
+        let fetchToken = 0;
+
+        const quotaField = document.querySelector('[data-field="quota_type_id"]');
+        const statusEl = document.createElement('p');
+        statusEl.className = 'field-hint';
+        statusEl.hidden = true;
+        quotaField?.appendChild(statusEl);
+
+        const setStatus = (message) => {
+            statusEl.textContent = message ?? '';
+            statusEl.hidden = !message;
+        };
+
+        const readDates = () => {
+            const start = String(startInput?.value ?? '');
+            const end = String(endInput?.value ?? '');
+
+            if (!start || !end || end < start) {
+                return null;
+            }
+
+            return { start, end };
+        };
+
+        const selectedQuotaOption = () => quotaInput.options[quotaInput.selectedIndex] ?? null;
+        const quotaInfo = (quotaId) => availabilityByQuota.get(String(quotaId)) ?? null;
+        const baseLabel = (option) => option.dataset.baseLabel || option.textContent;
+
+        const refreshQuotaOptions = () => {
+            if (applyingQuotaValue) {
+                return;
+            }
+
+            const selectedVehicleId = String(vehicleInput.value ?? '');
+            const previousQuotaValue = String(quotaInput.value ?? '');
+            const dates = readDates();
+
+            Array.from(quotaInput.options).forEach((option) => {
+                const optionVehicleId = String(option.dataset.vehicleId ?? '');
+                const matchesVehicle = !selectedVehicleId || optionVehicleId === selectedVehicleId;
+                const info = availabilityFetched ? quotaInfo(option.value) : null;
+
+                let availabilityOk = true;
+
+                if (matchesVehicle && dates && availabilityFetched) {
+                    availabilityOk = !!info && info.available > 0 && info.valid_duration;
+                }
+
+                option.hidden = !matchesVehicle;
+                option.disabled = !matchesVehicle || !availabilityOk;
+                option.selected = false;
+
+                if (matchesVehicle && dates && info) {
+                    const suffix = info.valid_duration
+                        ? `${info.available} ${info.available === 1 ? 'disponível' : 'disponíveis'}`
+                        : 'duração inválida';
+                    option.textContent = `${baseLabel(option)} — ${suffix}`;
+                } else {
+                    option.textContent = baseLabel(option);
+                }
+            });
+
+            const compatibleOptions = Array.from(quotaInput.options).filter(
+                (option) => !option.hidden && !option.disabled,
+            );
+
+            if (!selectedVehicleId) {
+                applyingQuotaValue = true;
+                quotaInput.value = '';
+                quotaInput.dispatchEvent(new Event('change', { bubbles: true }));
+                applyingQuotaValue = false;
+                syncQuotaOptions();
+                return;
+            }
+
+            const nextQuotaValue = compatibleOptions.some((option) => String(option.value ?? '') === previousQuotaValue)
+                ? previousQuotaValue
+                : compatibleOptions[0]?.value ?? '';
+
+            applyingQuotaValue = true;
+            quotaInput.value = nextQuotaValue;
+            quotaInput.dispatchEvent(new Event('change', { bubbles: true }));
+            applyingQuotaValue = false;
+            syncQuotaOptions();
+        };
+
+        const updateStatusMessage = () => {
+            if (!availabilityFetched) {
+                setStatus('');
+                return;
+            }
+
+            const option = selectedQuotaOption();
+
+            if (!option || option.hidden || option.disabled) {
+                setStatus('Sem vagas para o período selecionado.');
+                return;
+            }
+
+            const info = quotaInfo(option.value);
+
+            if (!info) {
+                setStatus('');
+                return;
+            }
+
+            if (!info.valid_duration) {
+                setStatus('A duração selecionada não é compatível com esta cota.');
+                return;
+            }
+
+            if (info.available <= 0) {
+                setStatus('Sem vagas para o período selecionado.');
+                return;
+            }
+
+            setStatus('');
+        };
+
+        // Em modo "exato", a data de fim é derivada do início + quota_type.days - 1.
+        const applyDuration = () => {
+            if (!startInput || !endInput) {
+                return;
+            }
+
+            const days = Number(selectedQuotaOption()?.dataset.days ?? 0);
+            const start = String(startInput.value ?? '');
+
+            if (!start || !days) {
+                return;
+            }
+
+            if (quotaDurationMode === 'exact') {
+                const [year, month, day] = start.split('-').map(Number);
+
+                if (!year || !month || !day) {
+                    return;
+                }
+
+                const end = new Date(Date.UTC(year, month - 1, day + days - 1));
+                const iso = end.toISOString().slice(0, 10);
+
+                if (endInput.value !== iso) {
+                    endInput.value = iso;
+                }
+
+                endInput.readOnly = true;
+            } else {
+                endInput.readOnly = false;
+            }
+        };
+
+        const fetchAvailability = async () => {
+            const dates = readDates();
+
+            if (!vehicleInput.value || !dates || !quotaAvailabilityUrl) {
+                availabilityFetched = false;
+                availabilityByQuota.clear();
+                refreshQuotaOptions();
+                updateStatusMessage();
+                return;
+            }
+
+            const token = ++fetchToken;
+
+            try {
+                const url = new URL(quotaAvailabilityUrl, window.location.href);
+                url.searchParams.set('vehicle_id', vehicleInput.value);
+                url.searchParams.set('start_date', dates.start);
+                url.searchParams.set('end_date', dates.end);
+
+                const response = await fetch(url, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+
+                if (!response.ok) {
+                    throw new Error('availability');
+                }
+
+                const data = await response.json();
+
+                if (token !== fetchToken) {
+                    return;
+                }
+
+                availabilityByQuota = new Map(
+                    (data.quotas ?? []).map((quota) => [String(quota.quota_type_id), quota]),
+                );
+                availabilityFetched = true;
+            } catch {
+                if (token !== fetchToken) {
+                    return;
+                }
+
+                availabilityFetched = false;
+                availabilityByQuota.clear();
+            }
+
+            refreshQuotaOptions();
+            updateStatusMessage();
+        };
+
+        const syncQuotaOptions = () => {
+            quotaInput.dispatchEvent(new CustomEvent('cs:sync', { bubbles: true }));
+        };
+
+        vehicleInput.addEventListener('change', () => {
+            refreshQuotaOptions();
+            fetchAvailability();
+        });
+        vehicleInput.addEventListener('input', () => {
+            refreshQuotaOptions();
+            fetchAvailability();
+        });
+        quotaInput.addEventListener('change', () => {
+            applyDuration();
+            updateStatusMessage();
+
+            if (!availabilityFetched) {
+                refreshQuotaOptions();
+            }
+        });
+        startInput?.addEventListener('change', () => {
+            applyDuration();
+            fetchAvailability();
+        });
+        endInput?.addEventListener('change', () => {
+            fetchAvailability();
+        });
+
+        if (quotaDurationMode === 'exact' && endInput) {
+            endInput.readOnly = true;
+        }
+
+        refreshQuotaOptions();
+        applyDuration();
+    };
+
     /* ---------- Resumo da última etapa ---------- */
     const setupSummary = () => {
+        const syncContractSignerName = () => {
+            const name = form.elements.namedItem('full_name')?.value ?? '';
+            const signer = form.elements.namedItem('contract_signer_name');
+
+            if (signer && name.trim() !== '') {
+                signer.value = name.trim();
+            }
+        };
+
         const update = () => {
             const name = form.elements.namedItem('full_name')?.value ?? '';
             const cpf = form.elements.namedItem('cpf')?.value ?? '';
@@ -429,6 +1012,8 @@ export const initClientRegistration = () => {
             const email = form.elements.namedItem('email')?.value ?? '';
             const city = form.elements.namedItem('city')?.value ?? '';
             const state = form.elements.namedItem('state')?.value ?? '';
+
+            syncContractSignerName();
 
             document.getElementById('summary-name').textContent = name;
             document.getElementById('summary-cpf').textContent = cpf ? `CPF: ${cpf}` : '';
@@ -444,12 +1029,195 @@ export const initClientRegistration = () => {
         update();
     };
 
+    /* ---------- Assinatura digital (canvas) ---------- */
+    const signatureSetup = () => {
+        const canvas = document.getElementById('signature-canvas');
+        const hidden = document.getElementById('contract_signature');
+        const clearBtn = document.getElementById('signature-clear');
+        const hint = document.getElementById('signature-hint');
+
+        if (!canvas || !hidden) {
+            return;
+        }
+
+        const DEFAULT_HEIGHT = 200;
+        const dpr = Math.max(window.devicePixelRatio || 1, 1);
+
+        let ctx = null;
+        let drawing = false;
+        let hasInk = false;
+        let initialized = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        const initCanvas = () => {
+            initialized = true;
+            const rect = canvas.getBoundingClientRect();
+            const cssWidth = Math.max(rect.width || canvas.clientWidth || 300, 1);
+
+            canvas.width = Math.round(cssWidth * dpr);
+            canvas.height = Math.round(DEFAULT_HEIGHT * dpr);
+
+            ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#111827';
+            ctx.lineWidth = Math.max(2.5, 2.5 * dpr);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        };
+
+        // Reajusta o canvas quando o painel da etapa final fica visível.
+        resizeSignatureCanvas = () => {
+            if (!initialized) {
+                initCanvas();
+                return;
+            }
+
+            if (hasInk) {
+                return; // preserva o traço já desenhado
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const cssWidth = Math.max(rect.width || canvas.clientWidth || 300, 1);
+            if (Math.abs(cssWidth * dpr - canvas.width) > 2) {
+                initCanvas();
+            }
+        };
+
+        const toCanvasCoords = (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+            const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
+
+            return [
+                (clientX - rect.left) * (canvas.width / (rect.width || 1)),
+                (clientY - rect.top) * (canvas.height / (rect.height || 1)),
+            ];
+        };
+
+        const detectInk = () => {
+            const image = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            for (let i = 0; i < image.length; i += 4) {
+                if (image[i + 3] > 0 && (image[i] < 250 || image[i + 1] < 250 || image[i + 2] < 250)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        const syncHidden = () => {
+            if (!detectInk()) {
+                hasInk = false;
+                hidden.value = '';
+            } else {
+                hasInk = true;
+                hidden.value = canvas.toDataURL('image/png');
+            }
+
+            updateSubmitState();
+        };
+
+        // Mantém o envio bloqueado enquanto não houver assinatura válida e aceite (apenas interface).
+        const updateSubmitState = () => {
+            if (!submitBtn) return;
+            const accepted = form.elements.namedItem('contract_accepted')?.checked ?? false;
+            submitBtn.disabled = !(hidden.value !== '' && accepted);
+        };
+
+        const start = (event) => {
+            if (event.button !== undefined && event.button !== 0) return;
+
+            event.preventDefault();
+            if (!initialized) initCanvas();
+
+            canvas.setPointerCapture?.(event.pointerId);
+            drawing = true;
+            [lastX, lastY] = toCanvasCoords(event);
+            hint?.classList.add('hidden');
+        };
+
+        const move = (event) => {
+            if (!drawing) return;
+            if (!ctx) return;
+
+            event.preventDefault();
+            const [x, y] = toCanvasCoords(event);
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            lastX = x;
+            lastY = y;
+        };
+
+        const end = (event) => {
+            if (!drawing) return;
+
+            drawing = false;
+            canvas.releasePointerCapture?.(event.pointerId);
+            syncHidden();
+            clearError(hidden);
+        };
+
+        const clear = () => {
+            drawing = false;
+            hasInk = false;
+            lastX = 0;
+            lastY = 0;
+
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            hidden.value = '';
+            hint?.classList.remove('hidden');
+            clearError(hidden);
+            updateSubmitState();
+        };
+
+        canvas.addEventListener('pointerdown', start);
+        canvas.addEventListener('pointermove', move);
+        canvas.addEventListener('pointerup', end);
+        canvas.addEventListener('pointercancel', end);
+        canvas.addEventListener('pointerleave', end);
+        clearBtn?.addEventListener('click', clear);
+        form.elements.namedItem('contract_accepted')?.addEventListener('change', updateSubmitState);
+        window.addEventListener('resize', () => {
+            if (isDesktopLayout()) resizeSignatureCanvas();
+        });
+
+        initCanvas();
+        updateSubmitState();
+    };
+
     /* ---------- Navegação principal ---------- */
     const nextBtn = document.getElementById('next-btn');
     const prevBtn = document.getElementById('prev-btn');
     const submitBtn = document.getElementById('submit-btn');
 
     nextBtn.addEventListener('click', () => {
+        if (correctionMode) {
+            const { errors, firstInvalid } = validateStep(currentStep);
+
+            if (errors.length > 0) {
+                firstInvalid?.focus({ preventScroll: true });
+                return;
+            }
+
+            // Etapa corrigida: "Revisar cadastro" leva direto para a última
+            // etapa (Contrato e assinatura).
+            clearStepServerErrors(currentStep);
+            correctionMode = false;
+            gotoStep(totalSteps);
+            return;
+        }
+
         const { errors, firstInvalid } = validateStep(currentStep);
 
         if (errors.length > 0) {
@@ -460,7 +1228,15 @@ export const initClientRegistration = () => {
         gotoStep(currentStep + 1);
     });
 
-    prevBtn.addEventListener('click', () => gotoStep(currentStep - 1));
+    prevBtn.addEventListener('click', () => {
+        if (correctionMode) {
+            correctionMode = false;
+            gotoStep(reviewStep);
+            return;
+        }
+
+        gotoStep(currentStep - 1);
+    });
 
     const setSubmitting = (submitting) => {
         if (!submitBtn) return;
@@ -472,18 +1248,125 @@ export const initClientRegistration = () => {
         if (label) label.textContent = submitting ? 'Enviando...' : 'Enviar cadastro';
     };
 
-    form.addEventListener('submit', (event) => {
-        for (let step = 1; step <= totalSteps; step++) {
-            const { errors, firstInvalid } = validateStep(step);
-            if (errors.length > 0) {
-                event.preventDefault();
-                gotoStep(step);
-                firstInvalid?.focus({ preventScroll: true });
-                return;
+    const readCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+    const mapServerErrors = (errors) => {
+        const next = {};
+
+        for (const [field, list] of Object.entries(errors ?? {})) {
+            if (Array.isArray(list) && list[0]) {
+                next[field] = String(list[0]);
             }
         }
 
+        return next;
+    };
+
+    const successPath = successUrl ? new URL(successUrl, window.location.href).pathname : null;
+
+    const submitWarning = document.querySelector('[data-submit-warning]');
+
+    const showSubmitWarning = (message) => {
+        if (!submitWarning) return;
+        submitWarning.textContent = message;
+        submitWarning.classList.remove('hidden');
+        submitWarning.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    const hideSubmitWarning = () => {
+        if (!submitWarning) return;
+        submitWarning.classList.add('hidden');
+    };
+
+    form.addEventListener('submit', async (event) => {
+        if (isDesktopLayout()) {
+            // Página única: valida todas as seções de uma vez, destaca os erros
+            // em cada campo visível e rola até o primeiro problema encontrado.
+            let firstInvalid = null;
+            let errorCount = 0;
+
+            for (let step = 1; step <= totalSteps; step++) {
+                const { errors, firstInvalid: first } = validateStep(step);
+                errorCount += errors.length;
+
+                if (first && !firstInvalid) {
+                    firstInvalid = first;
+                }
+            }
+
+            if (errorCount > 0) {
+                event.preventDefault();
+                correctionMode = true;
+                renderReviewProblems();
+                if (firstInvalid) revealField(firstInvalid);
+                return;
+            }
+        } else {
+            for (let step = 1; step <= totalSteps; step++) {
+                const { errors, firstInvalid } = validateStep(step);
+                if (errors.length > 0) {
+                    event.preventDefault();
+                    // Entra em modo correção: após ajustar, o usuário volta
+                    // direto para a revisão sem percorrer as etapas de novo.
+                    correctionMode = true;
+                    gotoStep(step);
+                    firstInvalid?.focus({ preventScroll: true });
+                    return;
+                }
+            }
+        }
+
+        event.preventDefault();
+        hideSubmitWarning();
         setSubmitting(true);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': readCsrfToken(),
+                },
+            });
+
+            if (response.status === 422) {
+                // Validação rejeitada pelo servidor: mantém o DOM e os arquivos
+                // em memória e volta para a revisão apontando os problemas.
+                const data = await response.json().catch(() => null);
+                serverErrors = mapServerErrors(data?.errors);
+                rebuildServerErrorSteps();
+                setSubmitting(false);
+                correctionMode = false;
+                gotoStep(reviewStep);
+                if (isDesktopLayout()) scrollReviewProblems();
+                reviewProblemsList?.querySelector('[data-corrigir-step]')?.focus({ preventScroll: true });
+                return;
+            }
+
+            setSubmitting(false);
+
+            // Sucesso: a rota do servidor redireciona para /sucesso.
+            if (successPath && new URL(response.url, window.location.href).pathname === successPath) {
+                window.location.href = response.url;
+                return;
+            }
+
+            // 429: limite de tentativas atingido. NUNCA recarrega a página:
+            // isso devolveria o usuário à etapa 1 e descartaria os dados
+            // preenchidos. Mantém o formulário intacto e orienta a aguardar.
+            if (response.status === 429) {
+                showSubmitWarning('Detectamos muitas tentativas de envio em pouco tempo. Aguarde alguns minutos e tente novamente — seus dados foram preservados.');
+                return;
+            }
+
+            // Demais respostas (419/erro de processamento) seguem o fluxo
+            // clássico do navegador, recarregando a página de origem.
+            window.location.href = response.url;
+        } catch {
+            setSubmitting(false);
+        }
     });
 
     /* ---------- Init ---------- */
@@ -491,6 +1374,17 @@ export const initClientRegistration = () => {
     bindLiveClear();
     setupFileInputs();
     setupCepLookup();
+    setupQuotaVehicleFilter();
     setupSummary();
-    gotoStep(1);
+    signatureSetup();
+
+    const hasServerErrors = Object.values(serverErrorSteps).some((count) => Number(count) > 0);
+    gotoStep(hasServerErrors ? reviewStep : 1);
+
+    // No desktop (página única), erros de validação do servidor ficam no resumo
+    // da revisão — abaixo da dobra. Rola até o container para que o usuário
+    // localize rapidamente os problemas.
+    if (isDesktopLayout() && hasServerErrors) {
+        window.requestAnimationFrame(scrollReviewProblems);
+    }
 };

@@ -6,40 +6,68 @@ use App\Enums\AuditAction;
 use App\Enums\FacialStatus;
 use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
+use App\Models\QuotaType;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 /**
  * Orquestra a criação de um cadastro de cliente, incluindo a
- * armazenamento dos arquivos em área privada e o registro do consentimento.
+ * armazenamento dos arquivos em área privada, o consentimento e a
+ * assinatura digital do contrato.
  *
  * Campos administrativos (status, facial_status, caminhos, consentimento,
- * uuid) são definidos exclusivamente aqui, nunca por dados do cliente.
+ * contrato, uuid) são definidos exclusivamente aqui, nunca por dados do
+ * cliente.
  */
 class ClientRegistrationService
 {
     public function __construct(
         private readonly DocumentStorageService $documentStorage,
+        private readonly ContractStorageService $contractStorage,
+        private readonly ContractPdfService $contractPdf,
         private readonly FacialValidationService $facialValidation,
         private readonly AuditService $audit,
+        private readonly QuotaAvailabilityService $quotaAvailability,
     ) {}
 
     /**
      * Cria o cadastro do cliente com os dados validados.
      *
+     * A criação definitiva (row no banco) só acontece após a assinatura
+     * ser validada e armazenada e o PDF assinado ser gerado. Tudo roda
+     * sob a mesma transação; qualquer falha destrói os arquivos já
+     * gravados e reverte a transação — nunca fica cadastro sem contrato
+     * (nem contrato órfão).
+     *
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data): ClientRegistration
+    public function create(array $data, ?string $signerIp = null): ClientRegistration
     {
         $uuid = (string) Str::uuid();
 
         try {
-            return DB::transaction(function () use ($data, $uuid): ClientRegistration {
+            return DB::transaction(function () use ($data, $uuid, $signerIp): ClientRegistration {
+                // Revalida a disponibilidade sob lock ANTES de gravar
+                // qualquer arquivo: protege contra a corrida entre a
+                // validação do formulário e a criação (overbooking).
+                if (! empty($data['vehicle_id']) && ! empty($data['quota_type_id'])) {
+                    $this->quotaAvailability->assertCanReserve(
+                        (int) $data['vehicle_id'],
+                        (int) $data['quota_type_id'],
+                        Carbon::parse($data['start_date']),
+                        Carbon::parse($data['end_date']),
+                        lock: true,
+                    );
+                }
+
                 $registration = new ClientRegistration;
                 $registration->uuid = $uuid;
 
-                foreach (ClientRegistration::DOCUMENTS as $document => $label) {
+                foreach (ClientRegistration::UPLOAD_DOCUMENTS as $document => $label) {
                     $file = $data["{$document}_file"] ?? null;
 
                     $registration->{$document.'_path'} = $file
@@ -47,7 +75,38 @@ class ClientRegistrationService
                         : null;
                 }
 
+                // Dados pessoais preenchidos antes do contrato: o PDF usa o
+                // model para montar a página 1 e o bloco de assinatura.
                 $registration->fill($this->mapFormData($data));
+
+                // Contrato: gera os arquivos ANTES de salvar o cadastro.
+                // Se qualquer passo falhar, a exceção propaga e o catch
+                // remove os arquivos já gravados; a transação reverte.
+                $signaturePath = $this->contractStorage->storeSignature(
+                    (string) $data['contract_signature'],
+                    $uuid,
+                );
+
+                $signedAt = now('America/Sao_Paulo');
+
+                $contractPath = $this->contractPdf->generate(
+                    $registration,
+                    $signaturePath,
+                    $signedAt->format('d/m/Y H:i'),
+                );
+
+                if (! empty($data['vehicle_id']) && ! empty($data['quota_type_id'])) {
+                    $quotaType = QuotaType::query()->find($data['quota_type_id']);
+                    $startDate = $data['start_date'] ?? now('America/Sao_Paulo')->toDateString();
+                    $endDate = $data['end_date'] ?? null;
+                    $quotaDays = $quotaType?->days ?? 0;
+
+                    $registration->vehicle_id = (int) $data['vehicle_id'];
+                    $registration->quota_type_id = (int) $data['quota_type_id'];
+                    $registration->start_date = $startDate;
+                    $registration->end_date = $endDate;
+                    $registration->quota_days = $quotaDays;
+                }
 
                 // Valores controlados pelo servidor.
                 $registration->status = RegistrationStatus::Novo;
@@ -59,13 +118,35 @@ class ClientRegistrationService
                 $registration->privacy_policy_accepted_at = now();
                 $registration->privacy_policy_version = (string) config('privacy.version');
 
+                $registration->contract_signed = true;
+                // O instante é normalizado para UTC: as colunas `datetime`
+                // são gravadas como relógio do app (UTC) e relidas como UTC.
+                $registration->contract_signed_at = $signedAt->clone()->setTimezone('UTC');
+                $registration->contract_version = (string) config('contracts.version');
+                $registration->contract_signed_pdf_path = $contractPath;
+                $registration->contract_signature_path = $signaturePath;
+                $registration->contract_signer_name = $data['contract_signer_name'];
+                $registration->contract_signer_ip = $signerIp ?? app('request')->ip();
+
                 $registration->save();
+
+                // Gera o contrato com dados preenchidos na página 1.
+                try {
+                    $filledPath = $this->contractPdf->generateFilled($registration);
+                    $registration->update(['filled_contract_path' => $filledPath]);
+                } catch (Throwable $e) {
+                    Log::warning('Failed to generate filled contract', [
+                        'registration_uuid' => $uuid,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
                 $this->audit->log(
                     AuditAction::ConsentRecorded,
                     [
                         'registration_uuid' => $uuid,
                         'policy_version' => $registration->privacy_policy_version,
+                        'contract_version' => $registration->contract_version,
                     ],
                     $registration,
                 );
@@ -96,16 +177,27 @@ class ClientRegistrationService
             $data['selfie_file'],
             $data['veracity_declaration_accepted'],
             $data['privacy_policy_accepted'],
+            $data['contract_signature'],
+            $data['contract_signer_name'],
+            $data['contract_accepted'],
         );
+
+        foreach (['vehicle_id', 'quota_type_id', 'start_date', 'end_date', 'quota_days'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = $data[$field] ?? null;
+            }
+        }
 
         return $data;
     }
 
     /**
-     * Exclui o diretório do cadastro caso a criação falhe no meio do caminho.
+     * Exclui os diretórios do cadastro e do contrato caso a criação falhe
+     * no meio do caminho.
      */
     public function cleanupOnFailure(string $registrationUuid): void
     {
         $this->documentStorage->deleteRegistrationDirectory($registrationUuid);
+        $this->contractStorage->deleteRegistrationDirectory($registrationUuid);
     }
 }

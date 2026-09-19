@@ -3,259 +3,205 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#1e40af">
-    <title>Dashboard &middot; Painel da Locadora &middot; Protótipo</title>
+    <meta name="theme-color" content="#050505">
+    <title>Dashboard | VCA</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/vca-logo.jpeg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="admin-body font-sans antialiased">
-    <div class="admin-layout">
+<body class="admin-body">
+    <div class="admin-shell">
 
         <aside class="admin-sidebar">
-            <div class="sb-brand">
-                <span class="sb-brand-icon">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+            <div class="admin-brand">
+                <span class="admin-brand-logo">
+                    <img src="assets/img/vca-logo.jpeg" alt="VCA Locadora">
                 </span>
-                <span>
-                    <p class="sb-brand-title">Locadora</p>
-                    <p class="sb-brand-sub">Painel administrativo</p>
+                <span class="min-w-0">
+                    <span class="admin-brand-title">VCA</span>
+                    <span class="admin-brand-sub">Painel administrativo</span>
                 </span>
             </div>
 
-            <nav class="sb-nav" aria-label="Navegação do painel">
-                <p class="sb-group-label">Principal</p>
-                <a class="sb-item is-active" href="admin-dashboard.html" aria-current="page">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Dashboard</span>
-                </a>
-
-                <p class="sb-group-label">Cadastros</p>
-                <a class="sb-item" href="admin-list.html">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Cadastros</span>
-                </a>
-
-                <p class="sb-group-label">Ferramentas</p>
-                <a class="sb-item" href="admin-link.html">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Link de cadastro</span>
-                </a>
-
-                <p class="sb-group-label">Sistema</p>
-                <a class="sb-item" href="admin-seguranca.html">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span>Segurança</span>
-                </a>
-
-                <button type="button" class="sb-logout">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <nav class="admin-nav" aria-label="Navegação principal">
+                <div class="nav-group">
+                    <p class="nav-label">Principal</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item is-active" href="admin-dashboard.html" aria-current="page">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12 21.75 3l-4.5 18-4.5-6-5.25-2.25L9 10.5 2.25 12Z"/></svg>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <p class="nav-label">Cadastros</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item" href="admin-list.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H3m15 0h-3.75M12 15.75v1.5m-3.75-1.5v1.5m6-1.5v1.5M7.5 18h9m-10.5-6H21M3 18V6.75a2.25 2.25 0 0 1 2.25-2.25h9"/></svg>
+                                <span>Cadastros</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <p class="nav-label">Ferramentas</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item" href="admin-link.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
+                                <span>Link de cadastro</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <p class="nav-label">Sistema</p>
+                    <ul class="nav-list">
+                        <li>
+                            <a class="nav-item" href="admin-seguranca.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
+                                <span>Segurança</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-item" href="admin-users.html">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+                                <span>Usuários</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="nav-logout" onclick="location.href='admin-login.html'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span>Sair</span>
                 </button>
             </nav>
 
-            <div class="sb-user">
-                <span class="sb-avatar">A</span>
-                <span style="min-width: 0;">
-                    <p class="sb-user-name">Admin</p>
-                    <p class="sb-user-email">admin@locadora.com.br</p>
+            <div class="admin-session">
+                <span class="session-avatar" aria-hidden="true">J</span>
+                <span class="min-w-0">
+                    <span class="session-name">Janete Almeida</span>
+                    <span class="session-email">janete@locadora.com.br</span>
                 </span>
             </div>
         </aside>
 
-        <div class="admin-content">
-            <header class="admin-topbar">
-                <div class="topbar-section">
-                    <p class="topbar-kicker">Painel da Locadora</p>
-                    <p class="topbar-title">Dashboard</p>
+        <header class="admin-mobile-header">
+            <button type="button" class="admin-mobile-menu" data-mobile-nav-open aria-expanded="false" aria-controls="mobile-nav" aria-label="Abrir menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/></svg>
+            </button>
+            <span class="admin-mobile-title min-w-0">
+                <span class="t">VCA</span>
+                <span class="s">Painel administrativo</span>
+            </span>
+            <span class="session-avatar" aria-hidden="true">J</span>
+        </header>
+
+        <div>
+            <div class="admin-topbar">
+                <div class="admin-topbar-section">
+                    <span class="admin-topbar-eyebrow">VCA</span>
+                    <span class="admin-topbar-title">Dashboard</span>
                 </div>
-                <div class="topbar-user">
-                    <span class="sb-avatar">A</span>
-                    <span style="min-width: 0;">
-                        <p class="topbar-user-name">Admin</p>
-                        <p class="topbar-user-email">admin@locadora.com.br</p>
+                <div class="admin-topbar-user">
+                    <span class="session-avatar" aria-hidden="true">J</span>
+                    <span class="min-w-0">
+                        <span class="session-name">Janete Almeida</span>
+                        <span class="session-email">janete@locadora.com.br</span>
                     </span>
                 </div>
-            </header>
+            </div>
 
-            <header class="admin-mobile-header">
-                <button type="button" class="icon-btn" id="admin-nav-open" aria-label="Abrir navegação" aria-controls="admin-nav-drawer">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-                <div class="mobile-brand">
-                    <p class="mobile-brand-title">Locadora</p>
-                    <p class="mobile-brand-sub">Painel administrativo</p>
-                </div>
-                <span class="mobile-avatar">A</span>
-            </header>
-
-            <main class="container-wide main-wide" style="padding-top: 1.5rem; padding-bottom: 3rem;">
-                <div class="space-y-6">
-                    <div class="flex" style="align-items: flex-start; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+            <main class="admin-main">
+                <div class="stack-6">
+                    <div class="page-head">
                         <div>
                             <h1 class="page-title">Visão geral</h1>
-                            <p class="page-sub" style="margin-top: 0.125rem;">7 cadastros.</p>
+                            <p class="page-sub">18 cadastros.</p>
                         </div>
-                        <a href="admin-list.html" class="back-link">
+                        <a class="back-link" href="admin-list.html">
                             Ver todos os cadastros
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </a>
                     </div>
 
-                    <div class="stat-grid">
-                        <div class="card stat-card">
-                            <p class="stat-value stat-total">7</p>
-                            <p class="stat-label">Total</p>
-                        </div>
-                        <div class="card stat-card">
-                            <p class="stat-value stat-new">2</p>
-                            <p class="stat-label">Novos</p>
-                        </div>
-                        <div class="card stat-card">
-                            <p class="stat-value stat-review">3</p>
-                            <p class="stat-label">Em análise</p>
-                        </div>
-                        <div class="card stat-card">
-                            <p class="stat-value stat-approved">1</p>
-                            <p class="stat-label">Aprovados</p>
-                        </div>
-                        <div class="card stat-card">
-                            <p class="stat-value stat-rejected">1</p>
-                            <p class="stat-label">Reprovados</p>
-                        </div>
+                    <div class="stat-grid cols-5">
+                        <div class="stat"><p class="stat-number">18</p><p class="stat-label">Total</p></div>
+                        <div class="stat"><p class="stat-number is-brand">6</p><p class="stat-label">Novos</p></div>
+                        <div class="stat"><p class="stat-number is-amber">4</p><p class="stat-label">Em análise</p></div>
+                        <div class="stat"><p class="stat-number is-emerald">6</p><p class="stat-label">Aprovados</p></div>
+                        <div class="stat"><p class="stat-number is-rose">2</p><p class="stat-label">Reprovados</p></div>
                     </div>
 
-                    <section class="card" style="padding: 1.5rem;" aria-labelledby="link-heading">
-                        <div class="flex" style="align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
-                            <div style="min-width: 0;">
-                                <h2 class="section-title" id="link-heading" style="text-transform: none; letter-spacing: 0;">Link de cadastro</h2>
-                                <p class="page-sub" style="margin-top: 0.25rem;">Copie e envie ao cliente.</p>
+                    <section class="card p-5" style="padding: 1.25rem;">
+                        <div class="row-between">
+                            <div class="min-w-0">
+                                <h2 class="section-title">Link de cadastro</h2>
+                                <p class="mt-2 text-sm text-dim">Copie e envie ao cliente.</p>
                             </div>
-                            <a href="form.html" class="back-link">
+                            <a class="back-link" href="admin-link.html">
                                 Abrir página
-                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.5 4.5 21 12l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </a>
                         </div>
 
-                        <div class="copy-row" style="margin-top: 1rem;">
-                            <p class="copy-value">https://locadora.com.br/cadastro/zyx9-abcd</p>
-                            <button type="button" class="btn btn-secondary" data-copy-link>Copiar link</button>
+                        <p id="copy-status-dashboard" class="sr-only" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);" role="status"></p>
+
+                        <div class="link-box mt-4">
+                            <p class="form-input break-all">https://vca.locadora.com.br/cadastro</p>
+                            <div class="link-actions">
+                                <button type="button" class="btn btn-secondary" data-js-copy data-copy-url="https://vca.locadora.com.br/cadastro" data-copy-status="copy-status-dashboard">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Copiar link
+                                </button>
+                            </div>
                         </div>
                     </section>
 
-                    <section aria-labelledby="recent-heading">
-                        <div class="section-head">
-                            <h2 class="section-title" id="recent-heading" style="text-transform: none; letter-spacing: 0;">Cadastros recentes</h2>
-                            <a href="admin-list.html" class="see-all">Ver todos</a>
+                    <section>
+                        <div class="row-between mb-3">
+                            <h2 class="section-title">Cadastros recentes</h2>
+                            <a href="admin-list.html" class="text-xs font-medium text-brand" style="text-decoration: none;">Ver todos</a>
                         </div>
 
-                        <div class="card recent-card">
-                            <a href="admin-detalhe.html">
-                                <div class="recent-main">
-                                    <p class="recent-name">Maria Fernandes Souza</p>
-                                    <p class="recent-sub">***.456.789-** &middot; 08/09/2026 14:22</p>
-                                </div>
-                                <div class="recent-side">
-                                    <span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span>
-                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </div>
+                        <div class="row-list">
+                            <a class="row-item" href="admin-detalhe.html">
+                                <span class="row-main">
+                                    <span class="row-name">João Pedro Almeida</span>
+                                    <span class="row-meta">123.456.789-00 &middot; 13/09/2026 14:02</span>
+                                </span>
+                                <span class="row-side"><span class="badge badge-novo"><span class="badge-dot" aria-hidden="true"></span>Novo</span></span>
                             </a>
-                            <a href="admin-detalhe.html">
-                                <div class="recent-main">
-                                    <p class="recent-name">João Pereira Lima</p>
-                                    <p class="recent-sub">***.123.456-** &middot; 08/09/2026 11:05</p>
-                                </div>
-                                <div class="recent-side">
-                                    <span class="badge b-em_analise"><span class="badge-dot d-amber" aria-hidden="true"></span>Em análise</span>
-                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </div>
+                            <a class="row-item" href="admin-detalhe.html">
+                                <span class="row-main">
+                                    <span class="row-name">Maria Fernanda Costa</span>
+                                    <span class="row-meta">987.654.321-00 &middot; 12/09/2026 18:47</span>
+                                </span>
+                                <span class="row-side"><span class="badge badge-analise"><span class="badge-dot" aria-hidden="true"></span>Em análise</span></span>
                             </a>
-                            <a href="admin-detalhe.html">
-                                <div class="recent-main">
-                                    <p class="recent-name">Ana Carolina Ribeiro</p>
-                                    <p class="recent-sub">***.789.012-** &middot; 07/09/2026 18:40</p>
-                                </div>
-                                <div class="recent-side">
-                                    <span class="badge b-aprovado"><span class="badge-dot d-emerald" aria-hidden="true"></span>Aprovado</span>
-                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </div>
+                            <a class="row-item" href="admin-detalhe.html">
+                                <span class="row-main">
+                                    <span class="row-name">Carlos Eduardo Martins</span>
+                                    <span class="row-meta">456.123.789-01 &middot; 12/09/2026 09:15</span>
+                                </span>
+                                <span class="row-side"><span class="badge badge-aprovado"><span class="badge-dot" aria-hidden="true"></span>Aprovado</span></span>
                             </a>
-                            <a href="admin-detalhe.html">
-                                <div class="recent-main">
-                                    <p class="recent-name">Carlos Eduardo Nunes</p>
-                                    <p class="recent-sub">***.234.567-** &middot; 06/09/2026 09:12</p>
-                                </div>
-                                <div class="recent-side">
-                                    <span class="badge b-reprovado"><span class="badge-dot d-red" aria-hidden="true"></span>Reprovado</span>
-                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </div>
-                            </a>
-                            <a href="admin-detalhe.html">
-                                <div class="recent-main">
-                                    <p class="recent-name">Juliana Castro Melo</p>
-                                    <p class="recent-sub">***.345.678-** &middot; 05/09/2026 16:30</p>
-                                </div>
-                                <div class="recent-side">
-                                    <span class="badge b-novo"><span class="badge-dot d-blue" aria-hidden="true"></span>Novo</span>
-                                    <svg class="h-4 w-4 recent-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m8.25 4.5 7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </div>
+                            <a class="row-item" href="admin-detalhe.html">
+                                <span class="row-main">
+                                    <span class="row-name">Ana Beatriz Souza</span>
+                                    <span class="row-meta">321.654.987-22 &middot; 11/09/2026 21:30</span>
+                                </span>
+                                <span class="row-side"><span class="badge badge-reprovado"><span class="badge-dot" aria-hidden="true"></span>Reprovado</span></span>
                             </a>
                         </div>
                     </section>
                 </div>
             </main>
-        </div>
-    </div>
-
-    <div class="drawer-backdrop hidden" id="admin-nav-backdrop" aria-hidden="true"></div>
-    <div class="drawer" id="admin-nav-drawer" aria-hidden="true">
-        <div class="drawer-head">
-            <span class="sb-brand-icon">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
-            </span>
-            <button type="button" class="icon-btn" id="admin-nav-close" aria-label="Fechar navegação" style="color: var(--slate-200);">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 18 18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-        </div>
-
-        <nav class="drawer-nav" aria-label="Navegação do painel">
-            <p class="sb-group-label">Principal</p>
-            <a class="sb-item is-active" href="admin-dashboard.html" data-mobile-nav-link aria-current="page">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Dashboard</span>
-            </a>
-
-            <p class="sb-group-label">Cadastros</p>
-            <a class="sb-item" href="admin-list.html" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Cadastros</span>
-            </a>
-
-            <p class="sb-group-label">Ferramentas</p>
-            <a class="sb-item" href="admin-link.html" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Link de cadastro</span>
-            </a>
-
-            <p class="sb-group-label">Sistema</p>
-            <a class="sb-item" href="admin-seguranca.html" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Segurança</span>
-            </a>
-
-            <button type="button" class="sb-logout" data-mobile-nav-link>
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Sair</span>
-            </button>
-        </nav>
-
-        <div class="drawer-user">
-            <span class="sb-avatar">A</span>
-            <span style="min-width: 0;">
-                <p class="sb-user-name">Admin</p>
-                <p class="sb-user-email">admin@locadora.com.br</p>
-            </span>
         </div>
     </div>
 

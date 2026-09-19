@@ -3,10 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#1e40af">
+    <meta name="theme-color" content="#050505">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex, nofollow">
-    <title>Verificação em duas etapas &middot; Painel da Locadora</title>
+    <title>Verificação em duas etapas | VCA</title>
+
+    <link rel="icon" type="image/jpeg" href="{{ asset('img/logo-vca.jpeg') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,8 +20,8 @@
     <div class="flex min-h-screen items-center justify-center px-4 py-10">
         <div class="w-full max-w-sm">
             <div class="mb-6 text-center">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
-                    <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand/15 ring-1 ring-brand/30">
+                    <svg class="h-6 w-6 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
                     </svg>
                 </span>
@@ -27,8 +29,8 @@
             </div>
 
             <div class="card p-6 sm:p-8">
-                <h1 class="mb-1 text-lg font-semibold tracking-tight text-slate-900">Código de verificação</h1>
-                <p class="mb-6 text-sm text-slate-500">
+                <h1 class="mb-1 text-lg font-semibold tracking-tight text-white">Código de verificação</h1>
+                <p class="mb-6 text-sm text-zinc-400">
                     Informe o código do seu aplicativo autenticador ou um código de recuperação.
                 </p>
 
@@ -53,7 +55,7 @@
             </div>
 
             <div class="mt-5 text-center">
-                <a href="{{ route('admin.login') }}" class="text-sm text-indigo-100 underline-offset-2 hover:underline">
+                <a href="{{ route('admin.login') }}" class="text-sm text-brand underline-offset-2 hover:underline">
                     Voltar ao login
                 </a>
             </div>

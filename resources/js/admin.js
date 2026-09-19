@@ -1,21 +1,22 @@
 /**
  * Recursos do painel administrativo.
  */
+import { Fancybox } from '@fancyapps/ui';
+import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import { toast } from './toasts';
 
 export const initAdmin = (root = document) => {
-    // Filtro por status (envia ao trocar a opção)
-    const statusFilter = root.getElementById('status-filter');
-    if (statusFilter) {
-        statusFilter.addEventListener('change', () => {
-            const url = new URL(window.location.href);
-            if (statusFilter.value) {
-                url.searchParams.set('status', statusFilter.value);
-            } else {
-                url.searchParams.delete('status');
-            }
-            window.location.href = url.toString();
-        });
+    initDocumentGallery(root);
+    initVehiclePhotoUploads(root);
+    // Após salvar um status, a página de detalhes exibe a confirmação e,
+    // passado o intervalo (ex.: 2000 ms), volta automaticamente à listagem.
+    const redirectAfter = Number(root.body?.dataset.statusRedirectAfter ?? 0);
+    const redirectUrl = root.body?.dataset.statusRedirectUrl ?? '';
+
+    if (redirectAfter > 0 && redirectUrl) {
+        window.setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, redirectAfter);
     }
 
     // Alteração de status: confirmação via dialog quando o status é "reprovado"
@@ -146,6 +147,86 @@ export const initAdmin = (root = document) => {
     });
 };
 
+/**
+ * Handles vehicle photo uploads on the registration edit form.
+ *
+ * The gallery input is intentionally nameless: the selected file is copied
+ * into the named input before the form is submitted.
+ */
+function initVehiclePhotoUploads(root) {
+    root.querySelectorAll('[data-admin-upload-card]').forEach((card) => {
+        const input = card.querySelector('[data-admin-upload-input]');
+        const gallery = card.querySelector('[data-admin-gallery-input]');
+        const preview = card.querySelector('.preview-image');
+        const empty = card.querySelector('.preview-empty-icon');
+        const fileName = card.querySelector('.file-name');
+        const existingSrc = card.dataset.existingSrc ?? '';
+
+        const showFile = (file) => {
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                empty?.classList.add('hidden');
+                preview?.classList.remove('hidden');
+                preview.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+            card.classList.add('is-filled');
+            if (fileName) {
+                fileName.textContent = file.name;
+            }
+        };
+
+        const restorePreview = () => {
+            if (input) {
+                input.value = '';
+            }
+            if (gallery) {
+                gallery.value = '';
+            }
+
+            if (existingSrc) {
+                empty?.classList.add('hidden');
+                preview?.classList.remove('hidden');
+                preview.src = existingSrc;
+                card.classList.add('is-filled');
+                if (fileName) {
+                    fileName.textContent = 'Foto salva';
+                }
+            } else {
+                empty?.classList.remove('hidden');
+                preview?.classList.add('hidden');
+                preview?.removeAttribute('src');
+                card.classList.remove('is-filled');
+                if (fileName) {
+                    fileName.textContent = 'Nenhuma imagem selecionada';
+                }
+            }
+        };
+
+        input?.addEventListener('change', () => showFile(input.files?.[0]));
+        gallery?.addEventListener('change', () => {
+            const file = gallery.files?.[0];
+            if (!file || !input) {
+                return;
+            }
+
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            input.files = transfer.files;
+            showFile(file);
+            gallery.value = '';
+        });
+        card.querySelector('.remove-preview')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            restorePreview();
+        });
+    });
+}
+
 function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
         return navigator.clipboard
@@ -182,4 +263,66 @@ function legacyCopy(text) {
 
 function checkIcon() {
     return '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>';
+}
+
+/**
+ * Visualização das fotos "Fotos e documentos" em lightbox (Fancybox 5).
+ * Os links apontam para a rota protegida admin.registrations.photo;
+ * somente documentos enviados participam da galeria.
+ */
+function initDocumentGallery(root) {
+    const group = '[data-fancybox="cadastro-docs"]';
+
+    if (!root.querySelector(group)) {
+        return;
+    }
+
+    Fancybox.defaults.l10n = {
+        PANUP: 'Mover para cima',
+        PANDOWN: 'Mover para baixo',
+        PANLEFT: 'Mover para a esquerda',
+        PANRIGHT: 'Mover para a direita',
+        ZOOMIN: 'Ampliar',
+        ZOOMOUT: 'Reduzir',
+        TOGGLEZOOM: 'Alternar nível de zoom',
+        TOGGLE1TO1: 'Alternar nível de zoom',
+        ITERATEZOOM: 'Alternar nível de zoom',
+        ROTATECCW: 'Girar no sentido anti-horário',
+        ROTATECW: 'Girar no sentido horário',
+        FLIPX: 'Inverter horizontalmente',
+        FLIPY: 'Inverter verticalmente',
+        FITX: 'Ajustar horizontalmente',
+        FITY: 'Ajustar verticalmente',
+        RESET: 'Redefinir',
+        TOGGLEFS: 'Alternar tela cheia',
+        CLOSE: 'Fechar',
+        NEXT: 'Próximo',
+        PREV: 'Anterior',
+        MODAL: 'Você pode fechar este conteúdo com a tecla ESC',
+        ERROR: 'Algo deu errado. Tente novamente mais tarde.',
+        IMAGE_ERROR: 'Imagem não encontrada',
+        ELEMENT_NOT_FOUND: 'Elemento HTML não encontrado',
+        AJAX_NOT_FOUND: 'Erro ao carregar AJAX: não encontrado',
+        AJAX_FORBIDDEN: 'Erro ao carregar AJAX: proibido',
+        IFRAME_ERROR: 'Erro ao carregar página',
+        TOGGLE_ZOOM: 'Alternar nível de zoom',
+        TOGGLE_THUMBS: 'Alternar miniaturas',
+        TOGGLE_SLIDESHOW: 'Alternar apresentação de slides',
+        TOGGLE_FULLSCREEN: 'Alternar modo tela cheia',
+        DOWNLOAD: 'Baixar',
+    };
+
+    Fancybox.bind(group, {
+        closeClickOutside: true,
+        Carousel: {
+            infinite: false,
+        },
+        Toolbar: {
+            display: {
+                left: ['counter'],
+                middle: [],
+                right: ['zoomIn', 'zoomOut', 'close'],
+            },
+        },
+    });
 }

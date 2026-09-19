@@ -51,6 +51,16 @@ class DocumentStorageService
     }
 
     /**
+     * Remove um documento já validado e armazenado pelo serviço.
+     */
+    public function delete(string $path): void
+    {
+        if ($this->isSafePath($path)) {
+            Storage::disk(self::DISK)->delete($path);
+        }
+    }
+
+    /**
      * Remove o diretório do cadastro quando o registro for eliminado.
      */
     public function deleteRegistrationDirectory(string $registrationUuid): void

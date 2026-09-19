@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\QuotaUnavailableException;
 use App\Rules\UploadBatchMax;
 use App\Rules\ValidCpf;
+use App\Rules\ValidSignatureData;
+use App\Services\QuotaAvailabilityService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class StoreClientRegistrationRequest extends FormRequest
 {
@@ -19,7 +24,7 @@ class StoreClientRegistrationRequest extends FormRequest
 
     /**
      * Normaliza o CPF (apenas dígitos) antes de validar para que a regra de
-     * unicidade compare o mesmo formato armazenado no banco.
+     * formato compare sempre o mesmo padrão (11122233344).
      */
     protected function prepareForValidation(): void
     {
@@ -57,7 +62,7 @@ class StoreClientRegistrationRequest extends FormRequest
 
         return [
             'full_name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\.\'\-]+$/u'],
-            'cpf' => ['required', new ValidCpf, Rule::unique('client_registrations', 'cpf')],
+            'cpf' => ['required', new ValidCpf],
             'birth_date' => ['required', 'date', 'before_or_equal:'.now()->subYears(18)->startOfDay()->format('Y-m-d')],
             'phone' => ['required', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
             'whatsapp' => ['required', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
@@ -74,11 +79,62 @@ class StoreClientRegistrationRequest extends FormRequest
             'cnh_category' => ['required', 'string', 'max:2', Rule::in(config('locations.cnh_categories', []))],
             'cnh_expiry_date' => ['required', 'date', 'after:today'],
 
+            'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
+            'quota_type_id' => ['required', 'integer', 'exists:quota_types,id'],
+            'start_date' => ['required', 'date', 'after_or_equal:'.$this->today(), 'before_or_equal:end_date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+
             ...$fileRules,
 
             'veracity_declaration_accepted' => ['required', 'accepted'],
             'privacy_policy_accepted' => ['required', 'accepted'],
+
+            'contract_signature' => ['required', new ValidSignatureData],
+            'contract_signer_name' => ['required', 'string', 'max:255', 'same:full_name'],
+            'contract_accepted' => ['required', 'accepted'],
         ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $vehicleId = $this->input('vehicle_id');
+                $quotaTypeId = $this->input('quota_type_id');
+                $startDate = $this->input('start_date');
+                $endDate = $this->input('end_date');
+
+                if (! is_numeric($vehicleId) || ! is_numeric($quotaTypeId) || ! $startDate || ! $endDate) {
+                    return;
+                }
+
+                try {
+                    $start = Carbon::parse((string) $startDate);
+                    $end = Carbon::parse((string) $endDate);
+                } catch (Throwable) {
+                    return;
+                }
+
+                try {
+                    app(QuotaAvailabilityService::class)->assertCanReserve(
+                        (int) $vehicleId,
+                        (int) $quotaTypeId,
+                        $start,
+                        $end,
+                    );
+                } catch (QuotaUnavailableException $e) {
+                    $validator->errors()->add($e->field, $e->getMessage());
+                }
+            },
+        ];
+    }
+
+    /**
+     * Data de hoje (fuso America/Sao_Paulo) para a regra de início.
+     */
+    private function today(): string
+    {
+        return now('America/Sao_Paulo')->startOfDay()->format('Y-m-d');
     }
 
     /**
@@ -93,7 +149,6 @@ class StoreClientRegistrationRequest extends FormRequest
             'full_name.regex' => 'O nome completo contém caracteres inválidos.',
             'cpf.required' => 'Informe o CPF.',
             'cpf.cpf' => 'Informe um CPF válido.',
-            'cpf.unique' => 'Já existe um cadastro para este CPF.',
             'birth_date.required' => 'Informe a data de nascimento.',
             'birth_date.date' => 'Informe uma data de nascimento válida.',
             'birth_date.before_or_equal' => 'É necessário ter pelo menos 18 anos para se cadastrar.',
@@ -119,6 +174,16 @@ class StoreClientRegistrationRequest extends FormRequest
             'cnh_expiry_date.required' => 'Informe a data de validade da CNH.',
             'cnh_expiry_date.date' => 'Informe uma data válida.',
             'cnh_expiry_date.after' => 'Informe uma data de validade futura.',
+
+            'vehicle_id.required' => 'Selecione o veículo.',
+            'quota_type_id.required' => 'Selecione o tipo de cota.',
+            'start_date.required' => 'Informe a data de início.',
+            'start_date.date' => 'Informe uma data de início válida.',
+            'start_date.after_or_equal' => 'A data de início não pode ser anterior a hoje.',
+            'start_date.before_or_equal' => 'A data de início não pode ser posterior à data de término.',
+            'end_date.required' => 'Informe a data de término.',
+            'end_date.date' => 'Informe uma data de término válida.',
+            'end_date.after_or_equal' => 'A data de término não pode ser anterior à data de início.',
 
             'cnh_front_file.required' => 'Envie a foto da CNH (frente).',
             'cnh_front_file.image' => 'A foto da CNH (frente) deve ser uma imagem.',
@@ -152,6 +217,12 @@ class StoreClientRegistrationRequest extends FormRequest
             'veracity_declaration_accepted.accepted' => 'Você deve aceitar a declaração de veracidade.',
             'privacy_policy_accepted.required' => 'Você deve aceitar a Política de Privacidade.',
             'privacy_policy_accepted.accepted' => 'Você deve aceitar a Política de Privacidade.',
+
+            'contract_signature.required' => 'Desenhe sua assinatura antes de concluir o cadastro.',
+            'contract_signer_name.required' => 'Informe o nome do signatário.',
+            'contract_signer_name.same' => 'O nome do signatário deve ser igual ao informado no cadastro.',
+            'contract_accepted.required' => 'Você deve aceitar os termos do contrato.',
+            'contract_accepted.accepted' => 'Você deve aceitar os termos do contrato.',
         ];
     }
 }

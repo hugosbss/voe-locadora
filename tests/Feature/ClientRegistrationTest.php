@@ -2,14 +2,26 @@
 
 namespace Tests\Feature;
 
+use App\Mail\NewRegistrationMail;
 use App\Models\ClientRegistration;
+use App\Models\QuotaType;
+use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleQuotaConfiguration;
+use App\Services\ClientRegistrationService;
+use App\Services\NewRegistrationNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Mockery\MockInterface;
+use RuntimeException;
+use Tests\Concerns\CreatesQuotaContext;
 use Tests\TestCase;
 
 class ClientRegistrationTest extends TestCase
 {
+    use CreatesQuotaContext;
     use RefreshDatabase;
 
     private array $baseData = [
@@ -30,7 +42,74 @@ class ClientRegistrationTest extends TestCase
         'cnh_expiry_date' => '2030-01-01',
         'veracity_declaration_accepted' => '1',
         'privacy_policy_accepted' => '1',
+        'contract_signer_name' => 'Maria da Silva Souza',
+        'contract_accepted' => '1',
     ];
+
+    /**
+     * Prepara o disco privado fake com o modelo do contrato. O template
+     * oficial não está versionado; os testes usam um PDF sintético de
+     * 12 páginas A4 (mesma estrutura) para validar o fluxo.
+     */
+    private function seedContractTemplate(): void
+    {
+        Storage::fake('local');
+
+        $pdf = new \FPDF('P', 'pt', [595.276, 841.89]);
+
+        for ($page = 1; $page <= 12; $page++) {
+            $pdf->AddPage();
+            $pdf->SetFont('Helvetica', '', 12);
+            $pdf->Text(40, 40, 'Contrato sintetico para testes — pagina '.$page);
+        }
+
+        Storage::disk('local')->put(config('contracts.template_path'), $pdf->Output('S'));
+    }
+
+    /**
+     * Gera um payload PNG válido desenhado (traço escuro em fundo branco).
+     */
+    private function signatureDataUrl(): string
+    {
+        $image = imagecreatetruecolor(520, 140);
+        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
+
+        $ink = imagecolorallocate($image, 15, 15, 15);
+        imageline($image, 40, 110, 480, 70, $ink);
+        imageline($image, 60, 95, 470, 60, $ink);
+        imageline($image, 80, 85, 450, 50, $ink);
+
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+        imagedestroy($image);
+
+        return 'data:image/png;base64,'.base64_encode($png);
+    }
+
+    /**
+     * Payload completo de um envio válido (dados + arquivos + assinatura).
+     *
+     * @return array<string, mixed>
+     */
+    private function validPayload(bool $withSignature = true): array
+    {
+        [$vehicle, $quota] = $this->createQuotaContext(30);
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
+        return [
+            ...$this->baseData,
+            'vehicle_id' => (string) $vehicle->id,
+            'quota_type_id' => (string) $quota->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
+            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
+            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
+            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
+            'contract_signature' => $withSignature ? $this->signatureDataUrl() : '',
+        ];
+    }
 
     public function test_public_form_page_renders(): void
     {
@@ -38,20 +117,229 @@ class ClientRegistrationTest extends TestCase
             ->assertOk()
             ->assertSee('Cadastro de Cliente')
             ->assertSee('Dados pessoais')
-            ->assertSee('Enviar cadastro');
+            ->assertSee('Enviar cadastro')
+            ->assertSee('Contrato e assinatura')
+            ->assertSee('id="signature-canvas"', false)
+            ->assertSee('Sua assinatura')
+            ->assertSee(route('client-registrations.contract'));
+    }
+
+    public function test_public_pages_use_vca_brand_and_have_no_protected_badge(): void
+    {
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+
+        $this->assertStringContainsString('>VCA</', $html);
+        $this->assertStringContainsString('Formulário de cadastro', $html);
+        $this->assertStringNotContainsString('Dados protegidos', $html);
+        $this->assertStringNotContainsString('Painel da Locadora', $html);
+        $this->assertStringNotContainsString('Locadora</span>', $html);
+    }
+
+    public function test_selfie_step_only_offers_camera_capture_without_gallery_option(): void
+    {
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="selfie_file"', $html);
+        $this->assertStringContainsString('capture="user"', $html);
+        $this->assertStringContainsString('Tirar selfie', $html);
+        $this->assertStringNotContainsString('Escolher da galeria', $html);
+        $this->assertStringNotContainsString('gallery-input sr-only" data-doc="selfie"', $html);
+
+        foreach (['cnh_front', 'cnh_back', 'proof_of_residence'] as $doc) {
+            $this->assertStringContainsString('gallery-input sr-only" data-doc="'.$doc.'"', $html);
+        }
+    }
+
+    public function test_public_form_lists_only_quota_code_name_and_availability_for_the_selected_vehicle(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'F-10',
+            'name' => 'Mensal',
+            'days' => 30,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 2,
+            'active' => true,
+        ]);
+
+        $html = $this->get('/cadastro')->assertOk()->getContent();
+
+        $this->assertStringContainsString('F-10 · Mensal (2 disponíveis)', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-vehicle-id="'.$vehicle->id.'"[^>]*>\s*F-10 · Mensal \(2 disponíveis\)\s*<\/option>/',
+            $html,
+        );
+        $this->assertStringNotContainsString('Civic 2025 · ABC-1234 · Mensal', $html);
+    }
+
+    public function test_valid_vehicle_and_quota_combination_is_accepted(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'F-10',
+            'name' => 'Mensal',
+            'days' => 30,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 2,
+            'active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['vehicle_id'] = (string) $vehicle->id;
+        $payload['quota_type_id'] = (string) $quota->id;
+
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $payload)
+            ->assertRedirect(route('client-registrations.success'));
+    }
+
+    public function test_invalid_vehicle_and_quota_combination_is_rejected(): void
+    {
+        $vehicleA = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $vehicleB = Vehicle::query()->create([
+            'model' => 'Corolla 2025',
+            'plate' => 'XYZ-5678',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'FS',
+            'name' => 'Semanal',
+            'days' => 7,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicleA->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 1,
+            'active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['vehicle_id'] = (string) $vehicleB->id;
+        $payload['quota_type_id'] = (string) $quota->id;
+
+        $this->seedContractTemplate();
+
+        $this->post('/cadastro', $payload)
+            ->assertSessionHasErrors('quota_type_id');
+    }
+
+    public function test_ajax_submission_returns_422_json_when_registration_processing_fails(): void
+    {
+        $vehicle = Vehicle::query()->create([
+            'model' => 'Civic 2025',
+            'plate' => 'ABC-1234',
+            'active' => true,
+        ]);
+
+        $quota = QuotaType::query()->create([
+            'code' => 'F-10',
+            'name' => 'Mensal',
+            'days' => 30,
+            'active' => true,
+        ]);
+
+        VehicleQuotaConfiguration::query()->create([
+            'vehicle_id' => $vehicle->id,
+            'quota_type_id' => $quota->id,
+            'quantity' => 2,
+            'active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['vehicle_id'] = (string) $vehicle->id;
+        $payload['quota_type_id'] = (string) $quota->id;
+
+        $service = \Mockery::mock(ClientRegistrationService::class);
+        $service->shouldReceive('create')
+            ->once()
+            ->andThrow(new RuntimeException('Não foi possível processar a assinatura do contrato. Tente novamente.'));
+
+        $this->app->instance(ClientRegistrationService::class, $service);
+
+        $this->seedContractTemplate();
+
+        $response = $this->postJson('/cadastro', $payload);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('errors.contract_signature.0', 'Não foi possível processar a assinatura do contrato. Tente novamente.');
+    }
+
+    public function test_admin_registration_detail_shows_vehicle_information_section_when_present(): void
+    {
+        $registration = ClientRegistration::factory()->create();
+        $registration->update([
+            'vehicle_pickup_photo_path' => 'cadastros/'.$registration->uuid.'/vehicle_pickup/retirada.jpg',
+            'vehicle_delivery_photo_path' => 'cadastros/'.$registration->uuid.'/vehicle_delivery/entrega.jpg',
+            'vehicle_observation' => 'Veículo entregue com chave no painel.',
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.show', $registration))
+            ->assertOk()
+            ->assertSee('Informações do veículo')
+            ->assertSee('Fotos do veículo')
+            ->assertSee('Veículo entregue com chave no painel.');
+    }
+
+    public function test_client_signer_name_and_dates_are_preserved_verbatim(): void
+    {
+        $this->seedContractTemplate();
+
+        [$startDate, $endDate] = $this->bookingPeriod(30);
+
+        $payload = $this->validPayload();
+        $payload['full_name'] = 'João da Silva Santos';
+        $payload['contract_signer_name'] = 'João da Silva Santos';
+        $payload['start_date'] = $startDate;
+        $payload['end_date'] = $endDate;
+
+        $response = $this->post('/cadastro', $payload);
+
+        $response->assertRedirect(route('client-registrations.success'));
+
+        $this->assertDatabaseHas('client_registrations', [
+            'full_name' => 'João da Silva Santos',
+            'contract_signer_name' => 'João da Silva Santos',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
     }
 
     public function test_client_can_submit_registration_with_documents(): void
     {
-        Storage::fake('local');
+        $this->seedContractTemplate();
 
-        $response = $this->post('/cadastro', [
-            ...$this->baseData,
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-        ]);
+        $response = $this->post('/cadastro', $this->validPayload());
 
         $response
             ->assertRedirect(route('client-registrations.success'))
@@ -63,6 +351,9 @@ class ClientRegistrationTest extends TestCase
             'facial_status' => 'pending',
             'veracity_declaration_accepted' => true,
             'privacy_policy_accepted' => true,
+            'contract_signed' => true,
+            'contract_signer_name' => 'Maria da Silva Souza',
+            'contract_signer_ip' => '127.0.0.1',
         ]);
 
         $registration = ClientRegistration::query()->firstOrFail();
@@ -74,17 +365,17 @@ class ClientRegistrationTest extends TestCase
 
         Storage::disk('local')->assertExists($registration->cnh_front_path);
         Storage::disk('local')->assertExists($registration->selfie_path);
+        Storage::disk('local')->assertExists($registration->contract_signature_path);
+        Storage::disk('local')->assertExists($registration->contract_signed_pdf_path);
     }
 
     public function test_registration_rejects_invalid_cpf(): void
     {
+        $this->seedContractTemplate();
+
         $response = $this->post('/cadastro', [
-            ...$this->baseData,
+            ...$this->validPayload(),
             'cpf' => '123.456.789-00',
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
         ]);
 
         $response
@@ -96,13 +387,15 @@ class ClientRegistrationTest extends TestCase
 
     public function test_registration_requires_documents_and_acceptances(): void
     {
+        $payload = $this->validPayload();
+
         unset(
-            $this->baseData['cnh_front_file'],
-            $this->baseData['veracity_declaration_accepted'],
-            $this->baseData['privacy_policy_accepted'],
+            $payload['cnh_front_file'],
+            $payload['veracity_declaration_accepted'],
+            $payload['privacy_policy_accepted'],
         );
 
-        $response = $this->post('/cadastro', $this->baseData);
+        $response = $this->post('/cadastro', $payload);
 
         $response->assertSessionHasErrors([
             'cnh_front_file',
@@ -116,12 +409,8 @@ class ClientRegistrationTest extends TestCase
     public function test_minors_are_not_accepted(): void
     {
         $data = [
-            ...$this->baseData,
+            ...$this->validPayload(),
             'birth_date' => now()->subYears(17)->format('Y-m-d'),
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
         ];
 
         $this->post('/cadastro', $data)
@@ -132,15 +421,9 @@ class ClientRegistrationTest extends TestCase
 
     public function test_documents_are_stored_privately_and_not_publicly_served(): void
     {
-        Storage::fake('local');
+        $this->seedContractTemplate();
 
-        $this->post('/cadastro', [
-            ...$this->baseData,
-            'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
-            'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
-            'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
-            'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-        ]);
+        $this->post('/cadastro', $this->validPayload());
 
         $registration = ClientRegistration::query()->firstOrFail();
 
@@ -156,5 +439,62 @@ class ClientRegistrationTest extends TestCase
         $this->get(route('client-registrations.success'))
             ->assertOk()
             ->assertSee('Cadastro enviado');
+    }
+
+    public function test_admins_are_notified_by_email_when_registration_is_created(): void
+    {
+        Mail::fake();
+        $this->seedContractTemplate();
+
+        User::factory()->count(2)->create();
+
+        $this->post('/cadastro', $this->validPayload())
+            ->assertRedirect(route('client-registrations.success'));
+
+        Mail::assertSent(NewRegistrationMail::class, 2);
+
+        $this->assertDatabaseCount('client_registrations', 1);
+    }
+
+    public function test_mail_failure_does_not_lose_the_registration(): void
+    {
+        $this->seedContractTemplate();
+
+        $this->mock(NewRegistrationNotifier::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('notifyAdmins')
+                ->once()
+                ->andThrow(new RuntimeException('SMTP indisponível'));
+        });
+
+        $response = $this->post('/cadastro', $this->validPayload());
+
+        $response->assertRedirect(route('client-registrations.success'));
+        $this->assertDatabaseCount('client_registrations', 1);
+    }
+
+    public function test_registration_notification_email_omits_sensitive_data(): void
+    {
+        $registration = ClientRegistration::factory()->create([
+            'full_name' => 'Maria da Silva Souza',
+        ]);
+
+        $html = (new NewRegistrationMail($registration))->render();
+
+        $this->assertStringContainsString('Novo cadastro recebido', $html);
+        $this->assertStringContainsString('Maria da Silva Souza', $html);
+        $this->assertStringContainsString('Ver cadastro', $html);
+        $this->assertStringContainsString($registration->uuid, $html);
+        $this->assertStringNotContainsString($registration->cpf, $html);
+        $this->assertStringNotContainsString($registration->cnh_number, $html);
+    }
+
+    public function test_registration_notification_email_logo_is_embedded_instead_of_absolute_url(): void
+    {
+        $registration = ClientRegistration::factory()->create();
+
+        $html = (new NewRegistrationMail($registration))->render();
+
+        $this->assertMatchesRegularExpression('/<img[^>]*src="(cid:|data:)/', $html);
+        $this->assertStringNotContainsString('/images/brand/vca-logo.jpeg', $html);
     }
 }

@@ -1,14 +1,34 @@
 @import 'tailwindcss';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../resources/views/vendor/pagination/*.blade.php';
+@source '../js/**/*.js';
+@source '../../resources/views/admin/dashboard/index.blade.php';
+@source not '../../docs';
 @source '../../storage/framework/views/*.php';
 
 /* ============================================================================
-   Tokens
+   Tokens (identidade VCA)
    ========================================================================== */
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
         'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+
+    /* Marca VCA */
+    --color-brand: #fed106;
+    --color-brand-soft: #ffe15a;
+    --color-brand-hover: #e9bd05;
+    --color-brand-active: #c7a205;
+
+    /* Superfícies */
+    --color-surface-950: #050505;
+    --color-surface-900: #0a0a0a;
+    --color-surface-850: #101010;
+    --color-surface-800: #161616;
+    --color-surface-700: #1f1f1f;
+
+    /* Cantos / bordas */
+    --color-line-dark: #242424;
+    --color-line-muted: #3a3a3a;
 }
 
 /* ============================================================================
@@ -17,39 +37,41 @@
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
+        color-scheme: dark;
     }
 
     body {
-        @apply bg-slate-100 text-slate-800 antialiased;
+        @apply bg-surface-950 text-gray-100 antialiased;
     }
 
     .app-body {
         background:
-            radial-gradient(1100px 480px at 100% -10%, rgb(99 102 241 / 0.16), transparent 60%),
-            radial-gradient(900px 380px at -12% 18%, rgb(14 165 233 / 0.12), transparent 60%),
-            #f1f5f9;
+            radial-gradient(1000px 420px at 100% -10%, rgb(254 209 6 / 0.05), transparent 60%),
+            radial-gradient(800px 360px at -10% 15%, rgb(254 209 6 / 0.04), transparent 55%),
+            #050505;
         min-height: 100vh;
     }
 
     .app-header {
-        background: linear-gradient(135deg, #1e1b4b 0%, #1e40af 55%, #0ea5e9 130%);
+        background: #0a0a0a;
+        border-bottom: 1px solid #1f1f1f;
     }
 
     .admin-body {
-        background: #f1f5f9;
+        background: #0a0a0a;
         min-height: 100vh;
     }
 
     .auth-body {
         background:
-            radial-gradient(900px 400px at 85% -10%, rgb(14 165 233 / 0.35), transparent 55%),
-            radial-gradient(700px 420px at -12% 110%, rgb(99 102 241 / 0.45), transparent 60%),
-            linear-gradient(135deg, #1e1b4b 0%, #1e40af 55%, #0ea5e9 130%);
+            radial-gradient(900px 440px at 82% -10%, rgb(254 209 6 / 0.08), transparent 55%),
+            radial-gradient(700px 440px at -12% 110%, rgb(254 209 6 / 0.05), transparent 60%),
+            #050505;
         min-height: 100vh;
     }
 
     :focus-visible {
-        @apply outline-2 outline-offset-2 outline-indigo-600;
+        @apply outline-2 outline-offset-2 outline-brand;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -69,15 +91,15 @@
    ========================================================================== */
 @layer components {
     .form-label {
-        @apply block text-sm font-medium text-slate-700;
+        @apply block text-sm font-medium text-gray-100;
     }
 
     .form-input {
-        @apply block w-full min-h-11 rounded-lg bg-white px-3.5 py-2.5 text-base text-slate-800 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 transition-[box-shadow,background-color] duration-150 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:min-h-10 sm:py-2 sm:text-sm;
+        @apply block w-full min-h-11 rounded-lg bg-surface-850 px-3.5 py-2.5 text-base text-white ring-1 ring-inset ring-line-dark placeholder:text-zinc-500 transition-[box-shadow,background-color] duration-150 hover:bg-surface-800 focus:ring-2 focus:ring-inset focus:ring-brand sm:min-h-10 sm:py-2 sm:text-sm;
     }
 
     .form-input:disabled {
-        @apply bg-slate-50 text-slate-400;
+        @apply bg-surface-900 text-zinc-500;
     }
 
     .form-input.input-invalid {
@@ -88,12 +110,38 @@
         @apply ring-2 ring-red-500 focus:ring-red-500;
     }
 
+    /* O controle nativo de `type="date"` tem largura mínima intrínseca que, em
+     * colunas `fr` estreitas (grid md:grid-cols-12 da CNH), pode estourar o
+     * container em certas larguras. `min-w-0` no item + min-width:0 no input
+     * mantêm o campo em 100% da coluna.
+     */
+    [data-field="cnh_expiry_date"] input[type="date"] {
+        min-width: 0;
+    }
+
     .field-error {
-        @apply mt-1.5 flex items-center gap-1.5 text-xs font-medium text-red-600;
+        @apply mt-1.5 flex items-center gap-1.5 text-xs font-medium text-red-400;
     }
 
     .field-hint {
-        @apply mt-1.5 text-xs text-slate-500;
+        @apply mt-1.5 text-xs text-zinc-500;
+    }
+
+    /* ==========================================================================
+       Assinatura digital
+       ========================================================================== */
+    #signature-canvas-wrap {
+        @apply cursor-crosshair;
+    }
+
+    #signature-canvas-wrap.has-error {
+        @apply ring-2 ring-red-500;
+    }
+
+    #signature-canvas {
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
     }
 
     /* ==========================================================================
@@ -104,15 +152,15 @@
     }
 
     .btn-primary {
-        @apply bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:hover:bg-indigo-600;
+        @apply bg-brand text-black hover:bg-brand-hover active:bg-brand-active disabled:hover:bg-brand;
     }
 
     .btn-secondary {
-        @apply bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 active:bg-slate-100;
+        @apply bg-surface-800 text-gray-100 ring-1 ring-inset ring-line-muted hover:bg-surface-700 active:bg-surface-850;
     }
 
     .btn-ghost {
-        @apply bg-transparent text-slate-600 hover:bg-slate-100 active:bg-slate-200;
+        @apply bg-transparent text-gray-300 hover:bg-white/5 active:bg-white/10;
     }
 
     .btn-danger {
@@ -136,15 +184,15 @@
        ========================================================================== */
 
     .stepbar-fill {
-        @apply absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-300 ease-out;
+        @apply absolute inset-y-0 left-0 rounded-full bg-brand transition-[width] duration-300 ease-out;
     }
 
     .step-dot {
-        @apply flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-150 bg-slate-200 text-slate-600 ring-1 ring-inset ring-slate-300;
+        @apply flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold bg-surface-800 text-zinc-400 ring-1 ring-inset ring-line-dark transition-colors duration-150;
     }
 
     .step-dot[data-active='true'] {
-        @apply bg-indigo-600 text-white ring-indigo-600;
+        @apply bg-brand text-black ring-brand;
     }
 
     .step-dot[data-done='true'] {
@@ -152,71 +200,89 @@
     }
 
     .step-label {
-        @apply text-[11px] leading-tight text-slate-400;
+        @apply text-[11px] leading-tight text-zinc-500;
     }
 
     .step-label[data-active='true'] {
-        @apply font-medium text-slate-600;
+        @apply font-semibold text-white;
     }
 
     .step-label[data-done='true'] {
-        @apply text-emerald-600;
+        @apply text-emerald-400;
+    }
+
+    /* ==========================================================================
+       Título de seção (etapas do formulário)
+       ========================================================================== */
+
+    .step-heading {
+        @apply flex items-center gap-2.5 text-sm font-semibold tracking-wide text-brand;
+    }
+
+    .step-heading::before {
+        content: '';
+        display: block;
+        width: 0.3125rem;
+        height: 0.9375rem;
+        border-radius: 9999px;
+        background: var(--color-brand);
+        flex-shrink: 0;
     }
 
     /* ==========================================================================
        Select customizado
        ========================================================================== */
     .cs-trigger {
-        @apply relative flex w-full min-h-11 items-center gap-2 rounded-lg bg-white px-3.5 py-2.5 text-left text-base text-slate-800 shadow-sm ring-1 ring-inset ring-slate-300 transition-[box-shadow] duration-150 focus:ring-2 focus:ring-inset focus:ring-indigo-500 focus:outline-none sm:min-h-10 sm:text-sm;
+        @apply relative flex w-full min-h-11 items-center gap-2 rounded-lg bg-surface-850 px-3.5 py-2.5 text-left text-base text-white ring-1 ring-inset ring-line-dark transition-[box-shadow] duration-150 hover:bg-surface-800 focus:ring-2 focus:ring-inset focus:ring-brand focus:outline-none sm:min-h-10 sm:text-sm;
     }
 
     .cs-trigger.is-open {
-        @apply ring-2 ring-indigo-500;
+        @apply ring-2 ring-brand;
     }
 
     .cs-value {
-        @apply flex-1 truncate text-slate-800;
+        @apply flex-1 truncate text-white;
     }
 
     .cs-value.is-empty {
-        @apply text-slate-400;
+        @apply text-zinc-500;
     }
 
     .cs-chevron {
-        @apply h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150;
+        @apply h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-150;
     }
 
     .cs-trigger.is-open .cs-chevron {
-        @apply rotate-180 text-indigo-600;
+        @apply rotate-180 text-brand;
     }
 
     .cs-menu {
-        @apply fixed z-50 max-h-64 min-w-[10rem] overflow-auto rounded-lg bg-white p-1.5 shadow-xl ring-1 ring-slate-200;
+        @apply fixed z-50 max-h-64 min-w-[10rem] overflow-auto rounded-lg bg-surface-850 p-1.5 shadow-2xl shadow-black/50 ring-1 ring-line-dark;
     }
 
     .cs-option {
-        @apply flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-slate-700 outline-none transition-colors duration-100 hover:bg-indigo-50 focus:bg-indigo-50;
+        @apply flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm text-gray-200 outline-none transition-colors duration-100 hover:bg-white/5 focus:bg-white/5;
     }
 
     .cs-option.is-highlighted {
-        @apply bg-indigo-50;
+        @apply bg-white/5;
     }
 
     .cs-option.is-selected {
-        @apply font-medium text-indigo-700;
+        @apply font-medium text-brand;
     }
 
     .cs-option-check {
-        @apply ml-auto h-4 w-4 shrink-0 text-indigo-600;
+        @apply ml-auto h-4 w-4 shrink-0 text-brand;
     }
 
     /* --- Bottom sheet (mobile) --- */
     .cs-backdrop {
-        @apply fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-[2px];
+        @apply fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px];
     }
 
     .cs-sheet {
-        @apply fixed inset-x-0 bottom-0 z-50 translate-y-full rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out will-change-transform;
+        @apply fixed inset-x-0 bottom-0 z-50 translate-y-full rounded-t-2xl bg-surface-900 shadow-2xl ring-1 ring-line-dark transition-transform duration-300 ease-out will-change-transform;
         padding-bottom: env(safe-area-inset-bottom);
     }
 
@@ -225,7 +291,7 @@
     }
 
     .cs-sheet-handle {
-        @apply mx-auto mt-2 h-1.5 w-10 rounded-full bg-slate-200;
+        @apply mx-auto mt-2 h-1.5 w-10 rounded-full bg-line-muted;
     }
 
     .cs-sheet-head {
@@ -233,7 +299,11 @@
     }
 
     .cs-sheet-title {
-        @apply text-sm font-semibold text-slate-800;
+        @apply text-sm font-semibold text-white;
+    }
+
+    .cs-sheet-close {
+        @apply inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors duration-150 hover:bg-white/10 hover:text-white;
     }
 
     .cs-sheet-list {
@@ -241,38 +311,38 @@
     }
 
     .cs-sheet-option {
-        @apply flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-base outline-none transition-colors duration-100 hover:bg-slate-50 focus:bg-slate-50;
+        @apply flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-base outline-none transition-colors duration-100 hover:bg-white/5 focus:bg-white/5;
     }
 
     .cs-sheet-option.is-selected {
-        @apply font-medium text-indigo-700;
+        @apply font-medium text-brand;
     }
 
     /* ==========================================================================
        Upload de documentos
        ========================================================================== */
     .upload-card {
-        @apply rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition-colors duration-150;
+        @apply rounded-xl border border-line-dark bg-surface-850/60 p-4 transition-colors duration-150;
     }
 
     .upload-card.is-filled {
-        @apply border-indigo-200 bg-indigo-50/40;
+        @apply border-brand/40 bg-surface-850;
     }
 
     .upload-card.has-error {
-        @apply border-red-300 bg-red-50/40;
+        @apply border-red-500/50 bg-red-950/20;
     }
 
     .upload-btn {
-        @apply inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 transition-colors duration-150 hover:bg-slate-50 active:bg-slate-100 sm:min-h-10;
+        @apply inline-flex min-h-11 cursor-pointer select-none items-center justify-center gap-2 rounded-lg bg-surface-800 px-3 py-2.5 text-sm font-medium text-gray-100 ring-1 ring-inset ring-line-muted transition-colors duration-150 hover:bg-surface-700 active:bg-surface-850 sm:min-h-10;
     }
 
     .preview-wrap {
-        @apply relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-white ring-1 ring-slate-200;
+        @apply relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-800 ring-1 ring-line-dark;
     }
 
     .preview-empty-icon {
-        @apply flex h-full w-full items-center justify-center text-slate-300;
+        @apply flex h-full w-full items-center justify-center text-zinc-600;
     }
 
     .preview-image {
@@ -280,7 +350,7 @@
     }
 
     .remove-preview {
-        @apply absolute right-0.5 top-0.5 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-slate-900/60 text-white opacity-0 transition-opacity duration-150 hover:bg-slate-900/80;
+        @apply absolute right-0.5 top-0.5 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity duration-150 hover:bg-black/90;
     }
 
     .upload-card.is-filled:focus-within .remove-preview,
@@ -310,25 +380,25 @@
     }
 
     .toast {
-        @apply relative flex w-full items-start gap-3 rounded-xl bg-white p-3 pl-3.5 shadow-lg ring-1 ring-slate-200;
+        @apply relative flex w-full items-start gap-3 rounded-xl bg-surface-850 p-3 pl-3.5 shadow-2xl shadow-black/40 ring-1 ring-line-dark;
         pointer-events: auto;
         max-width: min(24rem, calc(100vw - 2rem));
         animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
     .toast-success {
-        --toast-accent: #059669;
-        --toast-accent-soft: color-mix(in srgb, #059669 12%, white);
+        --toast-accent: #10b981;
+        --toast-accent-soft: color-mix(in srgb, #10b981 18%, #161616);
     }
 
     .toast-error {
-        --toast-accent: #dc2626;
-        --toast-accent-soft: color-mix(in srgb, #dc2626 12%, white);
+        --toast-accent: #ef4444;
+        --toast-accent-soft: color-mix(in srgb, #ef4444 18%, #161616);
     }
 
     .toast-info {
-        --toast-accent: #4f46e5;
-        --toast-accent-soft: color-mix(in srgb, #4f46e5 12%, white);
+        --toast-accent: #fed106;
+        --toast-accent-soft: color-mix(in srgb, #fed106 18%, #161616);
     }
 
     .toast-icon {
@@ -342,11 +412,11 @@
     }
 
     .toast-message {
-        @apply min-w-0 flex-1 py-1 text-sm leading-snug text-slate-700;
+        @apply min-w-0 flex-1 py-1 text-sm leading-snug text-gray-200;
     }
 
     .toast-close {
-        @apply -m-2 inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600;
+        @apply -m-2 inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors duration-150 hover:bg-white/10 hover:text-white;
     }
 
     .toast-close svg {
@@ -433,7 +503,7 @@
        Modal de confirmação
        ========================================================================== */
     .confirm-dialog {
-        @apply m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200;
+        @apply m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-surface-900 p-6 shadow-2xl shadow-black/60 ring-1 ring-line-dark;
     }
 
     .confirm-dialog[open] {
@@ -441,7 +511,7 @@
     }
 
     .confirm-dialog::backdrop {
-        background: rgb(15 23 42 / 0.55);
+        background: rgb(0 0 0 / 0.65);
         backdrop-filter: blur(2px);
     }
 
@@ -458,11 +528,11 @@
     }
 
     .confirm-dialog-title {
-        @apply text-lg font-semibold tracking-tight text-slate-900;
+        @apply text-lg font-semibold tracking-tight text-white;
     }
 
     .confirm-dialog-message {
-        @apply text-sm leading-relaxed text-slate-500;
+        @apply text-sm leading-relaxed text-zinc-400;
     }
 
     .confirm-dialog-actions {
@@ -495,11 +565,11 @@
        Cartões / listas
        ========================================================================== */
     .card {
-        @apply rounded-2xl bg-white shadow-sm ring-1 ring-slate-200;
+        @apply rounded-2xl bg-surface-900 shadow-xl shadow-black/40 ring-1 ring-line-dark;
     }
 
     .section-title {
-        @apply text-sm font-semibold tracking-wide text-indigo-600;
+        @apply text-sm font-semibold tracking-wide text-brand;
     }
 
     .badge {
@@ -514,11 +584,11 @@
        Tabela admin
        ========================================================================== */
     .data-table thead th {
-        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500;
     }
 
     .data-table tbody tr {
-        @apply border-t border-slate-100 transition-colors duration-100 hover:bg-slate-50;
+        @apply border-t border-line-dark transition-colors duration-100 hover:bg-white/[0.03];
     }
 
     .data-table tbody td {
@@ -526,22 +596,19 @@
     }
 
     .admin-row-card {
-        @apply flex items-center gap-3 rounded-xl bg-white p-4 ring-1 ring-slate-200 transition-colors duration-100;
+        @apply flex items-center gap-3 rounded-xl bg-surface-900 p-4 ring-1 ring-line-dark transition-colors duration-100 hover:ring-line-muted;
     }
 
     /* Breadcrumb / link de voltar */
     .back-link {
-        @apply inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 transition-colors duration-100 hover:text-indigo-800;
+        @apply inline-flex items-center gap-1.5 text-sm font-medium text-brand transition-colors duration-100 hover:text-brand-soft;
     }
 
     /* ==========================================================================
        Páginas de erro
        ========================================================================== */
     .error-code {
-        @apply text-7xl font-bold tracking-tight text-transparent sm:text-8xl;
-        background-image: linear-gradient(135deg, #1e1b4b 0%, #1e40af 55%, #0ea5e9 130%);
-        -webkit-background-clip: text;
-        background-clip: text;
+        @apply text-7xl font-bold tracking-tight text-brand sm:text-8xl;
     }
 
     .error-enter {
@@ -568,5 +635,49 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+}
+
+/* ==========================================================================
+   Ajustes a partir de 768px — formulário em página única (desktop/tablet)
+
+   Abaixo de 768px o formulário continua sendo o wizard de 6 etapas, onde a
+   visibilidade dos painéis é controlada pelo JavaScript (`.step-panel` +
+   classe `.hidden`). A partir de 768px as etapas viram seções consecutivas
+   do mesmo formulário: regras sem camada (@layer) vencem o utilitário
+   `.hidden` e mantêm todas as seções visíveis, removem a navegação entre
+   etapas e o indicador de progresso.
+   ========================================================================== */
+@media (min-width: 768px) {
+    .panel-card {
+        border-radius: 1.25rem;
+        border-top: 2px solid var(--color-brand);
+    }
+
+    .step-panel {
+        display: block;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-brand);
+    }
+
+    .step-panel:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .registration-nav,
+    #step-indicator {
+        display: none;
+    }
+
+    .step-heading {
+        font-size: 0.9375rem;
+    }
+
+    .step-panel .form-input,
+    .step-panel .cs-trigger {
+        min-height: 2.75rem;
     }
 }
