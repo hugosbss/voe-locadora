@@ -21,7 +21,7 @@
             <div class="card p-5 sm:p-6">
                 <h2 class="section-title mb-4">Informações do veículo</h2>
                 <div class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-line-dark bg-surface-850 p-4 text-sm sm:grid-cols-2">
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-2">
                         @include('components.data-row', [
                             'label' => 'Veículo',
                             'value' => $registration->vehicle

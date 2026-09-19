@@ -69,7 +69,7 @@ class ClientRegistrationController extends Controller
         $availableQuotaOptions = $vehicles->flatMap(fn (Vehicle $vehicle) => $vehicle->quotaConfigurations->map(fn (VehicleQuotaConfiguration $configuration) => [
             'id' => $configuration->quota_type_id,
             'vehicle_id' => $vehicle->id,
-            'label' => sprintf('%s · %s (%d disponíveis)', $configuration->quotaType->code, $configuration->quotaType->name, $configuration->quantity),
+            'label' => sprintf('%s · %s', $configuration->quotaType->code, $configuration->quotaType->name, $configuration->quantity),
             'vehicle_model' => $vehicle->model,
             'vehicle_plate' => $vehicle->plate,
             'quota_type' => $configuration->quotaType,

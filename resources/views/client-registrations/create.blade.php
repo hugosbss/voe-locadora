@@ -171,10 +171,22 @@
                             hint="A CNH deve estar dentro da validade." />
                     </div>
 
-                    <div class="md:col-span-4">
+                    <div class="md:col-span-6">
                         <x-select-field label="Veículo" name="vehicle_id" placeholder="Selecione o veículo..." required>
                             @foreach ($vehicles as $vehicle)
                                 <option value="{{ $vehicle->id }}" @selected(old('vehicle_id') == $vehicle->id)>{{ $vehicle->model }} · {{ $vehicle->plate }}</option>
+                            @endforeach
+                        </x-select-field>
+                    </div>
+
+                    <div class="md:col-span-6">
+                        <x-select-field label="Cota" name="quota_type_id" placeholder="Selecione a cota..." required>
+                            @foreach ($availableQuotaOptions as $option)
+                                <option value="{{ $option['id'] }}" data-vehicle-id="{{ $option['vehicle_id'] }}"
+                                    data-days="{{ $option['days'] }}" data-base-label="{{ $option['label'] }}"
+                                    @selected(old('quota_type_id') == $option['id'])>
+                                    {{ $option['label'] }}
+                                </option>
                             @endforeach
                         </x-select-field>
                     </div>
@@ -187,18 +199,6 @@
                     <div class="md:col-span-4 min-w-0">
                         <x-form-field label="Data de fim" name="end_date" value="{{ old('end_date') }}"
                             type="date" min="{{ now('America/Sao_Paulo')->format('Y-m-d') }}" required />
-                    </div>
-
-                    <div class="md:col-span-12">
-                        <x-select-field label="Cota" name="quota_type_id" placeholder="Selecione a cota..." required>
-                            @foreach ($availableQuotaOptions as $option)
-                                <option value="{{ $option['id'] }}" data-vehicle-id="{{ $option['vehicle_id'] }}"
-                                    data-days="{{ $option['days'] }}" data-base-label="{{ $option['label'] }}"
-                                    @selected(old('quota_type_id') == $option['id'])>
-                                    {{ $option['label'] }}
-                                </option>
-                            @endforeach
-                        </x-select-field>
                     </div>
                 </div>
             </section>
