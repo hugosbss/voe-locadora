@@ -271,11 +271,17 @@ class RegistrationController extends Controller
             $registration,
         );
 
-        // Sucesso: a página de detalhes mantém o toast e, após ~2s, é
-        // levada de volta à listagem (flags consumidas pelo próprio layout).
+        // Sucesso: a página de detalhes mantém o toast e permanece onde está.
+        //
+        // O retorno automático para a listagem (~2s), implementado pelos
+        // flags `status_updated_redirect` consumidos em
+        // `resources/views/layouts/admin.blade.php` + `resources/js/admin.js`,
+        // está DESABILITADO de propósito: a operação precisa permanecer no
+        // cadastro para conferir o resultado (e o link de assinatura) sem
+        // navegar. Para reativar, basta descomentar a linha abaixo.
         return back()
-            ->with('success', 'Status atualizado com sucesso.')
-            ->with('status_updated_redirect', true);
+            ->with('success', 'Status atualizado com sucesso.');
+        // ->with('status_updated_redirect', true);
     }
 
     /**

@@ -238,7 +238,7 @@ class AdminRegistrationTest extends TestCase
         ]);
     }
 
-    public function test_status_update_flashes_auto_redirect_flag_on_success(): void
+    public function test_status_update_keeps_the_operator_on_the_page_without_scheduling_redirect(): void
     {
         $registration = ClientRegistration::factory()->create(['status' => RegistrationStatus::Novo]);
 
@@ -249,7 +249,12 @@ class AdminRegistrationTest extends TestCase
             ])
             ->assertRedirect(route('admin.registrations.show', $registration))
             ->assertSessionHas('success', 'Status atualizado com sucesso.')
-            ->assertSessionHas('status_updated_redirect');
+            // O retorno automático para a listagem está desabilitado de
+            // propósito: a operação permanece no cadastro para conferir o
+            // resultado e o link de assinatura. O mecanismo
+            // (`status_updated_redirect` + data attributes + JS) continua
+            // pronto para ser reativado.
+            ->assertSessionMissing('status_updated_redirect');
     }
 
     public function test_status_update_with_invalid_value_does_not_schedule_redirect(): void
