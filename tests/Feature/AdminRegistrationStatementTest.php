@@ -153,15 +153,22 @@ class AdminRegistrationStatementTest extends TestCase
             ->assertSee('Este cadastro não possui período de cota registrado.');
     }
 
-    public function test_statement_is_available_from_the_registration_details_page(): void
+    public function test_statement_button_is_hidden_on_the_details_page_while_the_route_still_works(): void
     {
         [$registration] = $this->createRegistrationWithQuota();
 
+        // O módulo de Extratos está implementado, mas oculto: o botão não
+        // aparece no detalhe do cadastro.
         $this->actingAs(User::factory()->create())
             ->get(route('admin.registrations.show', $registration))
             ->assertOk()
-            ->assertSee('Ver extrato')
-            ->assertSee(route('admin.registrations.statement', $registration), false);
+            ->assertDontSee('Ver extrato')
+            ->assertDontSee(route('admin.registrations.statement', $registration), false);
+
+        // A rota permanece disponível para consulta direta/validação interna.
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.statement', $registration))
+            ->assertOk();
     }
 
     public function test_statement_action_is_hidden_for_registrations_that_are_not_approved(): void

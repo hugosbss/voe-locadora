@@ -31,26 +31,28 @@ class AdminStatementModuleTest extends TestCase
             ->assertSee(route('admin.statements.index'), false);
     }
 
-    public function test_extratos_menu_item_stays_active_on_the_module_and_on_the_statement(): void
+    public function test_extratos_menu_item_is_hidden_while_the_routes_stay_available(): void
     {
         $registration = $this->createStatement();
-        $activeMenuItem = '/href="[^"]*\/admin\/extratos"[^>]*aria-current="page"/s';
 
-        $this->assertMatchesRegularExpression(
-            $activeMenuItem,
-            $this->actingAs(User::factory()->create())
-                ->get(route('admin.statements.index'))
-                ->assertOk()
-                ->getContent(),
-        );
+        // Módulo implementado e testado, porém oculto na navegação.
+        $menu = $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.index'))
+            ->assertOk()
+            ->getContent();
 
-        $this->assertMatchesRegularExpression(
-            $activeMenuItem,
-            $this->actingAs(User::factory()->create())
-                ->get(route('admin.registrations.statement', $registration))
-                ->assertOk()
-                ->getContent(),
-        );
+        $this->assertStringNotContainsString(route('admin.statements.index'), $menu);
+        $this->assertStringNotContainsString('>Extratos<', $menu);
+
+        // As rotas continuam ativas: basta reexibir o item no menu para o
+        // módulo voltar a ser navegável.
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.statements.index'))
+            ->assertOk();
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.statement', $registration))
+            ->assertOk();
     }
 
     public function test_approved_registration_is_listed_with_the_existing_registration_data(): void

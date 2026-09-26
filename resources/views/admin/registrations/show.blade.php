@@ -9,9 +9,16 @@
             Voltar
         </a>
         <div class="flex flex-wrap items-center gap-3">
-            @if ($registration->isApproved())
+            {{--
+                Botão "Ver extrato": o módulo de Extratos está implementado e
+                testado, mas OCULTO até a operação liberar o uso. As rotas
+                (`admin.registrations.statement` e `admin.statements.index`)
+                continuam ativas e o código abaixo está preservado — basta
+                remover este comentário para o botão voltar a aparecer.
+            --}}
+            {{-- @if ($registration->isApproved())
                 <a href="{{ route('admin.registrations.statement', $registration) }}" class="btn btn-primary btn-sm">Ver extrato</a>
-            @endif
+            @endif --}}
             <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm">Editar cadastro</a>
             @include('components.status-badge', ['status' => $registration->status, 'size' => 'md'])
         </div>
