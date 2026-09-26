@@ -147,6 +147,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function (): void {
     Route::get('/cadastros/{registration:uuid}', [RegistrationController::class, 'show'])
         ->name('admin.registrations.show');
 
+    Route::get('/cadastros/{registration:uuid}/extrato', [RegistrationController::class, 'statement'])
+        ->name('admin.registrations.statement');
+
     Route::get('/cadastros/{registration:uuid}/editar', [RegistrationController::class, 'edit'])
         ->name('admin.registrations.edit');
 

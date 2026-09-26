@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateClientRegistrationRequest;
 use App\Models\ClientRegistration;
 use App\Services\AuditService;
+use App\Services\ClientRegistrationStatementService;
 use App\Services\ContractStorageService;
 use App\Services\DocumentStorageService;
 use App\Services\QuotaAvailabilityService;
@@ -28,6 +29,7 @@ class RegistrationController extends Controller
         private readonly ContractStorageService $contractStorage,
         private readonly AuditService $audit,
         private readonly QuotaAvailabilityService $quotaAvailability,
+        private readonly ClientRegistrationStatementService $statementBuilder,
     ) {}
 
     /**
@@ -95,6 +97,45 @@ class RegistrationController extends Controller
             'registration' => $registration,
             'statuses' => RegistrationStatus::cases(),
         ]);
+    }
+
+    /**
+     * Extrato do cliente: cadastro, cota, veículo e os dias da cota no mês
+     * selecionado. É apenas uma leitura dos dados já existentes; o mês é a
+     * única entrada aceita e não altera nada no cadastro.
+     */
+    public function statement(Request $request, ClientRegistration $registration): View
+    {
+        $this->authorize('view', $registration);
+
+        $registration->load(['vehicle', 'quotaType']);
+
+        return view('admin.registrations.statement', [
+            'registration' => $registration,
+            'statement' => $this->statementBuilder->build(
+                $registration,
+                $this->statementMonth($request, $registration),
+            ),
+        ]);
+    }
+
+    /**
+     * Mês visualizado no extrato. Sem um mês válido na query, abre no mês do
+     * período da cota; sem período, no mês atual.
+     */
+    private function statementMonth(Request $request, ClientRegistration $registration): Carbon
+    {
+        $requested = $request->query('mes');
+
+        if (is_string($requested) && Carbon::hasFormat($requested, 'Y-m')) {
+            return Carbon::createFromFormat('Y-m-d', $requested.'-01')->startOfMonth();
+        }
+
+        if ($registration->start_date) {
+            return Carbon::parse($registration->start_date)->startOfMonth();
+        }
+
+        return Carbon::now(config('app.timezone'))->startOfMonth();
     }
 
     public function edit(ClientRegistration $registration): View

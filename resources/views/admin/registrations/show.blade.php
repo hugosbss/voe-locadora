@@ -8,7 +8,8 @@
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Voltar
         </a>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('admin.registrations.statement', $registration) }}" class="btn btn-primary btn-sm">Ver extrato</a>
             <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm">Editar cadastro</a>
             @include('components.status-badge', ['status' => $registration->status, 'size' => 'md'])
         </div>
