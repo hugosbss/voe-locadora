@@ -332,7 +332,8 @@ Falha preexistente (não relacionada ao extrato): `Tests\Feature\ClientRegistrat
 |---|---|
 | `c0921d8` | `feat(admin): adiciona extrato do cliente derivado do cadastro` |
 | `2ce5876` | `test(admin): cobre o extrato do cliente` |
-| *(pendente)* | `docs(vca): relatório da fase 4 — extrato do cliente` |
+| `6dd1147` | `docs(vca): relatório da fase 4 — extrato do cliente` |
+| `4e782f6` | `docs(vca): registra o push da branch e o link do pull request` |
 
 - Alterações locais preexistentes e **fora** do escopo foram preservadas e não entram nos commits: `resources/views/public/how-it-works.blade.php` (modificado) e `tasks.MD` (não rastreado).
 - Push da branch e Pull Request contra `vca` (sem merge): ver 16.7.
