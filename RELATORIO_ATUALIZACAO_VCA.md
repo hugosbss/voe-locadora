@@ -334,12 +334,70 @@ Falha preexistente (não relacionada ao extrato): `Tests\Feature\ClientRegistrat
 | `2ce5876` | `test(admin): cobre o extrato do cliente` |
 | `6dd1147` | `docs(vca): relatório da fase 4 — extrato do cliente` |
 | `4e782f6` | `docs(vca): registra o push da branch e o link do pull request` |
+| `da5c0b2` | `docs(vca): completa a tabela de commits da fase 4` |
+| *(este commit)* | `docs(vca): registra o PR #3 e o estado final da fase 4` |
 
 - Alterações locais preexistentes e **fora** do escopo foram preservadas e não entram nos commits: `resources/views/public/how-it-works.blade.php` (modificado) e `tasks.MD` (não rastreado).
 - Push da branch e Pull Request contra `vca` (sem merge): ver 16.7.
 
 ### 16.7 Push e Pull Request
 
-- Push: `git push -u origin feature/vca-extrato-cliente` → branch publicada em `origin` (3 commits).
-- Pull Request: base `vca`, compare `feature/vca-extrato-cliente`, **sem merge**. O próprio remote devolveu o endereço de criação: `https://github.com/hugosbss/voe-locadora/pull/new/feature/vca-extrato-cliente` (equivalente a `https://github.com/hugosbss/voe-locadora/compare/vca...feature/vca-extrato-cliente`).
-- Observação de ambiente: o binário `gh` não está instalado neste ambiente e não há token do GitHub disponível, portanto o Pull Request foi deixado pronto para abertura pelo link acima (corpo sugerido: o resumo desta seção 16). O código está commitado e enviado; apenas a criação do PR depende de credencial/interactive.
+- Push: `git push -u origin feature/vca-extrato-cliente` → branch publicada em `origin` (commits `c0921d8`, `2ce5876`, `6dd1147`, `4e782f6`, `da5c0b2`).
+- Pull Request **aberto**: **https://github.com/hugosbss/voe-locadora/pull/3**
+  - Source/compare: `feature/vca-extrato-cliente`
+  - Target/base: `vca`
+  - Estado: `open` — **merge não realizado**
+- Observação de ambiente: o binário `gh` não está instalado; o PR foi criado pela API do GitHub usando a credencial já configurada no helper `store` do git (nenhum token foi criado, alterado ou exposto, e nenhuma configuração de ambiente foi modificada).
+
+### 16.8 Pendências
+
+Nenhuma pendência conhecida desta implementação.
+
+Permanecem as pendências das fases anteriores, já registradas na seção 12 e não tocadas aqui (provisionamento do template oficial do contrato, concorrência/disponibilidade dinâmica, escopo de configuração em controllers de veículo/cota e edição de quantidade nas telas de detalhe).
+
+### 16.9 Estado final
+
+Executado na branch `feature/vca-extrato-cliente`, com a alteração local preexistente de `resources/views/public/how-it-works.blade.php` preservada e não versionada:
+
+```text
+Branch: feature/vca-extrato-cliente
+
+Git status:
+ M resources/views/public/how-it-works.blade.php   (preexistente, fora do escopo)
+?? tasks.MD                                          (preexistente, fora do escopo)
+
+git diff --stat:
+ resources/views/public/how-it-works.blade.php | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+git diff --name-only:
+ resources/views/public/how-it-works.blade.php
+
+git diff --stat vca..feature/vca-extrato-cliente:
+ app/Http/Controllers/Admin/RegistrationController.php   |  41 ++++
+ app/Services/ClientRegistrationStatementService.php      | 163 +++++++++++++
+ resources/views/admin/registrations/show.blade.php       |   3 +-
+ resources/views/admin/registrations/statement.blade.php  | 144 +++++++++++++
+ routes/web.php                                          |   3 +
+ tests/Feature/AdminRegistrationStatementTest.php        | 223 +++++++++++++++++++++
+ 6 files changed, 576 insertions(+), 1 deletion(-)
+ (+ RELATORIO_ATUALIZACAO_VCA.md, documentação desta fase)
+
+git diff --name-only vca..feature/vca-extrato-cliente:
+ app/Http/Controllers/Admin/RegistrationController.php
+ app/Services/ClientRegistrationStatementService.php
+ resources/views/admin/registrations/show.blade.php
+ resources/views/admin/registrations/statement.blade.php
+ routes/web.php
+ tests/Feature/AdminRegistrationStatementTest.php
+ RELATORIO_ATUALIZACAO_VCA.md
+
+Último commit: docs(vca): registra o PR #3 e o estado final da fase 4
+
+Push: realizado (origin/feature/vca-extrato-cliente)
+Pull Request: https://github.com/hugosbss/voe-locadora/pull/3 (aberto, aguardando revisão)
+Source: feature/vca-extrato-cliente
+Target: vca
+Merge realizado: Não
+```
+
