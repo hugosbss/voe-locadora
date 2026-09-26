@@ -156,7 +156,7 @@ class ClientContractTest extends TestCase
 
         $this->assertStringContainsString('7. Contrato', $html);
         $this->assertStringContainsString('name="contract_accepted"', $html);
-        $this->assertStringContainsString('Leia o contrato abaixo e confirme que aceita os termos.', $html);
+        $this->assertStringContainsString('Ler contrato completo', $html);
         $this->assertStringContainsString(route('client-registrations.contract'), $html);
 
         // A assinatura acontece depois, em um link próprio: a etapa final do
