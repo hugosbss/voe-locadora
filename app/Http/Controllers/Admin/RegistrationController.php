@@ -96,6 +96,12 @@ class RegistrationController extends Controller
         return view('admin.registrations.show', [
             'registration' => $registration,
             'statuses' => RegistrationStatus::cases(),
+            // O link de assinatura só é oferecido quando o cadastro está
+            // aprovado e ainda sem assinatura — a mesma regra aplicada pela
+            // rota pública.
+            'signatureUrl' => $registration->isApproved() && ! $registration->hasSignedContract()
+                ? route('client-registrations.signature', $registration)
+                : null,
         ]);
     }
 

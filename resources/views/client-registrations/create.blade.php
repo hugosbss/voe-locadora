@@ -327,68 +327,20 @@
                 </div>
             </section>
 
-            {{-- Etapa 7: Contrato e assinatura --}}
-            <section class="step-panel space-y-5 hidden" data-panel="7" data-title="Contrato e assinatura">
-                <h2 class="step-heading mb-4 hidden sm:flex">7. Contrato e assinatura</h2>
+            {{-- Etapa 7: Contrato (a assinatura é feita depois, pelo link enviado pela locadora) --}}
+            <section class="step-panel space-y-5 hidden" data-panel="7" data-title="Contrato">
+                <h2 class="step-heading mb-4 hidden sm:flex">7. Contrato</h2>
 
                 <div class="rounded-xl bg-surface-850 p-4 text-sm ring-1 ring-inset ring-line-dark">
                     <p class="mb-1 font-medium text-zinc-400">Contrato do Clube de Mobilidade</p>
-                    <p class="text-gray-300">
-                        Leia o contrato abaixo. Depois, assine para concluir seu cadastro.
-                    </p>
                     <a
                         href="{{ route('client-registrations.contract') }}"
                         target="_blank"
                         rel="noopener"
                         class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-line-dark bg-surface-800 px-4 py-2 text-sm font-semibold text-white transition hover:border-brand hover:text-brand sm:w-auto">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                        Visualizar o contrato completo
+                        Ler contrato completo
                     </a>
-                </div>
-
-                <div>
-                    <label for="contract_signer_name" class="form-label">Nome do signatário</label>
-                    <input
-                        type="text"
-                        id="contract_signer_name"
-                        name="contract_signer_name"
-                        value="{{ old('contract_signer_name', '') }}"
-                        maxlength="255"
-                        readonly
-                        class="form-input cursor-not-allowed opacity-70">
-                    <p class="field-hint">O nome é preenchido automaticamente com os dados do cadastro.</p>
-                    <p id="contract_signer_name-error" class="field-error" role="alert"
-                        @unless ($errors->has('contract_signer_name')) hidden @endunless>{{ $errors->first('contract_signer_name') }}</p>
-                </div>
-
-                <div>
-                    <p class="form-label">Sua assinatura</p>
-                    <div
-                        id="signature-canvas-wrap"
-                        class="relative overflow-hidden rounded-xl bg-white ring-1 ring-inset ring-line-dark"
-                        style="touch-action: none;">
-                        <canvas
-                            id="signature-canvas"
-                            class="block w-full"
-                            height="200"
-                            aria-label="Área para desenhar sua assinatura"
-                            role="img"></canvas>
-                        <p id="signature-hint"
-                            class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-medium text-zinc-400">
-                            Desenhe sua assinatura aqui
-                        </p>
-                        <button
-                            type="button"
-                            id="signature-clear"
-                            class="absolute end-2 top-2 rounded-md border border-line-dark bg-white px-2 py-1 text-xs font-semibold text-zinc-600 transition hover:border-red-300 hover:text-red-500">
-                            Limpar
-                        </button>
-                    </div>
-                    <input type="hidden" id="contract_signature" name="contract_signature"
-                        value="{{ old('contract_signature', '') }}">
-                    <p class="field-hint">Use o dedo ou o mouse para desenhar sua assinatura. Ela será aplicada ao contrato.</p>
-                    <p id="contract_signature-error" class="field-error" role="alert"
-                        @unless ($errors->has('contract_signature')) hidden @endunless>{{ $errors->first('contract_signature') }}</p>
                 </div>
 
                 <div class="rounded-xl border border-line-dark p-4">
@@ -403,8 +355,7 @@
                 </div>
 
                 <div class="md:flex md:justify-center">
-                    <x-button type="submit" id="submit-btn" size="lg" class="w-full md:min-w-64 md:w-auto"
-                        disabled title="Assine o contrato e marque a aceitação para enviar">
+                    <x-button type="submit" id="submit-btn" size="lg" class="w-full md:min-w-64 md:w-auto">
                         <svg data-submit-spinner class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"
                             aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/></svg>
                         <span data-submit-label>Enviar cadastro</span>
@@ -443,7 +394,7 @@
             'documentos' => 4,
             'selfie_file' => 5,
             'veracity_declaration_accepted' => 6, 'privacy_policy_accepted' => 6,
-            'contract_signature' => 7, 'contract_signer_name' => 7, 'contract_accepted' => 7,
+            'contract_accepted' => 7,
         ];
 
         $serverErrorSteps = [];

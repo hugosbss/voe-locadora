@@ -69,8 +69,20 @@ class ContractStorageService
      */
     public function deleteRegistrationDirectory(string $registrationUuid): void
     {
-        Storage::disk(self::DISK)->deleteDirectory('contracts/signed/'.$registrationUuid);
+        $this->deleteSignedDirectory($registrationUuid);
         Storage::disk(self::DISK)->deleteDirectory('contracts/generated/'.$registrationUuid);
+    }
+
+    /**
+     * Remove SOMENTE o contrato assinado (assinatura + PDF) de um cadastro.
+     *
+     * Usado quando uma tentativa de assinatura falha no meio do caminho: o
+     * contrato preenchido em `contracts/generated/` é preservado para o
+     * cadastro continuar íntegro e o cliente poder tentar novamente.
+     */
+    public function deleteSignedDirectory(string $registrationUuid): void
+    {
+        Storage::disk(self::DISK)->deleteDirectory('contracts/signed/'.$registrationUuid);
     }
 
     /**

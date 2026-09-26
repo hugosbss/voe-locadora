@@ -41,8 +41,6 @@ class UploadSecurityTest extends TestCase
             'end_date' => $endDate,
             'veracity_declaration_accepted' => '1',
             'privacy_policy_accepted' => '1',
-            'contract_signature' => $this->signatureDataUrl(),
-            'contract_signer_name' => 'João Testador',
             'contract_accepted' => '1',
         ];
     }
@@ -136,8 +134,8 @@ class UploadSecurityTest extends TestCase
         $this->assertSame('52998224725', $second->cpf);
         $this->assertNotSame($first->uuid, $second->uuid);
         $this->assertMatchesRegularExpression(
-            '#^contracts/signed/[0-9a-f-]{36}/contrato-assinado\.pdf$#',
-            $second->contract_signed_pdf_path
+            '#^contracts/generated/[0-9a-f-]{36}/contrato-preenchido\.pdf$#',
+            $second->filled_contract_path
         );
     }
 
@@ -156,27 +154,5 @@ class UploadSecurityTest extends TestCase
         }
 
         Storage::disk('local')->put(config('contracts.template_path'), $pdf->Output('S'));
-    }
-
-    /**
-     * Gera um payload PNG de assinatura desenhada (traço escuro em fundo
-     * branco), no mesmo formato enviado pelo canvas do navegador.
-     */
-    private function signatureDataUrl(): string
-    {
-        $image = imagecreatetruecolor(520, 140);
-        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
-
-        $ink = imagecolorallocate($image, 15, 15, 15);
-        imageline($image, 40, 110, 480, 70, $ink);
-        imageline($image, 60, 95, 470, 60, $ink);
-        imageline($image, 80, 85, 450, 50, $ink);
-
-        ob_start();
-        imagepng($image);
-        $png = ob_get_clean();
-        imagedestroy($image);
-
-        return 'data:image/png;base64,'.base64_encode($png);
     }
 }

@@ -40,6 +40,11 @@ return [
         // Consulta de disponibilidade de cotas do formulário público.
         'quota_availability_per_minute' => (int) env('RATE_LIMIT_QUOTA_AVAILABILITY_PER_MINUTE', 60),
 
+        // Envio da assinatura do contrato (ação deliberada e única por
+        // cadastro): a janela é curta porque o titular pode precisar
+        // corrigir o traço e reenviar pelo mesmo link.
+        'signature_per_minute' => (int) env('RATE_LIMIT_SIGNATURE_PER_MINUTE', 10),
+
         // Autenticação administrativa (janela curta).
         'login_per_minute' => (int) env('RATE_LIMIT_LOGIN_PER_MINUTE', 5),
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\AuditAction;
+use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
 use App\Models\User;
 use App\Services\ContractPdfService;
@@ -42,7 +43,6 @@ class ClientContractTest extends TestCase
         'end_date' => '2026-10-19',
         'veracity_declaration_accepted' => '1',
         'privacy_policy_accepted' => '1',
-        'contract_signer_name' => 'Joao Oliveira Santos',
         'contract_accepted' => '1',
     ];
 
@@ -87,7 +87,8 @@ class ClientContractTest extends TestCase
     }
 
     /**
-     * Payload completo de envio válido.
+     * Payload completo de envio válido do cadastro (sem assinatura: ela é
+     * registrada depois, pelo link de assinatura).
      *
      * @return array<string, mixed>
      */
@@ -106,7 +107,6 @@ class ClientContractTest extends TestCase
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
             'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-            'contract_signature' => $this->signatureDataUrl(),
         ], $overrides);
     }
 
@@ -150,16 +150,20 @@ class ClientContractTest extends TestCase
 
     /* ---------- Etapa 7 (formulário) ---------- */
 
-    public function test_contract_step_is_rendered_with_canvas_and_accept_checkbox(): void
+    public function test_contract_step_is_rendered_with_viewer_and_accept_checkbox(): void
     {
         $html = $this->get('/cadastro')->assertOk()->getContent();
 
-        $this->assertStringContainsString('Contrato e assinatura', $html);
-        $this->assertStringContainsString('id="signature-canvas"', $html);
+        $this->assertStringContainsString('7. Contrato', $html);
         $this->assertStringContainsString('name="contract_accepted"', $html);
-        $this->assertStringContainsString('name="contract_signer_name"', $html);
-        $this->assertStringContainsString('Leia o contrato abaixo. Depois, assine para concluir seu cadastro.', $html);
+        $this->assertStringContainsString('Leia o contrato abaixo e confirme que aceita os termos.', $html);
         $this->assertStringContainsString(route('client-registrations.contract'), $html);
+
+        // A assinatura acontece depois, em um link próprio: a etapa final do
+        // cadastro não tem canvas nem campos de assinatura.
+        $this->assertStringNotContainsString('id="signature-canvas"', $html);
+        $this->assertStringNotContainsString('name="contract_signature"', $html);
+        $this->assertStringNotContainsString('name="contract_signer_name"', $html);
     }
 
     public function test_contract_template_is_served_for_reading(): void
@@ -172,7 +176,7 @@ class ClientContractTest extends TestCase
             ->assertHeader('content-disposition', 'inline; filename="contrato.pdf"');
     }
 
-    public function test_full_submission_persists_signed_contract_with_server_fields(): void
+    public function test_full_submission_creates_registration_without_signature(): void
     {
         $this->seedContractTemplate();
 
@@ -181,17 +185,18 @@ class ClientContractTest extends TestCase
 
         $registration = ClientRegistration::query()->firstOrFail();
 
-        $this->assertTrue($registration->contract_signed);
-        $this->assertSame('1.0', $registration->contract_version);
-        $this->assertSame('Joao Oliveira Santos', $registration->contract_signer_name);
-        $this->assertTrue($registration->contract_signed_at?->gte(now('America/Sao_Paulo')->subMinute()));
-        $this->assertTrue($registration->contract_signed_at?->lte(now('America/Sao_Paulo')?->addSecond()));
-        $this->assertStringStartsWith('contracts/signed/'.$registration->uuid.'/', $registration->contract_signature_path);
-        $this->assertSame('contrato-assinado.pdf', basename((string) $registration->contract_signed_pdf_path));
-        $this->assertSame('127.0.0.1', $registration->contract_signer_ip);
+        $this->assertFalse($registration->contract_signed);
+        $this->assertNull($registration->contract_signed_at);
+        $this->assertNull($registration->contract_signature_path);
+        $this->assertNull($registration->contract_signed_pdf_path);
+        $this->assertNull($registration->contract_signer_name);
+        $this->assertNull($registration->contract_signer_ip);
 
-        Storage::disk('local')->assertExists($registration->contract_signature_path);
-        Storage::disk('local')->assertExists($registration->contract_signed_pdf_path);
+        // A versão do contrato aceita no cadastro fica registrada mesmo
+        // antes da assinatura.
+        $this->assertSame('1.0', $registration->contract_version);
+
+        Storage::disk('local')->assertMissing('contracts/signed/'.$registration->uuid);
     }
 
     public function test_signed_contract_preserves_all_template_pages_and_stamps_page_twelve(): void
@@ -201,6 +206,17 @@ class ClientContractTest extends TestCase
         $this->post('/cadastro', $this->validPayload());
 
         $registration = ClientRegistration::query()->firstOrFail();
+
+        // `status` não é fillable: a aprovação é um ato administrativo.
+        $registration->status = RegistrationStatus::Aprovado;
+        $registration->save();
+
+        $this->post(route('client-registrations.signature.store', $registration->fresh()), [
+            'contract_signature' => $this->signatureDataUrl(),
+            'contract_accepted' => '1',
+        ])->assertRedirect(route('client-registrations.signature-done'));
+
+        $registration = $registration->fresh();
         $pdfPath = (string) $registration->contract_signed_pdf_path;
 
         $absolute = Storage::disk('local')->path($pdfPath);
@@ -278,63 +294,6 @@ class ClientContractTest extends TestCase
         $this->assertStringContainsString('Joao Oliveira Santos', $content);
         $this->assertStringContainsString('529.982.247-25', $content);
         $this->assertMatchesRegularExpression('/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/', $content);
-    }
-
-    public function test_signature_is_rejected_when_left_blank(): void
-    {
-        $this->seedContractTemplate();
-
-        $this->post('/cadastro', $this->validPayload(['contract_signature' => '']))
-            ->assertSessionHasErrors('contract_signature');
-
-        $this->assertDatabaseCount('client_registrations', 0);
-    }
-
-    public function test_blank_transparent_signature_is_rejected_by_the_server(): void
-    {
-        $this->seedContractTemplate();
-
-        // PNG transparente/limpo sem tinta: passa no formato, falha no
-        // critério de conteúdo (não confiamos no navegador).
-        $transparent = imagecreatetruecolor(100, 50);
-        imagesavealpha($transparent, true);
-        $alphaColor = imagecolorallocatealpha($transparent, 255, 255, 255, 127);
-        imagefill($transparent, 0, 0, $alphaColor);
-        ob_start();
-        imagepng($transparent);
-        $png = ob_get_clean();
-        imagedestroy($transparent);
-
-        $this->post('/cadastro', $this->validPayload([
-            'contract_signature' => 'data:image/png;base64,'.base64_encode($png),
-        ]))
-            ->assertSessionHasErrors('contract_signature');
-
-        $this->assertDatabaseCount('client_registrations', 0);
-    }
-
-    public function test_signature_with_non_png_content_is_rejected(): void
-    {
-        $this->seedContractTemplate();
-
-        $this->post('/cadastro', $this->validPayload([
-            'contract_signature' => 'data:image/png;base64,'.base64_encode('não sou um png'),
-        ]))
-            ->assertSessionHasErrors('contract_signature');
-
-        $this->assertDatabaseCount('client_registrations', 0);
-    }
-
-    public function test_signer_name_must_equal_full_name(): void
-    {
-        $this->seedContractTemplate();
-
-        $this->post('/cadastro', $this->validPayload([
-            'contract_signer_name' => 'Outra Pessoa Qualquer',
-        ]))
-            ->assertSessionHasErrors('contract_signer_name');
-
-        $this->assertDatabaseCount('client_registrations', 0);
     }
 
     public function test_contract_acceptance_is_required(): void

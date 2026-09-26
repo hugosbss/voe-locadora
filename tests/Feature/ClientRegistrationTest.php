@@ -42,7 +42,6 @@ class ClientRegistrationTest extends TestCase
         'cnh_expiry_date' => '2030-01-01',
         'veracity_declaration_accepted' => '1',
         'privacy_policy_accepted' => '1',
-        'contract_signer_name' => 'Maria da Silva Souza',
         'contract_accepted' => '1',
     ];
 
@@ -67,32 +66,13 @@ class ClientRegistrationTest extends TestCase
     }
 
     /**
-     * Gera um payload PNG válido desenhado (traço escuro em fundo branco).
-     */
-    private function signatureDataUrl(): string
-    {
-        $image = imagecreatetruecolor(520, 140);
-        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
-
-        $ink = imagecolorallocate($image, 15, 15, 15);
-        imageline($image, 40, 110, 480, 70, $ink);
-        imageline($image, 60, 95, 470, 60, $ink);
-        imageline($image, 80, 85, 450, 50, $ink);
-
-        ob_start();
-        imagepng($image);
-        $png = ob_get_clean();
-        imagedestroy($image);
-
-        return 'data:image/png;base64,'.base64_encode($png);
-    }
-
-    /**
-     * Payload completo de um envio válido (dados + arquivos + assinatura).
+     * Payload completo de um envio válido (dados + arquivos). A assinatura do
+     * contrato não faz parte do cadastro: ela é registrada depois, pelo link
+     * de assinatura.
      *
      * @return array<string, mixed>
      */
-    private function validPayload(bool $withSignature = true): array
+    private function validPayload(): array
     {
         [$vehicle, $quota] = $this->createQuotaContext(30);
         [$startDate, $endDate] = $this->bookingPeriod(30);
@@ -107,21 +87,26 @@ class ClientRegistrationTest extends TestCase
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
             'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-            'contract_signature' => $withSignature ? $this->signatureDataUrl() : '',
         ];
     }
 
     public function test_public_form_page_renders(): void
     {
-        $this->get('/cadastro')
+        $html = $this->get('/cadastro')
             ->assertOk()
             ->assertSee('Cadastro de Cliente')
             ->assertSee('Dados pessoais')
             ->assertSee('Enviar cadastro')
-            ->assertSee('Contrato e assinatura')
-            ->assertSee('id="signature-canvas"', false)
-            ->assertSee('Sua assinatura')
-            ->assertSee(route('client-registrations.contract'));
+            ->assertSee('7. Contrato')
+            ->assertSee('name="contract_accepted"', false)
+            ->assertSee(route('client-registrations.contract'))
+            ->getContent();
+
+        // A assinatura do contrato é um passo posterior: a etapa final do
+        // cadastro nao tem canvas nem campo de assinatura.
+        $this->assertStringNotContainsString('id="signature-canvas"', $html);
+        $this->assertStringNotContainsString('name="contract_signature"', $html);
+        $this->assertStringNotContainsString('name="contract_signer_name"', $html);
     }
 
     public function test_public_pages_use_vca_brand_and_have_no_protected_badge(): void
@@ -281,7 +266,7 @@ class ClientRegistrationTest extends TestCase
         $service = \Mockery::mock(ClientRegistrationService::class);
         $service->shouldReceive('create')
             ->once()
-            ->andThrow(new RuntimeException('Não foi possível processar a assinatura do contrato. Tente novamente.'));
+            ->andThrow(new RuntimeException('O conteúdo da imagem não pôde ser lido.'));
 
         $this->app->instance(ClientRegistrationService::class, $service);
 
@@ -291,7 +276,7 @@ class ClientRegistrationTest extends TestCase
 
         $response
             ->assertStatus(422)
-            ->assertJsonPath('errors.contract_signature.0', 'Não foi possível processar a assinatura do contrato. Tente novamente.');
+            ->assertJsonPath('errors.documentos.0', 'Não foi possível processar os documentos enviados. Tente novamente.');
     }
 
     public function test_admin_registration_detail_shows_vehicle_information_section_when_present(): void
@@ -311,7 +296,7 @@ class ClientRegistrationTest extends TestCase
             ->assertSee('Veículo entregue com chave no painel.');
     }
 
-    public function test_client_signer_name_and_dates_are_preserved_verbatim(): void
+    public function test_client_name_and_dates_are_preserved_verbatim(): void
     {
         $this->seedContractTemplate();
 
@@ -319,7 +304,6 @@ class ClientRegistrationTest extends TestCase
 
         $payload = $this->validPayload();
         $payload['full_name'] = 'João da Silva Santos';
-        $payload['contract_signer_name'] = 'João da Silva Santos';
         $payload['start_date'] = $startDate;
         $payload['end_date'] = $endDate;
 
@@ -329,7 +313,6 @@ class ClientRegistrationTest extends TestCase
 
         $this->assertDatabaseHas('client_registrations', [
             'full_name' => 'João da Silva Santos',
-            'contract_signer_name' => 'João da Silva Santos',
             'start_date' => $startDate,
             'end_date' => $endDate,
         ]);
@@ -351,9 +334,7 @@ class ClientRegistrationTest extends TestCase
             'facial_status' => 'pending',
             'veracity_declaration_accepted' => true,
             'privacy_policy_accepted' => true,
-            'contract_signed' => true,
-            'contract_signer_name' => 'Maria da Silva Souza',
-            'contract_signer_ip' => '127.0.0.1',
+            'contract_signed' => false,
         ]);
 
         $registration = ClientRegistration::query()->firstOrFail();
@@ -365,8 +346,14 @@ class ClientRegistrationTest extends TestCase
 
         Storage::disk('local')->assertExists($registration->cnh_front_path);
         Storage::disk('local')->assertExists($registration->selfie_path);
-        Storage::disk('local')->assertExists($registration->contract_signature_path);
-        Storage::disk('local')->assertExists($registration->contract_signed_pdf_path);
+
+        // A assinatura ainda não existe: ela é registrada depois, pelo link
+        // enviado ao cliente. O contrato preenchido é gerado no cadastro.
+        $this->assertFalse($registration->hasSignedContract());
+        $this->assertNull($registration->contract_signature_path);
+        $this->assertNull($registration->contract_signed_pdf_path);
+        $this->assertNotNull($registration->filled_contract_path);
+        Storage::disk('local')->assertExists($registration->filled_contract_path);
     }
 
     public function test_registration_rejects_invalid_cpf(): void

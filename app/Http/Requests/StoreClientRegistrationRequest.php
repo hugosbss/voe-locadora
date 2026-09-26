@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Exceptions\QuotaUnavailableException;
 use App\Rules\UploadBatchMax;
 use App\Rules\ValidCpf;
-use App\Rules\ValidSignatureData;
 use App\Services\QuotaAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
@@ -89,8 +88,9 @@ class StoreClientRegistrationRequest extends FormRequest
             'veracity_declaration_accepted' => ['required', 'accepted'],
             'privacy_policy_accepted' => ['required', 'accepted'],
 
-            'contract_signature' => ['required', new ValidSignatureData],
-            'contract_signer_name' => ['required', 'string', 'max:255', 'same:full_name'],
+            // O aceite dos termos é registrado no cadastro; a assinatura do
+            // contrato é um passo posterior (rota pública de assinatura),
+            // feito pelo cliente após a aprovação.
             'contract_accepted' => ['required', 'accepted'],
         ];
     }
@@ -218,9 +218,6 @@ class StoreClientRegistrationRequest extends FormRequest
             'privacy_policy_accepted.required' => 'Você deve aceitar a Política de Privacidade.',
             'privacy_policy_accepted.accepted' => 'Você deve aceitar a Política de Privacidade.',
 
-            'contract_signature.required' => 'Desenhe sua assinatura antes de concluir o cadastro.',
-            'contract_signer_name.required' => 'Informe o nome do signatário.',
-            'contract_signer_name.same' => 'O nome do signatário deve ser igual ao informado no cadastro.',
             'contract_accepted.required' => 'Você deve aceitar os termos do contrato.',
             'contract_accepted.accepted' => 'Você deve aceitar os termos do contrato.',
         ];

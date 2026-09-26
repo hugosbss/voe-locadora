@@ -1,4 +1,5 @@
 import { initClientRegistration } from './client-registration';
+import { initContractSignature } from './contract-signature';
 import { initAdmin } from './admin';
 import { initToasts } from './toasts';
 import { initCustomSelects } from './custom-select';
@@ -8,6 +9,7 @@ import { initErrorPage } from './error-page';
 document.addEventListener('DOMContentLoaded', () => {
     initCustomSelects(document);
     initClientRegistration();
+    initContractSignature();
     initAdmin();
     initToasts(document);
     initCookieBanner();

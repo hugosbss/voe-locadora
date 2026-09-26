@@ -85,6 +85,9 @@ class ClientRegistration extends Model
             'privacy_policy_accepted_at' => 'datetime',
             'contract_signed' => 'boolean',
             'contract_signed_at' => 'datetime',
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'quota_days' => 'integer',
         ];
     }
 
@@ -108,6 +111,39 @@ class ClientRegistration extends Model
             substr($digits, 6, 3),
             substr($digits, 9, 2)
         );
+    }
+
+    /**
+     * CPF parcialmente mascarado para telas PÚBLICAS (link de assinatura).
+     *
+     * `maskedCpf()` apenas formata o número e é usado no painel, onde o
+     * administrador precisa do CPF completo. A tela de assinatura é pública:
+     * ela mostra o início e os dois últimos dígitos, o suficiente para o
+     * titular reconhecer o documento sem expor o número inteiro.
+     */
+    public function partiallyMaskedCpf(): string
+    {
+        $digits = preg_replace('/\D/', '', $this->cpf);
+
+        return sprintf(
+            '%s.%s.%s-%s',
+            substr($digits, 0, 3),
+            str_repeat('*', 3),
+            str_repeat('*', 3),
+            substr($digits, 9, 2)
+        );
+    }
+
+    /**
+     * CNH parcialmente mascarada para telas públicas: somente os quatro
+     * últimos dígitos ficam visíveis.
+     */
+    public function partiallyMaskedCnh(): string
+    {
+        $digits = preg_replace('/\D/', '', (string) $this->cnh_number);
+        $visible = substr($digits, -4);
+
+        return str_repeat('*', max(0, strlen($digits) - strlen($visible))).$visible;
     }
 
     /**

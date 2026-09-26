@@ -37,10 +37,6 @@ export const initClientRegistration = () => {
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Reajusta o tamanho do canvas de assinatura quando o painel da etapa final
-    // fica visível (a largura só está disponível com o layout renderizado).
-    let resizeSignatureCanvas = () => {};
-
     // A partir de 768px o formulário passa a ser uma página única onde todas as
     // seções ficam visíveis simultaneamente. A navegação por etapas (wizard)
     // continua exclusiva do mobile.
@@ -84,7 +80,7 @@ export const initClientRegistration = () => {
 
     // Modo de correção: o usuário veio da revisão para ajustar uma etapa e o
     // botão principal passa a ser "Revisar cadastro" (leva para a última etapa,
-    // Contrato e assinatura).
+    // Contrato).
     let correctionMode = false;
 
     const dot = (step) => document.querySelector(`.step-dot[data-step="${step}"]`);
@@ -200,8 +196,6 @@ export const initClientRegistration = () => {
         selfie_file: 'Selfie',
         veracity_declaration_accepted: 'Declaração de veracidade',
         privacy_policy_accepted: 'Política de privacidade',
-        contract_signature: 'Assinatura do contrato',
-        contract_signer_name: 'Nome do signatário',
         contract_accepted: 'Aceite do contrato',
     };
 
@@ -397,8 +391,6 @@ export const initClientRegistration = () => {
         selfie_file: 'Adicione sua selfie.',
         veracity_declaration_accepted: 'Confirme a declaração de veracidade.',
         privacy_policy_accepted: 'Aceite a política de privacidade.',
-        contract_signature: 'Desenhe sua assinatura antes de continuar.',
-        contract_signer_name: 'Informe o nome do signatário.',
         contract_accepted: 'Aceite os termos do contrato.',
     };
 
@@ -440,9 +432,6 @@ export const initClientRegistration = () => {
         }
         const card = input.closest('.upload-card');
         if (card) card.classList.add('has-error');
-        if (input.type === 'hidden' && input.id === 'contract_signature') {
-            document.getElementById('signature-canvas-wrap')?.classList.add('has-error');
-        }
         input.setAttribute('aria-invalid', 'true');
 
         const el = findErrorEl(input);
@@ -456,9 +445,6 @@ export const initClientRegistration = () => {
         displayTarget(input).classList.remove('input-invalid');
         input.closest('[data-custom-select]')?.classList.remove('has-error');
         input.closest('.upload-card')?.classList.remove('has-error');
-        if (input.type === 'hidden' && input.id === 'contract_signature') {
-            document.getElementById('signature-canvas-wrap')?.classList.remove('has-error');
-        }
         input.removeAttribute('aria-invalid');
 
         const el = findErrorEl(input);
@@ -487,7 +473,7 @@ export const initClientRegistration = () => {
         4: ['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file'],
         5: ['selfie_file'],
         6: ['veracity_declaration_accepted', 'privacy_policy_accepted'],
-        7: ['contract_signature', 'contract_signer_name', 'contract_accepted'],
+        7: ['contract_accepted'],
     };
 
     const isEmailValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -996,15 +982,6 @@ export const initClientRegistration = () => {
 
     /* ---------- Resumo da última etapa ---------- */
     const setupSummary = () => {
-        const syncContractSignerName = () => {
-            const name = form.elements.namedItem('full_name')?.value ?? '';
-            const signer = form.elements.namedItem('contract_signer_name');
-
-            if (signer && name.trim() !== '') {
-                signer.value = name.trim();
-            }
-        };
-
         const update = () => {
             const name = form.elements.namedItem('full_name')?.value ?? '';
             const cpf = form.elements.namedItem('cpf')?.value ?? '';
@@ -1012,8 +989,6 @@ export const initClientRegistration = () => {
             const email = form.elements.namedItem('email')?.value ?? '';
             const city = form.elements.namedItem('city')?.value ?? '';
             const state = form.elements.namedItem('state')?.value ?? '';
-
-            syncContractSignerName();
 
             document.getElementById('summary-name').textContent = name;
             document.getElementById('summary-cpf').textContent = cpf ? `CPF: ${cpf}` : '';
@@ -1027,173 +1002,6 @@ export const initClientRegistration = () => {
         form.addEventListener('input', update);
         form.addEventListener('change', update);
         update();
-    };
-
-    /* ---------- Assinatura digital (canvas) ---------- */
-    const signatureSetup = () => {
-        const canvas = document.getElementById('signature-canvas');
-        const hidden = document.getElementById('contract_signature');
-        const clearBtn = document.getElementById('signature-clear');
-        const hint = document.getElementById('signature-hint');
-
-        if (!canvas || !hidden) {
-            return;
-        }
-
-        const DEFAULT_HEIGHT = 200;
-        const dpr = Math.max(window.devicePixelRatio || 1, 1);
-
-        let ctx = null;
-        let drawing = false;
-        let hasInk = false;
-        let initialized = false;
-        let lastX = 0;
-        let lastY = 0;
-
-        const initCanvas = () => {
-            initialized = true;
-            const rect = canvas.getBoundingClientRect();
-            const cssWidth = Math.max(rect.width || canvas.clientWidth || 300, 1);
-
-            canvas.width = Math.round(cssWidth * dpr);
-            canvas.height = Math.round(DEFAULT_HEIGHT * dpr);
-
-            ctx = canvas.getContext('2d', { willReadFrequently: true });
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#111827';
-            ctx.lineWidth = Math.max(2.5, 2.5 * dpr);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-        };
-
-        // Reajusta o canvas quando o painel da etapa final fica visível.
-        resizeSignatureCanvas = () => {
-            if (!initialized) {
-                initCanvas();
-                return;
-            }
-
-            if (hasInk) {
-                return; // preserva o traço já desenhado
-            }
-
-            const rect = canvas.getBoundingClientRect();
-            const cssWidth = Math.max(rect.width || canvas.clientWidth || 300, 1);
-            if (Math.abs(cssWidth * dpr - canvas.width) > 2) {
-                initCanvas();
-            }
-        };
-
-        const toCanvasCoords = (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
-            const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
-
-            return [
-                (clientX - rect.left) * (canvas.width / (rect.width || 1)),
-                (clientY - rect.top) * (canvas.height / (rect.height || 1)),
-            ];
-        };
-
-        const detectInk = () => {
-            const image = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-            for (let i = 0; i < image.length; i += 4) {
-                if (image[i + 3] > 0 && (image[i] < 250 || image[i + 1] < 250 || image[i + 2] < 250)) {
-                    return true;
-                }
-            }
-
-            return false;
-        };
-
-        const syncHidden = () => {
-            if (!detectInk()) {
-                hasInk = false;
-                hidden.value = '';
-            } else {
-                hasInk = true;
-                hidden.value = canvas.toDataURL('image/png');
-            }
-
-            updateSubmitState();
-        };
-
-        // Mantém o envio bloqueado enquanto não houver assinatura válida e aceite (apenas interface).
-        const updateSubmitState = () => {
-            if (!submitBtn) return;
-            const accepted = form.elements.namedItem('contract_accepted')?.checked ?? false;
-            submitBtn.disabled = !(hidden.value !== '' && accepted);
-        };
-
-        const start = (event) => {
-            if (event.button !== undefined && event.button !== 0) return;
-
-            event.preventDefault();
-            if (!initialized) initCanvas();
-
-            canvas.setPointerCapture?.(event.pointerId);
-            drawing = true;
-            [lastX, lastY] = toCanvasCoords(event);
-            hint?.classList.add('hidden');
-        };
-
-        const move = (event) => {
-            if (!drawing) return;
-            if (!ctx) return;
-
-            event.preventDefault();
-            const [x, y] = toCanvasCoords(event);
-
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            lastX = x;
-            lastY = y;
-        };
-
-        const end = (event) => {
-            if (!drawing) return;
-
-            drawing = false;
-            canvas.releasePointerCapture?.(event.pointerId);
-            syncHidden();
-            clearError(hidden);
-        };
-
-        const clear = () => {
-            drawing = false;
-            hasInk = false;
-            lastX = 0;
-            lastY = 0;
-
-            if (ctx) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            hidden.value = '';
-            hint?.classList.remove('hidden');
-            clearError(hidden);
-            updateSubmitState();
-        };
-
-        canvas.addEventListener('pointerdown', start);
-        canvas.addEventListener('pointermove', move);
-        canvas.addEventListener('pointerup', end);
-        canvas.addEventListener('pointercancel', end);
-        canvas.addEventListener('pointerleave', end);
-        clearBtn?.addEventListener('click', clear);
-        form.elements.namedItem('contract_accepted')?.addEventListener('change', updateSubmitState);
-        window.addEventListener('resize', () => {
-            if (isDesktopLayout()) resizeSignatureCanvas();
-        });
-
-        initCanvas();
-        updateSubmitState();
     };
 
     /* ---------- Navegação principal ---------- */
@@ -1211,7 +1019,7 @@ export const initClientRegistration = () => {
             }
 
             // Etapa corrigida: "Revisar cadastro" leva direto para a última
-            // etapa (Contrato e assinatura).
+            // etapa (Contrato).
             clearStepServerErrors(currentStep);
             correctionMode = false;
             gotoStep(totalSteps);
@@ -1376,7 +1184,6 @@ export const initClientRegistration = () => {
     setupCepLookup();
     setupQuotaVehicleFilter();
     setupSummary();
-    signatureSetup();
 
     const hasServerErrors = Object.values(serverErrorSteps).some((count) => Number(count) > 0);
     gotoStep(hasServerErrors ? reviewStep : 1);

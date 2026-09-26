@@ -49,6 +49,11 @@ class AppServiceProvider extends ServiceProvider
                 ->by((string) $request->ip());
         });
 
+        RateLimiter::for('contract_signature', function (Request $request): Limit {
+            return Limit::perMinute((int) config('rate.limits.signature_per_minute', 10))
+                ->by((string) $request->ip());
+        });
+
         RateLimiter::for('admin_login', function (Request $request): Limit {
             $email = strtolower(trim((string) $request->input('email', '')));
 
