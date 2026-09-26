@@ -240,11 +240,19 @@
 
                         <div class="mt-4">
                             <p class="form-label mb-1.5">Link de assinatura do contrato</p>
-                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <p class="min-w-0 flex-1 rounded-lg bg-surface-850 px-3.5 py-3 text-sm font-medium text-gray-200 ring-1 ring-inset ring-line-dark break-all sm:py-2.5">
+                            {{--
+                                Link e botões sempre em duas linhas: este card é a
+                                coluna estreita do detalhe (com a sidebar de 256px
+                                já descontada), então alinhar os botões ao lado do
+                                URL a partir de 640px squeezava o link e o quebrava
+                                em várias linhas. O clamp mantém o bloco com a mesma
+                                altura em qualquer largura.
+                            --}}
+                            <div class="flex flex-col gap-2">
+                                <p class="line-clamp-2 min-w-0 rounded-lg bg-surface-850 px-3.5 py-3 text-sm font-medium text-gray-200 ring-1 ring-inset ring-line-dark break-all sm:py-2.5">
                                     {{ $signatureUrl }}
                                 </p>
-                                <div class="flex shrink-0 gap-2">
+                                <div class="flex gap-2">
                                     <x-button type="button" variant="primary" data-js-copy data-copy-url="{{ $signatureUrl }}" data-copy-status="signature-copy-status" class="flex-1 sm:flex-none">
                                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a3.375 3.375 0 0 0-3.375 3.375v1.5M9.75 9h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                         Copiar link
