@@ -45,4 +45,6 @@ Thumbs.db
 /.mcp.json
 /boost.json
 /briefing.MD
-RELATORIO_ATUALIZACAO_VCA.md
+# Relatórios de trabalho (não vão ao repositório remoto)
+/RELATORIO_ATUALIZACAO_VCA.md
+/tasks.MD
