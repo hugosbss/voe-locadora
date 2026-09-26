@@ -111,6 +111,16 @@ class ClientRegistration extends Model
     }
 
     /**
+     * Cadastro aprovado. O extrato do cliente existe apenas para cadastros
+     * aprovados: o status é o mesmo já gravado no cadastro (enum
+     * `RegistrationStatus`), nenhuma cópia ou enumeração nova é criada.
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === RegistrationStatus::Aprovado;
+    }
+
+    /**
      * Normaliza o CPF para apenas dígitos.
      */
     public function setCpfAttribute(?string $value): void

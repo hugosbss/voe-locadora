@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RegistrationStatus;
 use App\Models\ClientRegistration;
 use App\Models\QuotaType;
 use App\Models\User;
@@ -140,7 +141,9 @@ class AdminRegistrationStatementTest extends TestCase
 
     public function test_statement_without_quota_informs_the_missing_data(): void
     {
-        $registration = ClientRegistration::factory()->create();
+        $registration = ClientRegistration::factory()->create([
+            'status' => RegistrationStatus::Aprovado,
+        ]);
 
         $this->actingAs(User::factory()->create())
             ->get(route('admin.registrations.statement', $registration))
@@ -159,6 +162,30 @@ class AdminRegistrationStatementTest extends TestCase
             ->assertOk()
             ->assertSee('Ver extrato')
             ->assertSee(route('admin.registrations.statement', $registration), false);
+    }
+
+    public function test_statement_action_is_hidden_for_registrations_that_are_not_approved(): void
+    {
+        $registration = ClientRegistration::factory()->create([
+            'status' => RegistrationStatus::EmAnalise,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.show', $registration))
+            ->assertOk()
+            ->assertDontSee('Ver extrato')
+            ->assertDontSee(route('admin.registrations.statement', $registration), false);
+    }
+
+    public function test_statement_route_is_forbidden_for_registrations_that_are_not_approved(): void
+    {
+        $registration = ClientRegistration::factory()->create([
+            'status' => RegistrationStatus::Novo,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin.registrations.statement', $registration))
+            ->assertForbidden();
     }
 
     public function test_guest_cannot_view_statement(): void
@@ -187,7 +214,8 @@ class AdminRegistrationStatementTest extends TestCase
 
     /**
      * Cadastro com veículo e cota, período compatível com a duração da cota
-     * (mesma regra `exact` da venda).
+     * (mesma regra `exact` da venda). O extrato existe apenas para cadastros
+     * aprovados, então o status também é informado.
      *
      * @return array{0: ClientRegistration, 1: Vehicle, 2: QuotaType}
      */
@@ -211,6 +239,7 @@ class AdminRegistrationStatementTest extends TestCase
         $registration = ClientRegistration::factory()->create([
             'full_name' => 'João da Silva',
             'cpf' => '52998224725',
+            'status' => RegistrationStatus::Aprovado,
             'vehicle_id' => $vehicle->id,
             'quota_type_id' => $quotaType->id,
             'start_date' => $startDate->toDateString(),

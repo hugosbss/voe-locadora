@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PasswordResetLinkController;
 use App\Http\Controllers\Admin\QuotaTypeController;
 use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\SecurityController;
+use App\Http\Controllers\Admin\StatementController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Public\ClientRegistrationController;
@@ -152,6 +153,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function (): void {
 
     Route::get('/cadastros/{registration:uuid}/editar', [RegistrationController::class, 'edit'])
         ->name('admin.registrations.edit');
+
+    Route::get('/extratos', [StatementController::class, 'index'])
+        ->name('admin.statements.index');
 
     Route::put('/cadastros/{registration:uuid}', [RegistrationController::class, 'update'])
         ->name('admin.registrations.update');

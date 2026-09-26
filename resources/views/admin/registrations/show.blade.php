@@ -9,7 +9,9 @@
             Voltar
         </a>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="{{ route('admin.registrations.statement', $registration) }}" class="btn btn-primary btn-sm">Ver extrato</a>
+            @if ($registration->isApproved())
+                <a href="{{ route('admin.registrations.statement', $registration) }}" class="btn btn-primary btn-sm">Ver extrato</a>
+            @endif
             <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm">Editar cadastro</a>
             @include('components.status-badge', ['status' => $registration->status, 'size' => 'md'])
         </div>

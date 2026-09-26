@@ -102,11 +102,12 @@ class RegistrationController extends Controller
     /**
      * Extrato do cliente: cadastro, cota, veículo e os dias da cota no mês
      * selecionado. É apenas uma leitura dos dados já existentes; o mês é a
-     * única entrada aceita e não altera nada no cadastro.
+     * única entrada aceita e não altera nada no cadastro. O mesmo extrato é
+     * aberto pelo módulo de Extratos e pelo botão do cadastro.
      */
     public function statement(Request $request, ClientRegistration $registration): View
     {
-        $this->authorize('view', $registration);
+        $this->authorize('viewStatement', $registration);
 
         $registration->load(['vehicle', 'quotaType']);
 
@@ -116,6 +117,7 @@ class RegistrationController extends Controller
                 $registration,
                 $this->statementMonth($request, $registration),
             ),
+            'history' => $this->statementBuilder->historyFor($registration),
         ]);
     }
 
