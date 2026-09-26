@@ -339,6 +339,6 @@ Falha preexistente (não relacionada ao extrato): `Tests\Feature\ClientRegistrat
 
 ### 16.7 Push e Pull Request
 
-- Push: `git push -u origin feature/vca-extrato-cliente` (branch publicada em `origin`).
-- Pull Request: base `vca`, compare `feature/vca-extrato-cliente`, **sem merge**. Link: `https://github.com/hugosbss/voe-locadora/compare/vca...feature/vca-extrato-cliente?expand=1`
-- Observação de ambiente: o binário `gh` não está instalado neste ambiente e não há token do GitHub disponível, portanto o Pull Request foi deixado pronto para abertura pelo link acima (o corpo do PR é o resumo desta seção 16). O código está commitado e enviado; apenas a criação do PR depende de credencial/interactive.
+- Push: `git push -u origin feature/vca-extrato-cliente` → branch publicada em `origin` (3 commits).
+- Pull Request: base `vca`, compare `feature/vca-extrato-cliente`, **sem merge**. O próprio remote devolveu o endereço de criação: `https://github.com/hugosbss/voe-locadora/pull/new/feature/vca-extrato-cliente` (equivalente a `https://github.com/hugosbss/voe-locadora/compare/vca...feature/vca-extrato-cliente`).
+- Observação de ambiente: o binário `gh` não está instalado neste ambiente e não há token do GitHub disponível, portanto o Pull Request foi deixado pronto para abertura pelo link acima (corpo sugerido: o resumo desta seção 16). O código está commitado e enviado; apenas a criação do PR depende de credencial/interactive.
