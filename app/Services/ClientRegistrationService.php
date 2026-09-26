@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AuditAction;
 use App\Enums\FacialStatus;
 use App\Enums\RegistrationStatus;
+use App\Exceptions\ContractSignatureNotAllowedException;
 use App\Models\ClientRegistration;
 use App\Models\QuotaType;
 use Carbon\Carbon;
@@ -15,9 +16,15 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Orquestra a criação de um cadastro de cliente, incluindo a
- * armazenamento dos arquivos em área privada, o consentimento e a
- * assinatura digital do contrato.
+ * Orquestra a criação de um cadastro de cliente e a assinatura posterior do
+ * contrato, incluindo o armazenamento dos arquivos em área privada, o
+ * consentimento e a assinatura digital.
+ *
+ * A criação do cadastro NÃO exige assinatura: o cliente envia os dados, o
+ * aceite dos termos é registrado e o contrato preenchido (página 1) é gerado.
+ * A assinatura é um passo posterior, feito pelo próprio titular através do
+ * link público de assinatura (ver `signContract`), e grava a assinatura no
+ * MESMO cadastro — nunca um novo registro.
  *
  * Campos administrativos (status, facial_status, caminhos, consentimento,
  * contrato, uuid) são definidos exclusivamente aqui, nunca por dados do
@@ -37,20 +44,18 @@ class ClientRegistrationService
     /**
      * Cria o cadastro do cliente com os dados validados.
      *
-     * A criação definitiva (row no banco) só acontece após a assinatura
-     * ser validada e armazenada e o PDF assinado ser gerado. Tudo roda
-     * sob a mesma transação; qualquer falha destrói os arquivos já
-     * gravados e reverte a transação — nunca fica cadastro sem contrato
-     * (nem contrato órfão).
+     * A criação definitiva (row no banco) só acontece após os arquivos
+     * enviados serem validados e gravados. Tudo roda sob a mesma transação;
+     * qualquer falha destrói os arquivos já gravados e reverte a transação.
      *
      * @param  array<string, mixed>  $data
      */
-    public function create(array $data, ?string $signerIp = null): ClientRegistration
+    public function create(array $data): ClientRegistration
     {
         $uuid = (string) Str::uuid();
 
         try {
-            return DB::transaction(function () use ($data, $uuid, $signerIp): ClientRegistration {
+            return DB::transaction(function () use ($data, $uuid): ClientRegistration {
                 // Revalida a disponibilidade sob lock ANTES de gravar
                 // qualquer arquivo: protege contra a corrida entre a
                 // validação do formulário e a criação (overbooking).
@@ -79,22 +84,6 @@ class ClientRegistrationService
                 // model para montar a página 1 e o bloco de assinatura.
                 $registration->fill($this->mapFormData($data));
 
-                // Contrato: gera os arquivos ANTES de salvar o cadastro.
-                // Se qualquer passo falhar, a exceção propaga e o catch
-                // remove os arquivos já gravados; a transação reverte.
-                $signaturePath = $this->contractStorage->storeSignature(
-                    (string) $data['contract_signature'],
-                    $uuid,
-                );
-
-                $signedAt = now('America/Sao_Paulo');
-
-                $contractPath = $this->contractPdf->generate(
-                    $registration,
-                    $signaturePath,
-                    $signedAt->format('d/m/Y H:i'),
-                );
-
                 if (! empty($data['vehicle_id']) && ! empty($data['quota_type_id'])) {
                     $quotaType = QuotaType::query()->find($data['quota_type_id']);
                     $startDate = $data['start_date'] ?? now('America/Sao_Paulo')->toDateString();
@@ -118,15 +107,11 @@ class ClientRegistrationService
                 $registration->privacy_policy_accepted_at = now();
                 $registration->privacy_policy_version = (string) config('privacy.version');
 
-                $registration->contract_signed = true;
-                // O instante é normalizado para UTC: as colunas `datetime`
-                // são gravadas como relógio do app (UTC) e relidas como UTC.
-                $registration->contract_signed_at = $signedAt->clone()->setTimezone('UTC');
+                // O aceite dos termos fica registrado agora, junto da versão
+                // vigente do contrato; a assinatura em si acontece depois, no
+                // fluxo público de assinatura (`signContract`).
+                $registration->contract_signed = false;
                 $registration->contract_version = (string) config('contracts.version');
-                $registration->contract_signed_pdf_path = $contractPath;
-                $registration->contract_signature_path = $signaturePath;
-                $registration->contract_signer_name = $data['contract_signer_name'];
-                $registration->contract_signer_ip = $signerIp ?? app('request')->ip();
 
                 $registration->save();
 
@@ -163,6 +148,117 @@ class ClientRegistrationService
     }
 
     /**
+     * Registra a assinatura do contrato em um cadastro JÁ existente.
+     *
+     * Nada é duplicado: o cadastro não é criado de novo e nenhum outro campo
+     * é alterado — apenas as colunas controladas pelo servidor da assinatura.
+     * A elegibilidade (cadastro aprovado) e a assinatura única são reverificadas
+     * sob lock dentro da transação, portanto dois envios simultâneos não
+     * produzem duas assinaturas.
+     *
+     * @param  string  $signatureDataUrl  data URL PNG enviada pelo canvas.
+     * @param  string|null  $signerIp  IP do titular no momento da assinatura.
+     *
+     * @throws ContractSignatureNotAllowedException quando o cadastro não está
+     *                                              elegível ou a assinatura já foi registrada.
+     * @throws RuntimeException quando a assinatura é inválida ou a geração do
+     *                          PDF falha (nada é gravado no cadastro e os arquivos da tentativa
+     *                          são removidos).
+     */
+    public function signContract(ClientRegistration $registration, string $signatureDataUrl, ?string $signerIp = null): ClientRegistration
+    {
+        $uuid = $registration->uuid;
+
+        // A guarda de elegibilidade acontece ANTES de qualquer escrita: um
+        // link reutilizado (cadastro já assinado) nunca toca nos arquivos
+        // existentes, mesmo que a checagem seja repetida dentro do lock.
+        $this->assertSignatureAllowed($registration);
+
+        $filesTouched = false;
+
+        try {
+            return DB::transaction(function () use ($registration, $signatureDataUrl, $signerIp, $uuid, &$filesTouched): ClientRegistration {
+                $locked = ClientRegistration::query()
+                    ->whereKey($registration->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $this->assertSignatureAllowed($locked);
+
+                // A tentativa passa a ser "suja" ANTES de gravar: se algo
+                // falhar no meio (escrita do PNG ou geração do PDF), a limpeza
+                // remove o que tiver sido criado. Apagar um diretório
+                // inexistente não faz nada, então marcar antes é seguro.
+                $filesTouched = true;
+
+                $signaturePath = $this->contractStorage->storeSignature($signatureDataUrl, $uuid);
+
+                $signedAt = now('America/Sao_Paulo');
+
+                $contractPath = $this->contractPdf->generate(
+                    $locked,
+                    $signaturePath,
+                    $signedAt->format('d/m/Y H:i'),
+                );
+
+                $locked->forceFill([
+                    'contract_signed' => true,
+                    // O instante é normalizado para UTC: as colunas `datetime`
+                    // são gravadas como relógio do app (UTC) e relidas como UTC.
+                    'contract_signed_at' => $signedAt->clone()->setTimezone('UTC'),
+                    'contract_version' => (string) config('contracts.version'),
+                    'contract_signed_pdf_path' => $contractPath,
+                    'contract_signature_path' => $signaturePath,
+                    // O signatário é sempre o titular do cadastro: o nome
+                    // nunca vem do navegador.
+                    'contract_signer_name' => $locked->full_name,
+                    'contract_signer_ip' => $signerIp ?? app('request')->ip(),
+                ])->save();
+
+                $this->audit->log(
+                    AuditAction::ContractSigned,
+                    [
+                        'registration_uuid' => $uuid,
+                        'contract_version' => $locked->contract_version,
+                    ],
+                    $locked,
+                );
+
+                return $locked;
+            });
+        } catch (ContractSignatureNotAllowedException $e) {
+            throw $e;
+        } catch (RuntimeException $e) {
+            // A assinatura desta tentativa é inválida (ou o PDF não pôde ser
+            // gerado): remove somente o que foi gravado agora, preservando o
+            // contrato preenchido (`contracts/generated/`) para que o cliente
+            // possa tentar de novo pelo mesmo link.
+            if ($filesTouched) {
+                $this->contractStorage->deleteSignedDirectory($uuid);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Um cadastro só pode receber assinatura quando está aprovado e ainda não
+     * assinado.
+     *
+     * @throws ContractSignatureNotAllowedException
+     */
+    private function assertSignatureAllowed(ClientRegistration $registration): void
+    {
+        if (! $registration->isApproved()) {
+            throw ContractSignatureNotAllowedException::notApproved();
+        }
+
+        if ($registration->hasSignedContract()) {
+            throw ContractSignatureNotAllowedException::alreadySigned();
+        }
+    }
+
+    /**
      * Remove dados temporários de arquivos que não devem ir para o banco.
      *
      * @param  array<string, mixed>  $data
@@ -177,8 +273,6 @@ class ClientRegistrationService
             $data['selfie_file'],
             $data['veracity_declaration_accepted'],
             $data['privacy_policy_accepted'],
-            $data['contract_signature'],
-            $data['contract_signer_name'],
             $data['contract_accepted'],
         );
 

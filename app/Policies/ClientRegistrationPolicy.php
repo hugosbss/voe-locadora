@@ -50,6 +50,20 @@ class ClientRegistrationPolicy
     }
 
     /**
+     * Acesso ao extrato do cliente. Além do papel administrativo, o extrato
+     * só existe para cadastros aprovados — é a mesma condição aplicada na
+     * listagem do módulo de Extratos.
+     */
+    public function viewStatement(User $user, ClientRegistration $registration): bool
+    {
+        if (! $this->hasAdminRole($user)) {
+            return false;
+        }
+
+        return $registration->isApproved();
+    }
+
+    /**
      * Acesso ao contrato assinado (PDF e assinatura) de um cadastro.
      */
     public function viewContract(User $user, ClientRegistration $registration): bool

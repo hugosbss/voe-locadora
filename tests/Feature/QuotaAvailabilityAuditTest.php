@@ -109,24 +109,6 @@ class QuotaAvailabilityAuditTest extends TestCase
         Storage::disk('local')->put(config('contracts.template_path'), $pdf->Output('S'));
     }
 
-    private function signatureDataUrl(): string
-    {
-        $image = imagecreatetruecolor(520, 140);
-        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
-
-        $ink = imagecolorallocate($image, 15, 15, 15);
-        imageline($image, 40, 110, 480, 70, $ink);
-        imageline($image, 60, 95, 470, 60, $ink);
-        imageline($image, 80, 85, 450, 50, $ink);
-
-        ob_start();
-        imagepng($image);
-        $png = ob_get_clean();
-        imagedestroy($image);
-
-        return 'data:image/png;base64,'.base64_encode($png);
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -154,13 +136,11 @@ class QuotaAvailabilityAuditTest extends TestCase
             'end_date' => null,
             'veracity_declaration_accepted' => '1',
             'privacy_policy_accepted' => '1',
-            'contract_signer_name' => 'Maria da Silva Souza',
             'contract_accepted' => '1',
             'cnh_front_file' => UploadedFile::fake()->image('cnh-front.jpg', 600, 400),
             'cnh_back_file' => UploadedFile::fake()->image('cnh-back.jpg', 600, 400),
             'proof_of_residence_file' => UploadedFile::fake()->image('comprovante.jpg', 600, 400),
             'selfie_file' => UploadedFile::fake()->image('selfie.jpg', 600, 400),
-            'contract_signature' => $this->signatureDataUrl(),
         ];
     }
 

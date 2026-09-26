@@ -12,9 +12,20 @@
             'registrations' => [
                 'label' => 'Cadastros',
                 'route' => route('admin.registrations.index'),
-                'active' => request()->routeIs('admin.registrations.*'),
+                'active' => request()->routeIs('admin.registrations.*') && ! request()->routeIs('admin.registrations.statement'),
                 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H3m15 0h-3.75M12 15.75v1.5m-3.75-1.5v1.5m6-1.5v1.5M7.5 18h9m-10.5-6H21M3 18V6.75a2.25 2.25 0 0 1 2.25-2.25h9',
             ],
+            // Módulo de Extratos: implementado e testado, porém OCULTO até a
+            // operação liberar o uso. Para exibir novamente, descomente o
+            // bloco 'statements' abaixo.
+            /*
+            'statements' => [
+                'label' => 'Extratos',
+                'route' => route('admin.statements.index'),
+                'active' => request()->routeIs('admin.statements.*') || request()->routeIs('admin.registrations.statement'),
+                'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25M9 12h6m-6 4h3m3 0h3m-9 3.75h3m3-3.75h3m-6 7.5h3',
+            ],
+            */
             'vehicles' => [
                 'label' => 'Veículos',
                 'route' => route('admin.vehicles.index'),

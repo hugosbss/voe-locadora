@@ -8,7 +8,17 @@
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 17l-5-5m0 0 5-5m-5 5h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Voltar
         </a>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            {{--
+                Botão "Ver extrato": o módulo de Extratos está implementado e
+                testado, mas OCULTO até a operação liberar o uso. As rotas
+                (`admin.registrations.statement` e `admin.statements.index`)
+                continuam ativas e o código abaixo está preservado — basta
+                remover este comentário para o botão voltar a aparecer.
+            --}}
+            {{-- @if ($registration->isApproved())
+                <a href="{{ route('admin.registrations.statement', $registration) }}" class="btn btn-primary btn-sm">Ver extrato</a>
+            @endif --}}
             <a href="{{ route('admin.registrations.edit', $registration) }}" class="btn btn-secondary btn-sm">Editar cadastro</a>
             @include('components.status-badge', ['status' => $registration->status, 'size' => 'md'])
         </div>
@@ -225,9 +235,44 @@
                     <p class="inline-flex items-center gap-1.5 rounded-full bg-surface-800 px-2.5 py-1 text-xs font-semibold text-zinc-400 ring-1 ring-inset ring-line-dark">
                         Contrato não assinado
                     </p>
-                    <p class="mt-3 text-sm text-zinc-400">
-                        Este cadastro foi enviado sem contrato digital assinado.
-                    </p>
+                    @if ($signatureUrl)
+                        <p id="signature-copy-status" class="sr-only" role="status"></p>
+
+                        <div class="mt-4">
+                            <p class="form-label mb-1.5">Link de assinatura do contrato</p>
+                            {{--
+                                Link e botões sempre em duas linhas: este card é a
+                                coluna estreita do detalhe (com a sidebar de 256px
+                                já descontada), então alinhar os botões ao lado do
+                                URL a partir de 640px squeezava o link e o quebrava
+                                em várias linhas. O clamp mantém o bloco com a mesma
+                                altura em qualquer largura.
+                            --}}
+                            <div class="flex flex-col gap-2">
+                                <p class="line-clamp-2 min-w-0 rounded-lg bg-surface-850 px-3.5 py-3 text-sm font-medium text-gray-200 ring-1 ring-inset ring-line-dark break-all sm:py-2.5">
+                                    {{ $signatureUrl }}
+                                </p>
+                                <div class="flex gap-2">
+                                    <x-button type="button" variant="primary" data-js-copy data-copy-url="{{ $signatureUrl }}" data-copy-status="signature-copy-status" class="flex-1 sm:flex-none">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a3.375 3.375 0 0 0-3.375 3.375v1.5M9.75 9h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Copiar link
+                                    </x-button>
+
+                                    <x-button type="button" variant="secondary" data-js-share data-share-title="Assinatura do contrato" data-share-text="Assine o Contrato do Clube de Mobilidade da VCA." data-share-url="{{ $signatureUrl }}" class="flex-1 sm:flex-none">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        Compartilhar
+                                    </x-button>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-zinc-500">
+                                Envie o link ao cliente. O contrato só pode ser assinado uma vez.
+                            </p>
+                        </div>
+                    @else
+                        <p class="mt-3 text-sm text-zinc-400">
+                            O link de assinatura fica disponível aqui assim que o cadastro for aprovado.
+                        </p>
+                    @endif
                 @endif
             </div>
         </aside>

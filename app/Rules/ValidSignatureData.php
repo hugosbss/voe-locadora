@@ -18,7 +18,7 @@ class ValidSignatureData implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value) || $value === '') {
-            $fail('Desenhe sua assinatura antes de concluir o cadastro.');
+            $fail('Desenhe sua assinatura antes de continuar.');
 
             return;
         }

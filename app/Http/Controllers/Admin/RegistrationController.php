@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateClientRegistrationRequest;
 use App\Models\ClientRegistration;
 use App\Services\AuditService;
+use App\Services\ClientRegistrationStatementService;
 use App\Services\ContractStorageService;
 use App\Services\DocumentStorageService;
 use App\Services\QuotaAvailabilityService;
@@ -28,6 +29,7 @@ class RegistrationController extends Controller
         private readonly ContractStorageService $contractStorage,
         private readonly AuditService $audit,
         private readonly QuotaAvailabilityService $quotaAvailability,
+        private readonly ClientRegistrationStatementService $statementBuilder,
     ) {}
 
     /**
@@ -94,7 +96,54 @@ class RegistrationController extends Controller
         return view('admin.registrations.show', [
             'registration' => $registration,
             'statuses' => RegistrationStatus::cases(),
+            // O link de assinatura só é oferecido quando o cadastro está
+            // aprovado e ainda sem assinatura — a mesma regra aplicada pela
+            // rota pública.
+            'signatureUrl' => $registration->isApproved() && ! $registration->hasSignedContract()
+                ? route('client-registrations.signature', $registration)
+                : null,
         ]);
+    }
+
+    /**
+     * Extrato do cliente: cadastro, cota, veículo e os dias da cota no mês
+     * selecionado. É apenas uma leitura dos dados já existentes; o mês é a
+     * única entrada aceita e não altera nada no cadastro. O mesmo extrato é
+     * aberto pelo módulo de Extratos e pelo botão do cadastro.
+     */
+    public function statement(Request $request, ClientRegistration $registration): View
+    {
+        $this->authorize('viewStatement', $registration);
+
+        $registration->load(['vehicle', 'quotaType']);
+
+        return view('admin.registrations.statement', [
+            'registration' => $registration,
+            'statement' => $this->statementBuilder->build(
+                $registration,
+                $this->statementMonth($request, $registration),
+            ),
+            'history' => $this->statementBuilder->historyFor($registration),
+        ]);
+    }
+
+    /**
+     * Mês visualizado no extrato. Sem um mês válido na query, abre no mês do
+     * período da cota; sem período, no mês atual.
+     */
+    private function statementMonth(Request $request, ClientRegistration $registration): Carbon
+    {
+        $requested = $request->query('mes');
+
+        if (is_string($requested) && Carbon::hasFormat($requested, 'Y-m')) {
+            return Carbon::createFromFormat('Y-m-d', $requested.'-01')->startOfMonth();
+        }
+
+        if ($registration->start_date) {
+            return Carbon::parse($registration->start_date)->startOfMonth();
+        }
+
+        return Carbon::now(config('app.timezone'))->startOfMonth();
     }
 
     public function edit(ClientRegistration $registration): View
@@ -222,11 +271,17 @@ class RegistrationController extends Controller
             $registration,
         );
 
-        // Sucesso: a página de detalhes mantém o toast e, após ~2s, é
-        // levada de volta à listagem (flags consumidas pelo próprio layout).
+        // Sucesso: a página de detalhes mantém o toast e permanece onde está.
+        //
+        // O retorno automático para a listagem (~2s), implementado pelos
+        // flags `status_updated_redirect` consumidos em
+        // `resources/views/layouts/admin.blade.php` + `resources/js/admin.js`,
+        // está DESABILITADO de propósito: a operação precisa permanecer no
+        // cadastro para conferir o resultado (e o link de assinatura) sem
+        // navegar. Para reativar, basta descomentar a linha abaixo.
         return back()
-            ->with('success', 'Status atualizado com sucesso.')
-            ->with('status_updated_redirect', true);
+            ->with('success', 'Status atualizado com sucesso.');
+        // ->with('status_updated_redirect', true);
     }
 
     /**

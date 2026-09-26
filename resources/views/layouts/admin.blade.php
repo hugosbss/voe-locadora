@@ -122,6 +122,7 @@
         <div class="flex min-h-screen flex-col">
             @php
                 $sectionTitle = match (true) {
+                    request()->routeIs('admin.statements.*') || request()->routeIs('admin.registrations.statement') => 'Extratos',
                     request()->routeIs('admin.registrations.*') => 'Cadastros',
                     request()->routeIs('admin.registration-link') => 'Link de cadastro',
                     request()->routeIs('admin.security.*') => 'Segurança',

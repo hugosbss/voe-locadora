@@ -54,8 +54,8 @@ class AdminRegistrationEditingTest extends TestCase
         $registration->refresh();
 
         $this->assertSame('Revisado pela administração.', $registration->vehicle_observation);
-        $this->assertSame('2026-09-19', $registration->start_date);
-        $this->assertSame('2026-10-19', $registration->end_date);
+        $this->assertSame('2026-09-19', $registration->start_date->format('Y-m-d'));
+        $this->assertSame('2026-10-19', $registration->end_date->format('Y-m-d'));
         $this->assertNotSame($oldPath, $registration->vehicle_pickup_photo_path);
         Storage::disk('local')->assertMissing($oldPath);
         Storage::disk('local')->assertExists($registration->vehicle_pickup_photo_path);

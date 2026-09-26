@@ -43,7 +43,7 @@ class ClientRegistrationController extends Controller
             'Documentos',
             'Selfie',
             'Revisão',
-            'Contrato e assinatura',
+            'Contrato',
         ];
 
         $vehicles = Vehicle::query()
@@ -151,10 +151,7 @@ class ClientRegistrationController extends Controller
         RateLimiter $limiter,
     ): RedirectResponse|JsonResponse {
         try {
-            $registration = $this->registrationService->create(
-                $request->validated(),
-                (string) $request->ip(),
-            );
+            $registration = $this->registrationService->create($request->validated());
 
             // Cadastro realmente criado: conta para o limite de criações reais
             // (anti-spam), enquanto erros de validação ficam fora dele.
@@ -171,22 +168,19 @@ class ClientRegistrationController extends Controller
 
             return back()
                 ->withErrors([$e->field => $e->getMessage()])
-                ->withInput($request->except(['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file', 'selfie_file', 'contract_signature']));
+                ->withInput($request->except($this->privateInputFields()));
         } catch (RuntimeException $e) {
             // Arquivo legitimamente inválido que escapou da validação, ou
-            // falha inesperada no reprocessamento: resposta genérica. A
-            // exceção da assinatura/contrato recebe destaque no campo.
+            // falha inesperada no reprocessamento: resposta genérica, sem
+            // revelar detalhes internos.
             Log::warning('Registration storage failed', [
                 'kind' => get_class($e),
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $field = str_contains($e->getMessage(), 'assinatura') || str_contains($e->getMessage(), 'contrato')
-                ? 'contract_signature'
-                : 'documentos';
-
-            $message = 'Não foi possível processar a assinatura do contrato. Tente novamente.';
+            $field = 'documentos';
+            $message = 'Não foi possível processar os documentos enviados. Tente novamente.';
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -196,7 +190,7 @@ class ClientRegistrationController extends Controller
 
             return back()
                 ->withErrors([$field => $message])
-                ->withInput($request->except(['cnh_front_file', 'cnh_back_file', 'proof_of_residence_file', 'selfie_file', 'contract_signature']));
+                ->withInput($request->except($this->privateInputFields()));
         }
 
         // Notifica os administradores. Qualquer falha de SMTP é registrada
@@ -221,5 +215,21 @@ class ClientRegistrationController extends Controller
     public function success(): View
     {
         return view('client-registrations.success');
+    }
+
+    /**
+     * Campos que nunca voltam ao formulário em caso de erro: os uploads
+     * precisam ser reenviados pelo navegador.
+     *
+     * @return array<int, string>
+     */
+    private function privateInputFields(): array
+    {
+        return [
+            'cnh_front_file',
+            'cnh_back_file',
+            'proof_of_residence_file',
+            'selfie_file',
+        ];
     }
 }

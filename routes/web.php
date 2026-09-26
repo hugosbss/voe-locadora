@@ -8,9 +8,11 @@ use App\Http\Controllers\Admin\PasswordResetLinkController;
 use App\Http\Controllers\Admin\QuotaTypeController;
 use App\Http\Controllers\Admin\RegistrationController;
 use App\Http\Controllers\Admin\SecurityController;
+use App\Http\Controllers\Admin\StatementController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Public\ClientRegistrationController;
+use App\Http\Controllers\Public\ContractSignatureController;
 use App\Http\Controllers\Public\HowItWorksController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +50,26 @@ Route::post('/cadastro', [ClientRegistrationController::class, 'store'])
 
 Route::get('/cadastro/contrato', [ClientRegistrationController::class, 'contractView'])
     ->name('client-registrations.contract');
+
+/*
+|--------------------------------------------------------------------------
+| Assinatura do contrato (link enviado pela locadora)
+|--------------------------------------------------------------------------
+|
+| O link aponta para o cadastro existente pelo UUID e só funciona para
+| cadastros aprovados ainda sem assinatura. A tela é somente leitura: o
+| único dado aceito é a assinatura, gravada no cadastro original.
+|
+*/
+Route::get('/contrato/assinatura/{registration:uuid}', [ContractSignatureController::class, 'create'])
+    ->name('client-registrations.signature');
+
+Route::post('/contrato/assinatura/{registration:uuid}', [ContractSignatureController::class, 'store'])
+    ->middleware('throttle:contract_signature')
+    ->name('client-registrations.signature.store');
+
+Route::view('/assinatura-concluida', 'client-registrations.signature-done')
+    ->name('client-registrations.signature-done');
 
 Route::get('/sucesso', [ClientRegistrationController::class, 'success'])
     ->name('client-registrations.success');
@@ -147,8 +169,14 @@ Route::middleware(['auth'])->prefix('admin')->group(function (): void {
     Route::get('/cadastros/{registration:uuid}', [RegistrationController::class, 'show'])
         ->name('admin.registrations.show');
 
+    Route::get('/cadastros/{registration:uuid}/extrato', [RegistrationController::class, 'statement'])
+        ->name('admin.registrations.statement');
+
     Route::get('/cadastros/{registration:uuid}/editar', [RegistrationController::class, 'edit'])
         ->name('admin.registrations.edit');
+
+    Route::get('/extratos', [StatementController::class, 'index'])
+        ->name('admin.statements.index');
 
     Route::put('/cadastros/{registration:uuid}', [RegistrationController::class, 'update'])
         ->name('admin.registrations.update');

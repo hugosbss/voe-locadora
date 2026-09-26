@@ -191,7 +191,7 @@
                     <div class="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand/10 ring-1 ring-brand/20">
                         <svg class="h-5 w-5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H6.375c-.621 0-1.125-.504-1.125-1.125V14.25m17.25 4.5V6.75a3 3 0 0 0-3-3H6.375a3 3 0 0 0-3 3v8.25m16.5 0h1.5" /></svg>
                     </div>
-                    <h3 class="text-sm font-semibold text-white">Cotas para semana e fim de semana</h3>
+                    <h3 class="text-sm font-semibold text-white">Cotas para semana, final de semana e família</h3>
                     <p class="mt-2 text-xs leading-relaxed text-zinc-500"></p>
                 </div>
 
