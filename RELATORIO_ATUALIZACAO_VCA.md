@@ -203,7 +203,9 @@ Suíte completa (ambiente local com PHP CLI disponível, MySQL em `127.0.0.1:330
 
 ## 10. Regressão
 
-A suíte completa de testes está verde (181/181). Nenhuma regressão detectada nas rotas, validações, storage ou fluxo de contrato após as correções.
+A suíte completa de testes está verde (181/181) ao final da iteração anterior. Nenhuma regressão detectada nas rotas, validações, storage ou fluxo de contrato após as correções.
+
+> Atualizado na fase 4 (ver seção 16): a suíte passou de 181 para 226 testes e o estado atual é **225/226**, com uma falha preexistente e não relacionada ao extrato.
 
 ## 11. Contrato/PDF
 
@@ -270,7 +272,73 @@ A recursão em `Maximum call stack size exceeded` era disparada por sincronizaç
 
 ## 15. Estado final
 
-- Suíte de testes: **181/181 passed**.
+- Suíte de testes: **181/181 passed** (estado ao final da iteração anterior; ver seção 16 para o estado atual).
 - Parte de veículos/cotas do formulário: validada por testes funcionais e de seleção pública.
 - Contrato/PDF: código inalterado; requer provisionamento do modelo oficial no ambiente real.
 - Branch: `feature/cadastro-cotas-veiculos` com 6 commits, pronta para Pull Request em `vca` (sem merge).
+
+## 16. Fase 4 — Extrato do Cliente (administrativo)
+
+### 16.1 Objetivo
+
+Disponibilizar no administrador o extrato de um cadastro, mostrando os dados que o cadastro **já possui** (cliente, cota, veículo, total de dias da cota) e as datas do mês selecionado agrupadas por semana, com o dia da semana de cada data.
+
+### 16.2 Regras respeitadas
+
+- A quantidade de dias exibida é lida de `quota_types.days` (cota do cadastro, via `ClientRegistration->quotaType`). Nenhum valor foi fixo no código, nenhum enum foi criado e nenhuma nova regra de duração foi introduzida.
+- O extrato é **somente leitura**: nenhuma tabela nova, nenhuma migration, nenhum registro gravado e nenhuma alteração nas regras de disponibilidade/uso já existentes.
+- As datas vêm do período registrado no cadastro (`start_date` → `end_date`). Sem `end_date`, o fim é obtido pela regra já existente em `QuotaAvailabilityService::endDateFor()` (mesma da venda), sem duplicar cálculo.
+- O recorte é a interseção entre o período da cota e o mês visualizado; as semanas são de segunda a domingo, numeradas sequencialmente a partir da primeira semana com dias da cota.
+- O mês é a única entrada aceita na URL (`?mes=YYYY-MM`); valor ausente ou inválido abre no mês do período da cota e, sem período, no mês atual.
+- Escopo restrito ao administrador: rota dentro do grupo administrativo, ligação por UUID e `$this->authorize('view', $registration)`.
+- Nada foi alterado no fluxo público, na geração de contrato/PDF, no storage de documentos ou nos assets de frontend.
+
+### 16.3 Implementação
+
+Backend:
+
+- `app/Services/ClientRegistrationStatementService.php` (novo): monta o extrato — carrega `vehicle`/`quotaType`, resolve o período, recorta o mês, agrupa por semana e rotula cada dia com `translatedFormat('l')` (locale `pt_BR`).
+- `app/Http/Controllers/Admin/RegistrationController.php`: ação `statement()` (autorização + view) e o helper `statementMonth()` para validar/derivar o mês.
+- `routes/web.php`: `GET /admin/cadastros/{registration:uuid}/extrato` → `admin.registrations.statement`.
+
+Frontend:
+
+- `resources/views/admin/registrations/statement.blade.php` (novo): cards de cliente/cota/veículo/período, seletor de mês com navegação anterior/próxima, dias agrupados por semana e o total de dias da cota. Layout em cartões, sem tabela larga, com colunas colapsáveis em telas estreitas.
+- `resources/views/admin/registrations/show.blade.php`: ação "Ver extrato" no cabeçalho (grupo com `flex-wrap` para não quebrar em telas estreitas).
+
+### 16.4 Testes
+
+`tests/Feature/AdminRegistrationStatementTest.php` (novo, 12 testes / 61 assertions): exibe os dados do cadastro; usa `quota_types.days` quando o `quota_days` gravado diverge; lista as datas do período; traz o dia da semana em português; agrupa por semana de segunda a domingo; respeita o mês informado; ignora mês inválido; trata cadastro sem cota; exibe o link no detalhe; bloqueia visitante; bloqueia usuário não administrador; retorna 404 para UUID inexistente.
+
+### 16.5 Validações executadas
+
+| Verificação | Resultado |
+|---|---|
+| `php artisan test --compact tests/Feature/AdminRegistrationStatementTest.php` | 12 passed (61 assertions) |
+| `php artisan test --compact tests/Feature/AdminRegistrationTest.php` | 25 passed (85 assertions) |
+| `php artisan test --compact` (suíte completa) | 226 testes / 948 assertions — 225 passed, 1 failed (preexistente) |
+| `vendor/bin/pint --dirty --format agent` | passed |
+| `php artisan view:cache` / `view:clear` | Blades compilados sem erro |
+| `php artisan route:list --name=admin.registrations` | rota `admin.registrations.statement` registrada |
+
+Falha preexistente (não relacionada ao extrato): `Tests\Feature\ClientRegistrationTest::test_public_form_lists_only_quota_code_name_and_availability_for_the_selected_vehicle` (`tests/Feature/ClientRegistrationTest.php:177`), que espera o texto de disponibilidade renderizado no formulário público. Reproduzida com o trabalho desta fase guardado via `git stash`, portanto não foi introduzida aqui.
+
+### 16.6 Git
+
+- Branch: **`feature/vca-extrato-cliente`**, criada a partir de `vca` (`4e15d35`) após `git fetch --all --prune`.
+- Nenhuma alteração em `vca`; nenhum merge realizado.
+
+| Hash | Mensagem |
+|---|---|
+| `c0921d8` | `feat(admin): adiciona extrato do cliente derivado do cadastro` |
+| `2ce5876` | `test(admin): cobre o extrato do cliente` |
+| *(pendente)* | `docs(vca): relatório da fase 4 — extrato do cliente` |
+
+- Alterações locais preexistentes e **fora** do escopo foram preservadas e não entram nos commits: `resources/views/public/how-it-works.blade.php` (modificado) e `tasks.MD` (não rastreado).
+- Push da branch e Pull Request contra `vca` (sem merge): ver 16.7.
+
+### 16.7 Push e Pull Request
+
+- Push: `git push -u origin feature/vca-extrato-cliente` (branch publicada em `origin`).
+- Pull Request: base `vca`, compare `feature/vca-extrato-cliente`, **sem merge**. Link: `https://github.com/hugosbss/voe-locadora/compare/vca...feature/vca-extrato-cliente?expand=1`
+- Observação de ambiente: o binário `gh` não está instalado neste ambiente e não há token do GitHub disponível, portanto o Pull Request foi deixado pronto para abertura pelo link acima (o corpo do PR é o resumo desta seção 16). O código está commitado e enviado; apenas a criação do PR depende de credencial/interactive.
